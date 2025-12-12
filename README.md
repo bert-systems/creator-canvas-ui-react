@@ -1,4 +1,8 @@
-# React + TypeScript + Vite
+# Creator Canvas UI React
+
+A React + TypeScript + Vite application for the Creative Canvas Studio interface.
+
+## Overview
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
