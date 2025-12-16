@@ -126,6 +126,10 @@ import { PathMergeNode } from '../nodes/PathMergeNode';
 import { StoryPivotNode } from '../nodes/StoryPivotNode';
 import { IntrigueLiftNode } from '../nodes/IntrigueLiftNode';
 import { StoryEnhancerNode } from '../nodes/StoryEnhancerNode';
+// Visualization nodes - Phase 5 (Dec 2025)
+import { SceneVisualizerNode } from '../nodes/SceneVisualizerNode';
+import { CharacterSheetNode } from '../nodes/CharacterSheetNode';
+import { ScreenplayFormatterNode } from '../nodes/ScreenplayFormatterNode';
 // Fashion nodes (Dec 2025)
 import { GarmentSketchNode } from '../nodes/GarmentSketchNode';
 import { TextileDesignerNode } from '../nodes/TextileDesignerNode';
@@ -207,6 +211,10 @@ const nodeTypes: NodeTypes = {
   storyPivot: StoryPivotNode as any,
   intrigueLift: IntrigueLiftNode as any,
   storyEnhancer: StoryEnhancerNode as any,
+  // Visualization nodes - Phase 5 (Dec 2025)
+  sceneVisualizer: SceneVisualizerNode as any,
+  characterSheet: CharacterSheetNode as any,
+  screenplayFormatter: ScreenplayFormatterNode as any,
   // Fashion nodes (Dec 2025)
   garmentSketch: GarmentSketchNode as any,
   textileDesigner: TextileDesignerNode as any,

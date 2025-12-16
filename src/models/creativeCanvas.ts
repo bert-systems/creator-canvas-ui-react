@@ -934,7 +934,12 @@ export type ConnectionActionType =
   | 'style-transplant'
   | 'element-transfer'
   | 'variation-bridge'
-  | 'character-inject';
+  | 'character-inject'
+  // Storytelling connection actions
+  | 'character-meet'
+  | 'plot-weave'
+  | 'location-portal'
+  | 'scene-to-storyboard';
 
 export type TransferableElement =
   | 'colors'
@@ -1050,5 +1055,45 @@ export const CONNECTION_ACTIONS: ConnectionActionDefinition[] = [
     preferredModel: 'nano-banana-pro',
     requiresSourceType: ['story-character', 'fashion-concept'],
     requiresTargetType: ['story-scene', 'story-chapter'],
+  },
+  // Storytelling Connection Actions
+  {
+    type: 'character-meet',
+    name: 'Character Meeting',
+    description: 'Generate a scene where two characters meet for the first time',
+    icon: 'Group',
+    supportedCategories: ['story'],
+    preferredModel: 'nano-banana-pro',
+    requiresSourceType: ['story-character'],
+    requiresTargetType: ['story-character'],
+    defaultOptions: { resolution: '2K' },
+  },
+  {
+    type: 'plot-weave',
+    name: 'Plot Weave',
+    description: 'Connect two plot points with cause-effect or parallel narratives',
+    icon: 'Timeline',
+    supportedCategories: ['story'],
+    preferredModel: 'nano-banana-pro',
+    defaultOptions: { resolution: '2K' },
+  },
+  {
+    type: 'location-portal',
+    name: 'Location Portal',
+    description: 'Create a travel or transition scene between two locations',
+    icon: 'Explore',
+    supportedCategories: ['story'],
+    preferredModel: 'nano-banana-pro',
+    defaultOptions: { resolution: '2K' },
+  },
+  {
+    type: 'scene-to-storyboard',
+    name: 'Scene to Storyboard',
+    description: 'Convert scene content into visual storyboard frames',
+    icon: 'PhotoLibrary',
+    supportedCategories: ['story'],
+    preferredModel: 'flux-redux',
+    requiresSourceType: ['story-scene'],
+    defaultOptions: { numVariations: 4, resolution: '2K' },
   },
 ];
