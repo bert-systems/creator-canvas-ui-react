@@ -179,7 +179,14 @@ export type NodeType =
   | 'fabricMotion'           // Animate fabric movement
   // Collections
   | 'collectionBuilder'      // Build fashion collections
-  | 'lookbookGenerator';     // Create lookbooks
+  | 'lookbookGenerator'      // Create lookbooks
+  // Additional Fashion nodes
+  | 'colorwayGenerator'      // Generate color variations
+  | 'sizeScaler'             // Size visualization
+  | 'layeringStylist'        // Outfit layering
+  | 'ghostMannequin'         // Invisible mannequin shots
+  | 'turnaroundVideo'        // 360-degree rotation video
+  | 'lineSheetGenerator';    // Wholesale line sheets
 
 export type PortType =
   // Media types

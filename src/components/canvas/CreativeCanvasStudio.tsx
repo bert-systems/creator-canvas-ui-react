@@ -143,6 +143,15 @@ import { TechPackGeneratorNode } from '../nodes/TechPackGeneratorNode';
 import { LookbookGeneratorNode } from '../nodes/LookbookGeneratorNode';
 import { AccessoryStylistNode } from '../nodes/AccessoryStylistNode';
 import { FabricMotionNode } from '../nodes/FabricMotionNode';
+// Fashion nodes - Phase 2 (Dec 2025)
+import { CulturalTextileFusionNode } from '../nodes/CulturalTextileFusionNode';
+import { ColorwayGeneratorNode } from '../nodes/ColorwayGeneratorNode';
+import { PoseLibraryNode } from '../nodes/PoseLibraryNode';
+import { SizeScalerNode } from '../nodes/SizeScalerNode';
+import { LayeringStylistNode } from '../nodes/LayeringStylistNode';
+import { GhostMannequinNode } from '../nodes/GhostMannequinNode';
+import { TurnaroundVideoNode } from '../nodes/TurnaroundVideoNode';
+import { LineSheetGeneratorNode } from '../nodes/LineSheetGeneratorNode';
 import TemplateBrowser from '../panels/TemplateBrowser';
 import BoardManager from '../panels/BoardManager';
 import ConnectionActionMenu from '../panels/ConnectionActionMenu';
@@ -228,6 +237,15 @@ const nodeTypes: NodeTypes = {
   lookbookGenerator: LookbookGeneratorNode as any,
   accessoryStylist: AccessoryStylistNode as any,
   fabricMotion: FabricMotionNode as any,
+  // Fashion nodes - Phase 2 (Dec 2025)
+  culturalTextileFusion: CulturalTextileFusionNode as any,
+  colorwayGenerator: ColorwayGeneratorNode as any,
+  poseLibrary: PoseLibraryNode as any,
+  sizeScaler: SizeScalerNode as any,
+  layeringStylist: LayeringStylistNode as any,
+  ghostMannequin: GhostMannequinNode as any,
+  turnaroundVideo: TurnaroundVideoNode as any,
+  lineSheetGenerator: LineSheetGeneratorNode as any,
 };
 
 // Edge types for React Flow - animated connection lines
