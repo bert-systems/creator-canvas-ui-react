@@ -1,9 +1,10 @@
 /**
  * Node Inspector - Right sidebar for viewing and editing node properties
  * Supports dynamic parameter editing based on node definition
+ * Enhanced with model chooser, prompt enhancer, and comprehensive metadata display
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -25,6 +26,10 @@ import {
   Tooltip,
   Paper,
   alpha,
+  Collapse,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import {
   PlayArrow as PlayIcon,
@@ -38,9 +43,44 @@ import {
   CheckCircle as SuccessIcon,
   Error as ErrorIcon,
   HourglassEmpty as PendingIcon,
+  AutoAwesome as EnhanceIcon,
+  ExpandMore as ExpandMoreIcon,
+  Lightbulb as TipIcon,
+  Code as ModelIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
-import type { CanvasNodeData, NodeParameter, Port } from '@/models/canvas';
+import type { CanvasNodeData, NodeParameter, Port, NodeType } from '@/models/canvas';
 import { getNodeDefinition, nodeCategories } from '@/config/nodeDefinitions';
+
+// ===== AI Model Options =====
+// Available models for generation nodes
+const AI_MODEL_OPTIONS = {
+  imageGen: [
+    { value: 'fal-ai/flux-pro/v1.1', label: 'FLUX.2 Pro', description: 'Highest quality, commercial-ready' },
+    { value: 'fal-ai/flux/dev', label: 'FLUX.2 Dev', description: 'LoRA support, custom styles' },
+    { value: 'fal-ai/nano-banana-pro', label: 'Nano Banana Pro', description: 'Multi-face generation' },
+    { value: 'fal-ai/flux-kontext/pro', label: 'FLUX Kontext', description: 'Image editing' },
+  ],
+  videoGen: [
+    { value: 'fal-ai/kling-video/v2.6/pro/text-to-video', label: 'Kling 2.6 T2V', description: 'Text to video' },
+    { value: 'fal-ai/kling-video/v2.6/pro/image-to-video', label: 'Kling 2.6 I2V', description: 'Image animation' },
+    { value: 'fal-ai/veo3', label: 'VEO 3.1', description: 'Cinematic quality' },
+    { value: 'fal-ai/kling-video/v2/avatar', label: 'Kling Avatar', description: 'Talking head' },
+  ],
+  threeD: [
+    { value: 'fal-ai/meshy', label: 'Meshy 6', description: 'High-detail 3D models' },
+    { value: 'fal-ai/tripo', label: 'Tripo v2.5', description: 'Fast game-ready 3D' },
+  ],
+};
+
+// ===== Prompt Enhancement Agents =====
+const PROMPT_AGENTS = [
+  { id: 'muse', name: 'Muse', description: 'Expands ideas with creative flourishes', icon: '✨' },
+  { id: 'curator', name: 'Curator', description: 'Adds technical precision and detail', icon: '🎯' },
+  { id: 'architect', name: 'Architect', description: 'Structures prompts for best results', icon: '📐' },
+  { id: 'heritage', name: 'Heritage Guide', description: 'Adds cultural and historical context', icon: '🌍' },
+  { id: 'critic', name: 'Critic', description: 'Refines and improves clarity', icon: '🔍' },
+];
 
 // ===== Types =====
 
@@ -52,6 +92,8 @@ interface SelectedNode {
 interface NodeInspectorProps {
   node: SelectedNode | null;
   onParameterChange?: (nodeId: string, paramId: string, value: unknown) => void;
+  onModelChange?: (nodeId: string, model: string) => void;
+  onPromptEnhance?: (nodeId: string, prompt: string, agentId: string) => Promise<string>;
   onExecute?: (nodeId: string) => void;
   onStop?: (nodeId: string) => void;
   onDelete?: (nodeId: string) => void;
@@ -59,6 +101,18 @@ interface NodeInspectorProps {
   onClose?: () => void;
   width?: number;
 }
+
+// Helper to check if node category supports model selection
+const isGenerationCategory = (category: string): category is 'imageGen' | 'videoGen' | 'threeD' => {
+  return ['imageGen', 'videoGen', 'threeD'].includes(category);
+};
+
+// Helper to check if node has a prompt parameter
+const hasPromptParameter = (nodeType: NodeType): boolean => {
+  const def = getNodeDefinition(nodeType);
+  return def?.parameters.some(p => p.id === 'prompt') ||
+         def?.inputs.some(i => i.type === 'text') || false;
+};
 
 // ===== Helper Functions =====
 
@@ -98,6 +152,8 @@ const getCategoryColor = (category: string): string => {
 export function NodeInspector({
   node,
   onParameterChange,
+  onModelChange,
+  onPromptEnhance,
   onExecute,
   onStop,
   onDelete,
@@ -105,6 +161,13 @@ export function NodeInspector({
   onClose,
   width = 320,
 }: NodeInspectorProps) {
+  // Local state for prompt enhancement
+  const [selectedAgent, setSelectedAgent] = useState<string>('muse');
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhancedPrompt, setEnhancedPrompt] = useState<string>('');
+  const [showEnhancedPrompt, setShowEnhancedPrompt] = useState(false);
+  const [metadataExpanded, setMetadataExpanded] = useState(true);
+
   // Get node definition
   const definition = useMemo(() => {
     if (!node) return null;
@@ -117,6 +180,31 @@ export function NodeInspector({
     return getCategoryColor(node.data.category);
   }, [node]);
 
+  // Check if this node supports model selection
+  const supportsModelSelection = useMemo(() => {
+    if (!node) return false;
+    return isGenerationCategory(node.data.category) && definition?.aiModel;
+  }, [node, definition]);
+
+  // Get available models for this node's category
+  const availableModels = useMemo(() => {
+    if (!node || !supportsModelSelection) return [];
+    const category = node.data.category as 'imageGen' | 'videoGen' | 'threeD';
+    return AI_MODEL_OPTIONS[category] || [];
+  }, [node, supportsModelSelection]);
+
+  // Check if node has prompt capability
+  const supportsPromptEnhancement = useMemo(() => {
+    if (!node) return false;
+    return hasPromptParameter(node.data.nodeType);
+  }, [node]);
+
+  // Get current prompt value
+  const currentPrompt = useMemo(() => {
+    if (!node) return '';
+    return (node.data.parameters?.prompt as string) || '';
+  }, [node]);
+
   // Handle parameter change
   const handleParamChange = useCallback(
     (paramId: string, value: unknown) => {
@@ -126,6 +214,41 @@ export function NodeInspector({
     },
     [node, onParameterChange]
   );
+
+  // Handle model change
+  const handleModelChange = useCallback(
+    (newModel: string) => {
+      if (node && onModelChange) {
+        onModelChange(node.id, newModel);
+      }
+    },
+    [node, onModelChange]
+  );
+
+  // Handle prompt enhancement
+  const handleEnhancePrompt = useCallback(async () => {
+    if (!node || !currentPrompt || !onPromptEnhance) return;
+
+    setIsEnhancing(true);
+    try {
+      const enhanced = await onPromptEnhance(node.id, currentPrompt, selectedAgent);
+      setEnhancedPrompt(enhanced);
+      setShowEnhancedPrompt(true);
+    } catch (error) {
+      console.error('Failed to enhance prompt:', error);
+    } finally {
+      setIsEnhancing(false);
+    }
+  }, [node, currentPrompt, selectedAgent, onPromptEnhance]);
+
+  // Apply enhanced prompt
+  const handleApplyEnhancedPrompt = useCallback(() => {
+    if (enhancedPrompt) {
+      handleParamChange('prompt', enhancedPrompt);
+      setShowEnhancedPrompt(false);
+      setEnhancedPrompt('');
+    }
+  }, [enhancedPrompt, handleParamChange]);
 
   // Render parameter input based on type
   const renderParameter = (param: NodeParameter) => {
@@ -468,20 +591,211 @@ export function NodeInspector({
 
       {/* Scrollable content */}
       <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-        {/* Description */}
+        {/* Enhanced Node Info Section */}
         {definition && (
+          <Accordion
+            expanded={metadataExpanded}
+            onChange={() => setMetadataExpanded(!metadataExpanded)}
+            sx={{ mb: 2, '&:before': { display: 'none' } }}
+            elevation={0}
+          >
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{
+                bgcolor: alpha(categoryColor, 0.08),
+                borderRadius: 1,
+                minHeight: 'auto',
+                '& .MuiAccordionSummary-content': { my: 1 },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <InfoIcon fontSize="small" sx={{ color: categoryColor }} />
+                <Typography variant="subtitle2">
+                  {definition.displayName || definition.label}
+                </Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails sx={{ pt: 1.5 }}>
+              {/* Description */}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                {definition.description}
+              </Typography>
+
+              {/* Quick Help Tip */}
+              {definition.quickHelp && (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 1,
+                    mb: 1.5,
+                    bgcolor: alpha(categoryColor, 0.04),
+                    borderColor: alpha(categoryColor, 0.2),
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <TipIcon fontSize="small" sx={{ color: categoryColor, mt: 0.25 }} />
+                    <Typography variant="caption" color="text.secondary">
+                      {definition.quickHelp}
+                    </Typography>
+                  </Box>
+                </Paper>
+              )}
+
+              {/* Use Case Example */}
+              {definition.useCase && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                  <strong>Example:</strong> {definition.useCase}
+                </Typography>
+              )}
+
+              {/* Node Type Badge */}
+              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                <Chip
+                  label={nodeData.nodeType}
+                  size="small"
+                  variant="outlined"
+                  sx={{ height: 22, fontSize: '0.7rem' }}
+                />
+                {definition.aiModel && (
+                  <Tooltip title="Current AI Model">
+                    <Chip
+                      icon={<ModelIcon sx={{ fontSize: 14 }} />}
+                      label={definition.aiModel.split('/').pop()}
+                      size="small"
+                      variant="outlined"
+                      sx={{ height: 22, fontSize: '0.7rem' }}
+                    />
+                  </Tooltip>
+                )}
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+        )}
+
+        {/* Model Chooser Section - for generation nodes */}
+        {supportsModelSelection && availableModels.length > 0 && (
           <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              {definition.description}
-            </Typography>
-            {definition.aiModel && (
-              <Chip
-                label={definition.aiModel}
-                size="small"
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <ModelIcon fontSize="small" sx={{ color: categoryColor }} />
+              <Typography variant="subtitle2">AI Model</Typography>
+            </Box>
+            <FormControl fullWidth size="small">
+              <Select
+                value={definition?.aiModel || ''}
+                onChange={(e) => handleModelChange(e.target.value)}
+                sx={{
+                  '& .MuiSelect-select': {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    py: 0.75,
+                  },
+                }}
+              >
+                {availableModels.map((model) => (
+                  <MenuItem key={model.value} value={model.value}>
+                    <Box>
+                      <Typography variant="body2">{model.label}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {model.description}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Paper>
+        )}
+
+        {/* Prompt Enhancer Section */}
+        {supportsPromptEnhancement && onPromptEnhance && (
+          <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+              <EnhanceIcon fontSize="small" sx={{ color: categoryColor }} />
+              <Typography variant="subtitle2">Prompt Enhancer</Typography>
+              <Tooltip title="Use AI agents to improve your prompt">
+                <InfoIcon fontSize="small" sx={{ color: 'text.disabled', ml: 'auto' }} />
+              </Tooltip>
+            </Box>
+
+            {/* Agent Selection */}
+            <Box sx={{ mb: 1.5 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                Select Enhancement Agent
+              </Typography>
+              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                {PROMPT_AGENTS.map((agent) => (
+                  <Tooltip key={agent.id} title={agent.description}>
+                    <Chip
+                      icon={<span style={{ fontSize: 14 }}>{agent.icon}</span>}
+                      label={agent.name}
+                      size="small"
+                      variant={selectedAgent === agent.id ? 'filled' : 'outlined'}
+                      onClick={() => setSelectedAgent(agent.id)}
+                      sx={{
+                        bgcolor: selectedAgent === agent.id ? alpha(categoryColor, 0.2) : undefined,
+                        borderColor: selectedAgent === agent.id ? categoryColor : undefined,
+                        '&:hover': { bgcolor: alpha(categoryColor, 0.1) },
+                      }}
+                    />
+                  </Tooltip>
+                ))}
+              </Stack>
+            </Box>
+
+            {/* Enhance Button */}
+            <Button
+              variant="outlined"
+              size="small"
+              fullWidth
+              startIcon={isEnhancing ? <RefreshIcon sx={{ animation: 'spin 1s linear infinite' }} /> : <EnhanceIcon />}
+              onClick={handleEnhancePrompt}
+              disabled={isEnhancing || !currentPrompt}
+              sx={{
+                borderColor: categoryColor,
+                color: categoryColor,
+                '&:hover': { borderColor: categoryColor, bgcolor: alpha(categoryColor, 0.08) },
+              }}
+            >
+              {isEnhancing ? 'Enhancing...' : 'Enhance Prompt'}
+            </Button>
+
+            {/* Enhanced Prompt Preview */}
+            <Collapse in={showEnhancedPrompt}>
+              <Paper
                 variant="outlined"
-                sx={{ mt: 1 }}
-              />
-            )}
+                sx={{
+                  mt: 1.5,
+                  p: 1.5,
+                  bgcolor: alpha(categoryColor, 0.04),
+                  borderColor: alpha(categoryColor, 0.3),
+                }}
+              >
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                  Enhanced Prompt:
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1.5 }}>
+                  {enhancedPrompt}
+                </Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={handleApplyEnhancedPrompt}
+                    sx={{ bgcolor: categoryColor }}
+                  >
+                    Apply
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => setShowEnhancedPrompt(false)}
+                  >
+                    Cancel
+                  </Button>
+                </Stack>
+              </Paper>
+            </Collapse>
           </Paper>
         )}
 

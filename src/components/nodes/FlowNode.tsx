@@ -29,8 +29,28 @@ import {
   Person as CharacterIcon,
   ViewInAr as Mesh3DIcon,
   MoreHoriz as AnyIcon,
+  // Storytelling icons
+  AutoStories as StoryIcon,
+  Movie as SceneIcon,
+  Flag as PlotPointIcon,
+  Place as LocationIcon,
+  Forum as DialogueIcon,
+  Description as TreatmentIcon,
+  FormatListNumbered as OutlineIcon,
+  MenuBook as LoreIcon,
+  Timeline as TimelineIcon,
+  // Fashion icons
+  Draw as GarmentIcon,
+  Texture as FabricIcon,
+  GridOn as PatternIcon,
+  PersonOutline as ModelIcon,
+  Style as OutfitIcon,
+  Collections as CollectionIcon,
+  Assignment as TechPackIcon,
+  PhotoAlbum as LookbookIcon,
 } from '@mui/icons-material';
 import type { CanvasNodeData, Port, PortType } from '@/models/canvas';
+import { PORT_COLORS } from './portColors';
 import { nodeCategories } from '@/config/nodeDefinitions';
 
 // ===== Constants =====
@@ -38,16 +58,6 @@ import { nodeCategories } from '@/config/nodeDefinitions';
 const NODE_WIDTH_COLLAPSED = 200;
 const NODE_MIN_HEIGHT = 100;
 
-const PORT_COLORS: Record<PortType, string> = {
-  image: '#3b82f6',
-  video: '#8b5cf6',
-  audio: '#ec4899',
-  text: '#f97316',
-  style: '#06b6d4',
-  character: '#a855f7',
-  mesh3d: '#f59e0b',
-  any: '#6b7280',
-};
 
 const PORT_ICONS: Record<PortType, React.ReactNode> = {
   image: <ImageIcon sx={{ fontSize: 12 }} />,
@@ -58,6 +68,25 @@ const PORT_ICONS: Record<PortType, React.ReactNode> = {
   character: <CharacterIcon sx={{ fontSize: 12 }} />,
   mesh3d: <Mesh3DIcon sx={{ fontSize: 12 }} />,
   any: <AnyIcon sx={{ fontSize: 12 }} />,
+  // Storytelling port types
+  story: <StoryIcon sx={{ fontSize: 12 }} />,
+  scene: <SceneIcon sx={{ fontSize: 12 }} />,
+  plotPoint: <PlotPointIcon sx={{ fontSize: 12 }} />,
+  location: <LocationIcon sx={{ fontSize: 12 }} />,
+  dialogue: <DialogueIcon sx={{ fontSize: 12 }} />,
+  treatment: <TreatmentIcon sx={{ fontSize: 12 }} />,
+  outline: <OutlineIcon sx={{ fontSize: 12 }} />,
+  lore: <LoreIcon sx={{ fontSize: 12 }} />,
+  timeline: <TimelineIcon sx={{ fontSize: 12 }} />,
+  // Fashion port types
+  garment: <GarmentIcon sx={{ fontSize: 12 }} />,
+  fabric: <FabricIcon sx={{ fontSize: 12 }} />,
+  pattern: <PatternIcon sx={{ fontSize: 12 }} />,
+  model: <ModelIcon sx={{ fontSize: 12 }} />,
+  outfit: <OutfitIcon sx={{ fontSize: 12 }} />,
+  collection: <CollectionIcon sx={{ fontSize: 12 }} />,
+  techPack: <TechPackIcon sx={{ fontSize: 12 }} />,
+  lookbook: <LookbookIcon sx={{ fontSize: 12 }} />,
 };
 
 // ===== Helper Functions =====

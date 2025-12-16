@@ -18,7 +18,26 @@ const PORT_COMPATIBILITY: Record<PortType, PortType[]> = {
   style: ['style', 'any'],
   character: ['character', 'any'],
   mesh3d: ['mesh3d', 'any'],
-  any: ['image', 'video', 'audio', 'text', 'style', 'character', 'mesh3d', 'any'],
+  any: ['image', 'video', 'audio', 'text', 'style', 'character', 'mesh3d', 'story', 'scene', 'plotPoint', 'location', 'dialogue', 'treatment', 'outline', 'lore', 'timeline', 'garment', 'fabric', 'pattern', 'model', 'outfit', 'collection', 'techPack', 'lookbook', 'any'],
+  // Storytelling port types
+  story: ['story', 'text', 'any'],
+  scene: ['scene', 'text', 'any'],
+  plotPoint: ['plotPoint', 'scene', 'text', 'any'],
+  location: ['location', 'text', 'any'],
+  dialogue: ['dialogue', 'text', 'any'],
+  treatment: ['treatment', 'text', 'any'],
+  outline: ['outline', 'story', 'text', 'any'],
+  lore: ['lore', 'text', 'any'],
+  timeline: ['timeline', 'text', 'any'],
+  // Fashion port types
+  garment: ['garment', 'image', 'any'],
+  fabric: ['fabric', 'pattern', 'image', 'any'],
+  pattern: ['pattern', 'fabric', 'image', 'any'],
+  model: ['model', 'image', 'any'],
+  outfit: ['outfit', 'garment', 'image', 'any'],
+  collection: ['collection', 'outfit', 'lookbook', 'any'],
+  techPack: ['techPack', 'garment', 'text', 'any'],
+  lookbook: ['lookbook', 'collection', 'image', 'any'],
 };
 
 // ===== Interfaces =====
@@ -204,6 +223,25 @@ export const getEdgeStyle = (
     character: '#a855f7',
     mesh3d: '#f59e0b',
     any: '#6b7280',
+    // Storytelling port types
+    story: '#10b981',
+    scene: '#14b8a6',
+    plotPoint: '#f59e0b',
+    location: '#84cc16',
+    dialogue: '#f472b6',
+    treatment: '#a78bfa',
+    outline: '#22d3ee',
+    lore: '#c084fc',
+    timeline: '#fbbf24',
+    // Fashion port types
+    garment: '#ec4899',
+    fabric: '#f472b6',
+    pattern: '#f9a8d4',
+    model: '#c084fc',
+    outfit: '#a855f7',
+    collection: '#8b5cf6',
+    techPack: '#6366f1',
+    lookbook: '#7c3aed',
   };
 
   return {

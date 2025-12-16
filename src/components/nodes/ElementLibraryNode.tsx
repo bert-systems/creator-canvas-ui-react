@@ -40,7 +40,8 @@ import {
   Settings as SettingsIcon,
   Videocam as VideoIcon,
 } from '@mui/icons-material';
-import type { Port, PortType } from '@/models/canvas';
+import type { Port } from '@/models/canvas';
+import { PORT_COLORS } from './portColors';
 
 // ===== Constants =====
 
@@ -48,16 +49,6 @@ const NODE_WIDTH = 320;
 const NODE_MIN_HEIGHT = 340;
 const MAX_ELEMENTS = 5;
 
-const PORT_COLORS: Record<PortType, string> = {
-  image: '#3b82f6',
-  video: '#8b5cf6',
-  audio: '#ec4899',
-  text: '#f97316',
-  style: '#06b6d4',
-  character: '#a855f7',
-  mesh3d: '#f59e0b',
-  any: '#6b7280',
-};
 
 // Element library accent color (amber/orange)
 const LIBRARY_COLOR = '#f59e0b';

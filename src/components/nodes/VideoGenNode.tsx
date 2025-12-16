@@ -37,7 +37,8 @@ import {
   Settings as SettingsIcon,
   Fullscreen as FullscreenIcon,
 } from '@mui/icons-material';
-import type { CanvasNodeData, Port, PortType } from '@/models/canvas';
+import type { CanvasNodeData, Port } from '@/models/canvas';
+import { PORT_COLORS } from './portColors';
 import { nodeCategories } from '@/config/nodeDefinitions';
 
 // ===== Constants =====
@@ -45,16 +46,6 @@ import { nodeCategories } from '@/config/nodeDefinitions';
 const NODE_WIDTH = 280;
 const NODE_MIN_HEIGHT = 200;
 
-const PORT_COLORS: Record<PortType, string> = {
-  image: '#3b82f6',
-  video: '#8b5cf6',
-  audio: '#ec4899',
-  text: '#f97316',
-  style: '#06b6d4',
-  character: '#a855f7',
-  mesh3d: '#f59e0b',
-  any: '#6b7280',
-};
 
 // ===== Types =====
 

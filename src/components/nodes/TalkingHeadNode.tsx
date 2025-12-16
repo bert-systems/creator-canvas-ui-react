@@ -39,23 +39,14 @@ import {
   Fullscreen as FullscreenIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import type { CanvasNodeData, Port, PortType } from '@/models/canvas';
+import type { CanvasNodeData, Port } from '@/models/canvas';
+import { PORT_COLORS } from './portColors';
 
 // ===== Constants =====
 
 const NODE_WIDTH = 260;
 const NODE_MIN_HEIGHT = 240;
 
-const PORT_COLORS: Record<PortType, string> = {
-  image: '#3b82f6',
-  video: '#8b5cf6',
-  audio: '#ec4899',
-  text: '#f97316',
-  style: '#06b6d4',
-  character: '#a855f7',
-  mesh3d: '#f59e0b',
-  any: '#6b7280',
-};
 
 // Avatar-specific accent color (warm pink/coral)
 const AVATAR_COLOR = '#ec4899';

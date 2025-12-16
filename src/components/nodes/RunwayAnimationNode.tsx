@@ -42,7 +42,8 @@ import {
   ThreeSixty as SpinIcon,
   Waves as FabricIcon,
 } from '@mui/icons-material';
-import type { Port, PortType } from '@/models/canvas';
+import type { Port } from '@/models/canvas';
+import { PORT_COLORS } from './portColors';
 import type { RunwayAnimationType } from '@/services/virtualTryOnService';
 
 // ===== Constants =====
@@ -50,16 +51,6 @@ import type { RunwayAnimationType } from '@/services/virtualTryOnService';
 const NODE_WIDTH = 290;
 const NODE_MIN_HEIGHT = 280;
 
-const PORT_COLORS: Record<PortType, string> = {
-  image: '#3b82f6',
-  video: '#8b5cf6',
-  audio: '#ec4899',
-  text: '#f97316',
-  style: '#06b6d4',
-  character: '#a855f7',
-  mesh3d: '#f59e0b',
-  any: '#6b7280',
-};
 
 // Runway animation accent color (purple/violet)
 const RUNWAY_COLOR = '#8b5cf6';

@@ -91,7 +91,7 @@ import type {
   ConnectionActionType,
   ConnectionActionOptions,
 } from '../../models/creativeCanvas';
-import type { CanvasNodeData } from '../../models/canvas';
+import type { CanvasNodeData, NodeType } from '../../models/canvas';
 import {
   CATEGORY_INFO,
   normalizeCardFromApi,
@@ -101,21 +101,139 @@ import creativeCanvasService from '../../services/creativeCanvasService';
 import connectionActionService from '../../services/connectionActionService';
 import { CanvasNode } from '../nodes/CanvasNode';
 import { FlowNode } from '../nodes/FlowNode';
+// Storytelling nodes (Dec 2025)
+import { StoryGenesisNode } from '../nodes/StoryGenesisNode';
+import { StoryStructureNode } from '../nodes/StoryStructureNode';
+import { CharacterCreatorNode } from '../nodes/CharacterCreatorNode';
+import { SceneGeneratorNode } from '../nodes/SceneGeneratorNode';
+import { LocationCreatorNode } from '../nodes/LocationCreatorNode';
+import { DialogueGeneratorNode } from '../nodes/DialogueGeneratorNode';
+// Storytelling Phase 2 nodes (Dec 2025)
+import { TreatmentGeneratorNode } from '../nodes/TreatmentGeneratorNode';
+import { CharacterRelationshipNode } from '../nodes/CharacterRelationshipNode';
+import { CharacterVoiceNode } from '../nodes/CharacterVoiceNode';
+import { WorldLoreNode } from '../nodes/WorldLoreNode';
+import { TimelineNode } from '../nodes/TimelineNode';
+import { PlotPointNode } from '../nodes/PlotPointNode';
+import { PlotTwistNode } from '../nodes/PlotTwistNode';
+import { ConflictGeneratorNode } from '../nodes/ConflictGeneratorNode';
+import { MonologueGeneratorNode } from '../nodes/MonologueGeneratorNode';
+// Branching narrative nodes (Dec 2025)
+import { ChoicePointNode } from '../nodes/ChoicePointNode';
+import { ConsequenceTrackerNode } from '../nodes/ConsequenceTrackerNode';
+import { PathMergeNode } from '../nodes/PathMergeNode';
+// Enhancement nodes (Dec 2025)
+import { StoryPivotNode } from '../nodes/StoryPivotNode';
+import { IntrigueLiftNode } from '../nodes/IntrigueLiftNode';
+import { StoryEnhancerNode } from '../nodes/StoryEnhancerNode';
+// Fashion nodes (Dec 2025)
+import { GarmentSketchNode } from '../nodes/GarmentSketchNode';
+import { TextileDesignerNode } from '../nodes/TextileDesignerNode';
+import { ModelCasterNode } from '../nodes/ModelCasterNode';
+import { OutfitComposerNode } from '../nodes/OutfitComposerNode';
+import { FlatLayComposerNode } from '../nodes/FlatLayComposerNode';
+import { EcommerceShotNode } from '../nodes/EcommerceShotNode';
+import { CollectionBuilderNode } from '../nodes/CollectionBuilderNode';
+import { PatternGeneratorNode } from '../nodes/PatternGeneratorNode';
+import { TechPackGeneratorNode } from '../nodes/TechPackGeneratorNode';
+import { LookbookGeneratorNode } from '../nodes/LookbookGeneratorNode';
+import { AccessoryStylistNode } from '../nodes/AccessoryStylistNode';
+import { FabricMotionNode } from '../nodes/FabricMotionNode';
 import TemplateBrowser from '../panels/TemplateBrowser';
 import BoardManager from '../panels/BoardManager';
 import ConnectionActionMenu from '../panels/ConnectionActionMenu';
-import { NodePalette } from '../panels/NodePalette';
+// NodePalette removed - now using CreativePalette v3 exclusively
 import { NodeInspector } from '../panels/NodeInspector';
+// Creative Palette Redesign (Elevated Vision v3.0 - Phase 3)
+import { CreativePalette } from '../palette';
 import { validateConnection, getEdgeStyle, createConnectionValidator } from '../../utils/connectionValidation';
+// New Creative Card system (Elevated Vision v3.0)
+import { CreativeCard, StandardEdge, FlowingEdge, StyleEdge, CharacterEdge, DelightEdge } from '../cards';
+// Creative Collaborators (Agents) - Elevated Vision v3.0
+import { AgentPresence, AgentPanel } from '../agents';
+import type { AgentPersona } from '../agents';
+// Workflow Templates (Elevated Vision v3.0)
+import type { WorkflowTemplate, PersonaType } from '../../data/workflowTemplates';
+import { nodeDefinitions } from '../../config/nodeDefinitions';
+
+// ============================================================================
+// PROPS INTERFACE
+// ============================================================================
+
+interface CreativeCanvasStudioProps {
+  /** Initial workflow template to load on mount */
+  initialWorkflow?: WorkflowTemplate | null;
+  /** Callback when workflow has been loaded */
+  onWorkflowLoaded?: () => void;
+  /** User's selected persona for personalized experience */
+  userPersona?: PersonaType;
+}
+
+// Context for passing props to inner component
+const WorkflowContext = React.createContext<{
+  initialWorkflow?: WorkflowTemplate | null;
+  onWorkflowLoaded?: () => void;
+  userPersona?: PersonaType;
+}>({});
 
 // Node types for React Flow
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const nodeTypes: NodeTypes = {
   canvasCard: CanvasNode,
+  creativeCard: CreativeCard as any, // New Creative Card (Elevated Vision v3.0)
   canvasNode: FlowNode as any,  // New flow node type for palette nodes
+  // Storytelling nodes - Foundation (Dec 2025)
+  storyGenesis: StoryGenesisNode as any,
+  storyStructure: StoryStructureNode as any,
+  characterCreator: CharacterCreatorNode as any,
+  sceneGenerator: SceneGeneratorNode as any,
+  locationCreator: LocationCreatorNode as any,
+  dialogueGenerator: DialogueGeneratorNode as any,
+  // Storytelling nodes - Phase 2 (Dec 2025)
+  treatmentGenerator: TreatmentGeneratorNode as any,
+  characterRelationship: CharacterRelationshipNode as any,
+  characterVoice: CharacterVoiceNode as any,
+  worldLore: WorldLoreNode as any,
+  storyTimeline: TimelineNode as any,
+  plotPoint: PlotPointNode as any,
+  plotTwist: PlotTwistNode as any,
+  conflictGenerator: ConflictGeneratorNode as any,
+  monologueGenerator: MonologueGeneratorNode as any,
+  // Branching narrative nodes (Dec 2025)
+  choicePoint: ChoicePointNode as any,
+  consequenceTracker: ConsequenceTrackerNode as any,
+  pathMerge: PathMergeNode as any,
+  // Enhancement nodes (Dec 2025)
+  storyPivot: StoryPivotNode as any,
+  intrigueLift: IntrigueLiftNode as any,
+  storyEnhancer: StoryEnhancerNode as any,
+  // Fashion nodes (Dec 2025)
+  garmentSketch: GarmentSketchNode as any,
+  textileDesigner: TextileDesignerNode as any,
+  modelCaster: ModelCasterNode as any,
+  outfitComposer: OutfitComposerNode as any,
+  flatLayComposer: FlatLayComposerNode as any,
+  ecommerceShot: EcommerceShotNode as any,
+  collectionBuilder: CollectionBuilderNode as any,
+  patternGenerator: PatternGeneratorNode as any,
+  techPackGenerator: TechPackGeneratorNode as any,
+  lookbookGenerator: LookbookGeneratorNode as any,
+  accessoryStylist: AccessoryStylistNode as any,
+  fabricMotion: FabricMotionNode as any,
+};
+
+// Edge types for React Flow - animated connection lines
+const edgeTypes = {
+  default: StandardEdge,
+  standard: StandardEdge,
+  flowing: FlowingEdge,
+  style: StyleEdge,
+  character: CharacterEdge,
+  delight: DelightEdge,
 };
 
 // Convert CanvasCard to React Flow Node
+// Uses CreativeCard (Elevated Vision v3.0) with 3 modes: hero, craft, mini
 const cardToNode = (
   card: CanvasCard,
   callbacks: {
@@ -124,15 +242,17 @@ const cardToNode = (
     onDuplicate?: (card: CanvasCard) => void;
     onError?: (message: string) => void;
     onSuccess?: (message: string) => void;
-  }
+  },
+  useCreativeCard: boolean = true // Toggle between old and new card system
 ): Node => ({
   id: card.id,
-  type: 'canvasCard',
+  type: useCreativeCard ? 'creativeCard' : 'canvasCard',
   position: { x: card.position.x, y: card.position.y },
   data: { card, ...callbacks },
   style: {
-    width: card.dimensions.width,
-    height: card.isExpanded ? (card.dimensions.height * 2) : card.dimensions.height,
+    // CreativeCard manages its own dimensions based on mode
+    width: useCreativeCard ? undefined : card.dimensions.width,
+    height: useCreativeCard ? undefined : (card.isExpanded ? (card.dimensions.height * 2) : card.dimensions.height),
     zIndex: card.zIndex,
   },
   draggable: !card.isLocked,
@@ -144,6 +264,11 @@ const CreativeCanvasInner: React.FC = () => {
   const theme = useTheme();
   const reactFlowInstance = useReactFlow();
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+
+  // Get workflow context
+  const { initialWorkflow, onWorkflowLoaded, userPersona: _userPersona } = React.useContext(WorkflowContext);
+  const [workflowLoaded, setWorkflowLoaded] = useState(false);
+  // Note: userPersona can be used later for personalized suggestions
 
   // Board state
   const [currentBoard, setCurrentBoard] = useState<CanvasBoard | null>(null);
@@ -183,6 +308,12 @@ const CreativeCanvasInner: React.FC = () => {
     targetCardId: string;
   } | null>(null);
   const [connectionProcessing, setConnectionProcessing] = useState(false);
+
+  // Agent state - Creative Collaborators (Elevated Vision v3.0)
+  const [agentPanelOpen, setAgentPanelOpen] = useState(false);
+  const [activeAgentId, setActiveAgentId] = useState<AgentPersona>('muse');
+
+  // Creative Palette v3 is now the default (legacy NodePalette removed)
 
   // Handle card update from child node
   const handleCardUpdate = useCallback((updatedCard: CanvasCard) => {
@@ -438,6 +569,69 @@ const CreativeCanvasInner: React.FC = () => {
     loadBoards();
   }, []);
 
+  // Load initial workflow template if provided (from onboarding)
+  useEffect(() => {
+    if (initialWorkflow && !workflowLoaded) {
+      console.log('Loading workflow template:', initialWorkflow.name);
+
+      // Convert workflow nodes to React Flow nodes
+      const flowNodes: Node[] = initialWorkflow.nodes.map((workflowNode) => {
+        const nodeDef = nodeDefinitions.find((n) => n.type === workflowNode.nodeType);
+
+        const nodeData: CanvasNodeData = {
+          nodeType: workflowNode.nodeType,
+          category: nodeDef?.category || 'input',
+          label: workflowNode.label,
+          parameters: workflowNode.parameters || (nodeDef?.parameters.reduce<Record<string, unknown>>(
+            (acc, param) => ({ ...acc, [param.id]: param.default }),
+            {}
+          ) || {}),
+          inputs: nodeDef?.inputs || [],
+          outputs: nodeDef?.outputs || [],
+          status: 'idle',
+        };
+
+        return {
+          id: workflowNode.id,
+          type: 'canvasNode',
+          position: workflowNode.position,
+          data: nodeData,
+          selected: false,
+        };
+      });
+
+      // Convert workflow edges to React Flow edges
+      const flowEdges: Edge[] = initialWorkflow.edges.map((workflowEdge) => ({
+        id: workflowEdge.id,
+        source: workflowEdge.source,
+        sourceHandle: workflowEdge.sourceHandle,
+        target: workflowEdge.target,
+        targetHandle: workflowEdge.targetHandle,
+        type: 'default',
+        animated: true,
+      }));
+
+      // Set the nodes and edges
+      setNodes(flowNodes);
+      setEdges(flowEdges);
+
+      // Switch to canvas view
+      setActiveView('canvas');
+
+      // Mark as loaded
+      setWorkflowLoaded(true);
+      onWorkflowLoaded?.();
+
+      // Show success message
+      setSuccessMessage(`Workflow "${initialWorkflow.name}" loaded! Follow the guided steps to get started.`);
+
+      // Fit view after a short delay to ensure nodes are rendered
+      setTimeout(() => {
+        reactFlowInstance?.fitView({ padding: 0.2 });
+      }, 100);
+    }
+  }, [initialWorkflow, workflowLoaded, onWorkflowLoaded, reactFlowInstance]);
+
   // Update nodes when board changes
   useEffect(() => {
     if (currentBoard) {
@@ -671,12 +865,68 @@ const CreativeCanvasInner: React.FC = () => {
     // Update selected flow node for the inspector panel
     if (selectedNodesList.length === 1) {
       const selectedNode = selectedNodesList[0];
-      // Check if it's a flow node with CanvasNodeData
-      if (selectedNode.data && 'nodeType' in selectedNode.data) {
-        setSelectedFlowNode({
-          id: selectedNode.id,
-          data: selectedNode.data as CanvasNodeData,
-        });
+
+      // Handle canvasNode type (FlowNode from palette)
+      if (selectedNode.type === 'canvasNode' && selectedNode.data) {
+        const nodeData = selectedNode.data as CanvasNodeData;
+        // Ensure nodeType exists (required for inspector)
+        if (nodeData.nodeType) {
+          setSelectedFlowNode({
+            id: selectedNode.id,
+            data: nodeData,
+          });
+        } else {
+          console.warn('Selected node missing nodeType:', selectedNode);
+          setSelectedFlowNode(null);
+        }
+      }
+      // Handle creativeCard and canvasCard types (card-based nodes)
+      else if ((selectedNode.type === 'creativeCard' || selectedNode.type === 'canvasCard') && selectedNode.data) {
+        const cardData = selectedNode.data as { card: CanvasCard };
+        const card = cardData.card;
+
+        if (card) {
+          // Get template to determine node category and type
+          const template = getTemplateById(card.templateId);
+
+          // Convert card data to CanvasNodeData format for the inspector
+          // Map card category to node category based on template type
+          const nodeCategory = template?.category === 'fashion' ? 'composite' :
+                              template?.category === 'interior' ? 'composite' :
+                              template?.category === 'stock' ? 'imageGen' :
+                              template?.category === 'story' ? 'composite' : 'composite';
+
+          const convertedData: CanvasNodeData = {
+            nodeType: card.type as unknown as NodeType, // Use card type as node type
+            category: nodeCategory as CanvasNodeData['category'],
+            label: card.title || template?.name || 'Untitled',
+            parameters: {
+              prompt: card.prompt || card.config?.basePrompt || '',
+              style: card.config?.style || '',
+              ...card.settings,
+            },
+            inputs: [], // Cards don't have typed ports like flow nodes
+            outputs: [],
+            status: card.workflow?.status === 'running' ? 'running' :
+                    card.workflow?.status === 'completed' ? 'completed' :
+                    card.workflow?.status === 'failed' ? 'error' : 'idle',
+            progress: card.workflow?.stages?.reduce((acc, s) =>
+              s.status === 'completed' ? acc + (100 / (card.workflow?.stages?.length || 1)) : acc, 0),
+            result: card.generatedImages?.length ? {
+              type: 'image',
+              urls: card.generatedImages,
+              url: card.generatedImages[0],
+            } : undefined,
+            error: card.workflow?.error,
+          };
+
+          setSelectedFlowNode({
+            id: selectedNode.id,
+            data: convertedData,
+          });
+        } else {
+          setSelectedFlowNode(null);
+        }
       } else {
         setSelectedFlowNode(null);
       }
@@ -758,6 +1008,51 @@ const CreativeCanvasInner: React.FC = () => {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  // Helper: Find node at position with a tolerance
+  const findNodeAtPosition = useCallback((position: { x: number; y: number }, tolerance: number = 50): Node | null => {
+    for (const node of nodes) {
+      const nodeWidth = 200; // Approximate node width
+      const nodeHeight = 100; // Approximate node height
+
+      if (
+        position.x >= node.position.x - tolerance &&
+        position.x <= node.position.x + nodeWidth + tolerance &&
+        position.y >= node.position.y - tolerance &&
+        position.y <= node.position.y + nodeHeight + tolerance
+      ) {
+        return node;
+      }
+    }
+    return null;
+  }, [nodes]);
+
+  // Helper: Check if two port types are compatible
+  const arePortsCompatible = useCallback((outputType: string, inputType: string): boolean => {
+    if (outputType === 'any' || inputType === 'any') return true;
+    return outputType === inputType;
+  }, []);
+
+  // Helper: Find best connection between two nodes
+  const findBestConnection = useCallback((
+    sourceNode: Node,
+    targetNode: Node
+  ): { sourceHandle: string; targetHandle: string } | null => {
+    const sourceData = sourceNode.data as CanvasNodeData | undefined;
+    const targetData = targetNode.data as CanvasNodeData | undefined;
+
+    if (!sourceData?.outputs || !targetData?.inputs) return null;
+
+    // Find first compatible output → input pair
+    for (const output of sourceData.outputs) {
+      for (const input of targetData.inputs) {
+        if (arePortsCompatible(output.type, input.type)) {
+          return { sourceHandle: output.id, targetHandle: input.id };
+        }
+      }
+    }
+    return null;
+  }, [arePortsCompatible]);
+
   const onDrop = useCallback(
     async (event: React.DragEvent) => {
       event.preventDefault();
@@ -771,17 +1066,31 @@ const CreativeCanvasInner: React.FC = () => {
         const bounds = canvasContainerRef.current.getBoundingClientRect();
 
         // Calculate position in canvas coordinates
-        const position = reactFlowInstance.screenToFlowPosition({
+        const dropPosition = reactFlowInstance.screenToFlowPosition({
           x: event.clientX - bounds.left,
           y: event.clientY - bounds.top,
         });
+
+        // Check if dropping onto an existing node for auto-connect
+        const targetNode = findNodeAtPosition(dropPosition);
+        let finalPosition = dropPosition;
+        let autoConnectEdge: Edge | null = null;
+
+        // If dropped on a node, position the new node to the right and prepare auto-connect
+        if (targetNode) {
+          // Position new node to the right of target with spacing
+          finalPosition = {
+            x: targetNode.position.x + 250, // Node width + spacing
+            y: targetNode.position.y,
+          };
+        }
 
         try {
           // Create card via API - all cards are backend entities from creation
           const request: CreateCardRequest = {
             type: nodeData.nodeType as CardType,
             templateId: nodeData.nodeType, // Use nodeType as templateId
-            position: { x: position.x, y: position.y },
+            position: { x: finalPosition.x, y: finalPosition.y },
             dimensions: { width: 320, height: 400 },
             title: nodeData.label,
             config: {
@@ -799,19 +1108,66 @@ const CreativeCanvasInner: React.FC = () => {
           const newCard = normalizeCardFromApi(response.data as unknown as Record<string, unknown>);
 
           // Create React Flow node from the backend card
+          // Explicitly set all required CanvasNodeData fields to ensure proper selection/inspection
           const newNode: Node<CanvasNodeData> = {
             id: newCard.id, // Use backend-generated ID
             type: 'canvasNode',
-            position: newCard.position,
+            position: { x: finalPosition.x, y: finalPosition.y },
             data: {
-              ...nodeData,
-              // Sync any backend-normalized data
+              nodeType: nodeData.nodeType,
+              category: nodeData.category,
               label: newCard.title || nodeData.label,
-              status: 'idle',
+              inputs: nodeData.inputs || [],
+              outputs: nodeData.outputs || [],
+              parameters: nodeData.parameters || {},
+              status: 'idle' as const,
             },
           };
 
+          // If we have a target node, try to create an auto-connect edge
+          if (targetNode) {
+            // Try target's output → new node's input (most common: drop processor on image source)
+            const connectionFromTarget = findBestConnection(targetNode, newNode);
+            if (connectionFromTarget) {
+              autoConnectEdge = {
+                id: `edge-${targetNode.id}-${newNode.id}`,
+                source: targetNode.id,
+                target: newNode.id,
+                sourceHandle: connectionFromTarget.sourceHandle,
+                targetHandle: connectionFromTarget.targetHandle,
+                type: 'default',
+              };
+            } else {
+              // Try new node's output → target's input (less common: drop source on processor)
+              const connectionToTarget = findBestConnection(newNode, targetNode);
+              if (connectionToTarget) {
+                // Position new node to the LEFT of target instead
+                newNode.position = {
+                  x: targetNode.position.x - 250,
+                  y: targetNode.position.y,
+                };
+                autoConnectEdge = {
+                  id: `edge-${newNode.id}-${targetNode.id}`,
+                  source: newNode.id,
+                  target: targetNode.id,
+                  sourceHandle: connectionToTarget.sourceHandle,
+                  targetHandle: connectionToTarget.targetHandle,
+                  type: 'default',
+                };
+              }
+            }
+          }
+
+          // Add the new node
           setNodes((nds) => [...nds, newNode]);
+
+          // Add auto-connect edge if applicable
+          if (autoConnectEdge) {
+            setEdges((eds) => [...eds, autoConnectEdge!]);
+            setSuccessMessage(`Added ${nodeData.label} and connected to ${(targetNode?.data as CanvasNodeData)?.label || 'node'}`);
+          } else {
+            setSuccessMessage(`Added ${nodeData.label} node`);
+          }
 
           // Update board state with new card
           setCurrentBoard(prev => prev ? {
@@ -819,7 +1175,6 @@ const CreativeCanvasInner: React.FC = () => {
             cards: [...(prev.cards || []), newCard],
           } : null);
 
-          setSuccessMessage(`Added ${nodeData.label} node`);
         } catch (err) {
           console.error('Failed to create card:', err);
           setError(`Failed to add ${nodeData.label} node`);
@@ -893,7 +1248,7 @@ const CreativeCanvasInner: React.FC = () => {
         }
       }
     },
-    [reactFlowInstance, setNodes, selectedFlowNode, currentBoard]
+    [reactFlowInstance, setNodes, setEdges, selectedFlowNode, currentBoard, findNodeAtPosition, findBestConnection]
   );
 
   // Handle parameter change from inspector
@@ -1089,6 +1444,55 @@ const CreativeCanvasInner: React.FC = () => {
     [nodes, setNodes]
   );
 
+  // Handle style selection from CreativePalette (Phase 3)
+  const handleStyleSelect = useCallback(
+    (styleId: string, keywords: string[]) => {
+      // If there's a selected node, apply style keywords to its prompt
+      if (selectedFlowNode) {
+        const currentPrompt = (selectedFlowNode.data.parameters?.prompt as string) || '';
+        const keywordStr = keywords.join(', ');
+        const newPrompt = currentPrompt ? `${currentPrompt}, ${keywordStr}` : keywordStr;
+
+        // Update node parameters
+        handleParameterChange(selectedFlowNode.id, 'prompt', newPrompt);
+        setSuccessMessage(`Applied style "${styleId}" to node prompt`);
+      } else {
+        setSuccessMessage(`Style "${styleId}" - select a node first to apply`);
+      }
+    },
+    [selectedFlowNode, handleParameterChange]
+  );
+
+  // Handle color palette selection from CreativePalette (Phase 3)
+  const handleColorPaletteSelect = useCallback(
+    (paletteId: string, colors: string[]) => {
+      // Store the selected palette for use in generation
+      // For now, just show a message - in production this would affect generation params
+      console.log('Color palette selected:', paletteId, colors);
+      setSuccessMessage(`Selected color palette: ${paletteId}`);
+    },
+    []
+  );
+
+  // Handle asset selection from CreativePalette (Phase 3)
+  const handleAssetSelect = useCallback(
+    (_assetId: string, assetType: string, url: string) => {
+      // If there's a selected node, apply asset to appropriate input
+      if (selectedFlowNode) {
+        // Determine which parameter to update based on asset type
+        const paramId = assetType === 'image' ? 'image' :
+                        assetType === 'video' ? 'video' :
+                        assetType === 'audio' ? 'audio' : 'input';
+
+        handleParameterChange(selectedFlowNode.id, paramId, url);
+        setSuccessMessage(`Applied ${assetType} asset to node`);
+      } else {
+        setSuccessMessage(`Asset selected - select a node first to apply`);
+      }
+    },
+    [selectedFlowNode, handleParameterChange]
+  );
+
   // Render toolbar
   const renderToolbar = () => (
     <Paper
@@ -1218,11 +1622,12 @@ const CreativeCanvasInner: React.FC = () => {
   // Render canvas view
   const renderCanvasView = () => (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', position: 'relative' }}>
-      {/* Left Sidebar - Node Palette */}
+      {/* Left Sidebar - Creative Palette v3 */}
       {nodePaletteOpen && (
-        <NodePalette
-          boardCategory={currentBoard?.category || null}
-          onClose={() => setNodePaletteOpen(false)}
+        <CreativePalette
+          onStyleSelect={handleStyleSelect}
+          onColorPaletteSelect={handleColorPaletteSelect}
+          onAssetSelect={handleAssetSelect}
           width={280}
         />
       )}
@@ -1247,6 +1652,7 @@ const CreativeCanvasInner: React.FC = () => {
           onMoveEnd={onMoveEnd}
           onContextMenu={(e) => handleContextMenu(e)}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           isValidConnection={isValidConnection}
           snapToGrid={snapToGrid}
           snapGrid={[20, 20]}
@@ -1601,16 +2007,40 @@ const CreativeCanvasInner: React.FC = () => {
           {successMessage}
         </Alert>
       </Snackbar>
+
+      {/* Creative Collaborators (Agents) - Elevated Vision v3.0 */}
+      <AgentPresence
+        onOpenPanel={(agentId) => {
+          if (agentId) setActiveAgentId(agentId);
+          setAgentPanelOpen(true);
+        }}
+        onAction={(message, actionId) => {
+          console.log('Agent action:', message.agentId, actionId);
+        }}
+      />
+
+      <AgentPanel
+        open={agentPanelOpen}
+        onClose={() => setAgentPanelOpen(false)}
+        initialAgent={activeAgentId}
+        width={380}
+      />
     </Box>
   );
 };
 
 // Wrapper component with ReactFlowProvider
-export const CreativeCanvasStudio: React.FC = () => {
+export const CreativeCanvasStudio: React.FC<CreativeCanvasStudioProps> = ({
+  initialWorkflow,
+  onWorkflowLoaded,
+  userPersona,
+}) => {
   return (
-    <ReactFlowProvider>
-      <CreativeCanvasInner />
-    </ReactFlowProvider>
+    <WorkflowContext.Provider value={{ initialWorkflow, onWorkflowLoaded, userPersona }}>
+      <ReactFlowProvider>
+        <CreativeCanvasInner />
+      </ReactFlowProvider>
+    </WorkflowContext.Provider>
   );
 };
 

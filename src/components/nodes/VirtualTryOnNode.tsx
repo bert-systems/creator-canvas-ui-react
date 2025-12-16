@@ -36,7 +36,8 @@ import {
   HighQuality as QualityIcon,
   Balance as BalanceIcon,
 } from '@mui/icons-material';
-import type { Port, PortType } from '@/models/canvas';
+import type { Port } from '@/models/canvas';
+import { PORT_COLORS } from './portColors';
 import type { TryOnProvider, TryOnCategory } from '@/services/virtualTryOnService';
 
 // ===== Constants =====
@@ -44,16 +45,6 @@ import type { TryOnProvider, TryOnCategory } from '@/services/virtualTryOnServic
 const NODE_WIDTH = 300;
 const NODE_MIN_HEIGHT = 280;
 
-const PORT_COLORS: Record<PortType, string> = {
-  image: '#3b82f6',
-  video: '#8b5cf6',
-  audio: '#ec4899',
-  text: '#f97316',
-  style: '#06b6d4',
-  character: '#a855f7',
-  mesh3d: '#f59e0b',
-  any: '#6b7280',
-};
 
 // Fashion-specific accent color (pink)
 const FASHION_COLOR = '#ec4899';

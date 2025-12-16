@@ -30,7 +30,8 @@ import {
   Lock as LockIcon,
   ZoomOutMap as ResizeIcon,
 } from '@mui/icons-material';
-import type { Port, PortType, NodeCategory, NodeType } from '@/models/canvas';
+import type { Port, NodeCategory, NodeType } from '@/models/canvas';
+import { PORT_COLORS } from './portColors';
 
 // ===== Constants =====
 
@@ -42,16 +43,6 @@ const MAX_WIDTH = 600;
 const MAX_HEIGHT = 800;
 
 // Port colors by type
-const PORT_COLORS: Record<PortType, string> = {
-  image: '#3b82f6',
-  video: '#22c55e',
-  audio: '#a855f7',
-  text: '#f59e0b',
-  style: '#e80ade',
-  character: '#8b5cf6',
-  mesh3d: '#ec4899',
-  any: '#9ca3af',
-};
 
 // Category colors
 const CATEGORY_COLORS: Record<string, string> = {
