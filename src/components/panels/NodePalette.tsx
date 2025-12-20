@@ -56,6 +56,8 @@ import {
   type AdinkraSymbol,
   type AfricanGarment,
 } from '@/services/canvasToolbarService';
+import { focusRing, timing, easing } from '@/styles/microInteractions';
+import { brandColors, darkNeutrals } from '@/theme';
 
 // ===== Types =====
 
@@ -507,7 +509,7 @@ export function NodePalette({ boardCategory, onClose, width = 300 }: NodePalette
 
               <Collapse in={expandedCategories.includes(category.id) || !!searchQuery} timeout="auto" unmountOnExit>
                 <List disablePadding>
-                  {categoryNodes.map(node => (
+                  {categoryNodes.map((node, index) => (
                     <ListItem
                       key={node.type}
                       disablePadding
@@ -516,25 +518,49 @@ export function NodePalette({ boardCategory, onClose, width = 300 }: NodePalette
                       sx={{
                         cursor: 'grab',
                         '&:active': { cursor: 'grabbing' },
+                        // Staggered entrance animation
+                        animation: `fadeInUp ${timing.standard}ms ${easing.decelerate}`,
+                        animationDelay: `${index * 30}ms`,
+                        animationFillMode: 'backwards',
+                        '@keyframes fadeInUp': {
+                          from: { opacity: 0, transform: 'translateY(8px)' },
+                          to: { opacity: 1, transform: 'translateY(0)' },
+                        },
                       }}
                     >
                       <ListItemButton
                         sx={{
                           pl: 4,
                           py: 0.75,
+                          borderLeft: '3px solid transparent',
+                          transition: `all ${timing.fast}ms ${easing.smooth}`,
+                          ...focusRing,
                           '&:hover': {
-                            backgroundColor: alpha(category.color, 0.08),
+                            backgroundColor: alpha(category.color, 0.1),
+                            borderLeftColor: category.color,
+                            pl: 3.625, // Compensate for border
+                            '& .drag-icon': {
+                              color: category.color,
+                            },
+                            '& .node-dot': {
+                              transform: 'scale(1.2)',
+                            },
+                          },
+                          '&:active': {
+                            backgroundColor: alpha(category.color, 0.15),
                           },
                         }}
                       >
-                        <DragIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.disabled' }} />
+                        <DragIcon className="drag-icon" sx={{ fontSize: 16, mr: 0.5, color: 'text.disabled', transition: `color ${timing.fast}ms` }} />
                         <Box
+                          className="node-dot"
                           sx={{
                             width: 8,
                             height: 8,
                             borderRadius: '50%',
                             backgroundColor: category.color,
                             mr: 1.5,
+                            transition: `transform ${timing.fast}ms ${easing.smooth}`,
                           }}
                         />
                         <ListItemText
@@ -547,13 +573,21 @@ export function NodePalette({ boardCategory, onClose, width = 300 }: NodePalette
                           secondaryTypographyProps={{
                             fontSize: '0.7rem',
                             noWrap: true,
+                            sx: { color: darkNeutrals.textTertiary },
                           }}
                         />
                         {node.aiModel && (
                           <Chip
                             label="AI"
                             size="small"
-                            sx={{ height: 18, fontSize: '0.65rem', ml: 0.5 }}
+                            sx={{
+                              height: 18,
+                              fontSize: '0.65rem',
+                              ml: 0.5,
+                              bgcolor: alpha(brandColors.tealPulse, 0.15),
+                              color: brandColors.tealPulse,
+                              fontWeight: 600,
+                            }}
                           />
                         )}
                       </ListItemButton>

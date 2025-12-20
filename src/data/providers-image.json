@@ -1,0 +1,2366 @@
+[
+    {
+        "name": "Google Gemini Image Generation",
+        "models": [
+            {
+                "modelId": "gemini-2.5-flash",
+                "displayName": "Gemini 2.5 Flash (Image Generation)",
+                "description": "Native image generation with Gemini 2.5 Flash - Experimental feature",
+                "supportedSizes": [
+                    {
+                        "width": 512,
+                        "height": 512,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": false,
+                    "supportsStyle": true,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [
+                        "photorealistic",
+                        "illustration",
+                        "anime",
+                        "sketch",
+                        "painting",
+                        "3d-render",
+                        "cartoon",
+                        "watercolor"
+                    ],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.002,
+                    "currency": "USD"
+                }
+            }
+        ]
+    },
+    {
+        "name": "fal.ai",
+        "models": [
+            {
+                "modelId": "flux-2-max",
+                "displayName": "FLUX.2 [max]",
+                "description": "State-of-the-art image generation and advanced image editing with exceptional realism, precision, and consistency",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "square_hd"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 2048,
+                        "aspectRatio": "square_4mp"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "portrait_4_3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "landscape_4_3"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "portrait_16_9"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "landscape_16_9"
+                    },
+                    {
+                        "width": 1080,
+                        "height": 1920,
+                        "aspectRatio": "portrait_16_9_hd"
+                    },
+                    {
+                        "width": 1920,
+                        "height": 1080,
+                        "aspectRatio": "landscape_16_9_hd"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.07,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-2-pro",
+                "displayName": "FLUX.2 [pro]",
+                "description": "Production-optimized generation with zero-configuration quality, no parameter tuning needed",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "square_hd"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 2048,
+                        "aspectRatio": "square_4mp"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "portrait_4_3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "landscape_4_3"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "portrait_16_9"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "landscape_16_9"
+                    },
+                    {
+                        "width": 1080,
+                        "height": 1920,
+                        "aspectRatio": "portrait_16_9_hd"
+                    },
+                    {
+                        "width": 1920,
+                        "height": 1080,
+                        "aspectRatio": "landscape_16_9_hd"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.03,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-2-dev",
+                "displayName": "FLUX.2 [dev]",
+                "description": "Lightweight open-source model with professional quality, supports LoRA and JSON structured prompts",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "square_hd"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 2048,
+                        "aspectRatio": "square_4mp"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "portrait_4_3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "landscape_4_3"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "portrait_16_9"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "landscape_16_9"
+                    },
+                    {
+                        "width": 1080,
+                        "height": 1920,
+                        "aspectRatio": "portrait_16_9_hd"
+                    },
+                    {
+                        "width": 1920,
+                        "height": 1080,
+                        "aspectRatio": "landscape_16_9_hd"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": true,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 4,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.012,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-2-flex",
+                "displayName": "FLUX.2 [flex]",
+                "description": "Advanced customizable model with surgical control over quality, superior typography",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "square_hd"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 2048,
+                        "aspectRatio": "square_4mp"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "portrait_4_3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "landscape_4_3"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "portrait_16_9"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "landscape_16_9"
+                    },
+                    {
+                        "width": 1080,
+                        "height": 1920,
+                        "aspectRatio": "portrait_16_9_hd"
+                    },
+                    {
+                        "width": 1920,
+                        "height": 1080,
+                        "aspectRatio": "landscape_16_9_hd"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 2,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.06,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-pro",
+                "displayName": "FLUX.1 [pro]",
+                "description": "Premium FLUX model with highest quality output",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 20,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.055,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-pro-kontext",
+                "displayName": "FLUX.1 Kontext [pro]",
+                "description": "Context-aware editing for targeted local transformations (fashion, design)",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": true,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.06,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-kontext",
+                "displayName": "FLUX.1 Kontext [pro]",
+                "description": "Context-aware editing for targeted local transformations (fashion, design)",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": true,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.06,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-pro-redux",
+                "displayName": "FLUX.1 [pro] Redux",
+                "description": "High-performance style transfer and image transformation",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": true,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.05,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-dev",
+                "displayName": "FLUX.1 [dev]",
+                "description": "Development FLUX model with excellent quality/cost balance",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 20,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.025,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-dev-image-to-image",
+                "displayName": "FLUX.1 [dev] Image-to-Image",
+                "description": "Edit existing images with FLUX dev model",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.03,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-krea",
+                "displayName": "FLUX.1 Krea [dev]",
+                "description": "Text-to-image with incredible aesthetics and photorealism",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 20,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.03,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-krea-dev-redux",
+                "displayName": "FLUX.1 Krea [dev] Redux",
+                "description": "Image-to-image transformation with Krea (requires reference image)",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": true,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": true,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.035,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-schnell",
+                "displayName": "FLUX.1 [schnell]",
+                "description": "Fastest FLUX model (1-4 steps) for rapid generation",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 4
+                },
+                "pricing": {
+                    "pricePerImage": 0.003,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-lora",
+                "displayName": "FLUX.1 with LoRA",
+                "description": "FLUX dev with custom LoRA for personalization and specific styles",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": true,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.035,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-general",
+                "displayName": "FLUX.1 [dev] with ControlNet and LoRA",
+                "description": "Comprehensive endpoint with LoRA, ControlNet, and IP-Adapter support",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": true,
+                    "supportedControlNetTypes": [
+                        "canny",
+                        "depth",
+                        "pose",
+                        "normal",
+                        "tile"
+                    ],
+                    "supportsLoRA": true,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": true,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.04,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "flux-general-image-to-image",
+                "displayName": "FLUX.1 General Image-to-Image",
+                "description": "Image editing with ControlNet, LoRA, and IP-Adapter",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": true,
+                    "supportedControlNetTypes": [
+                        "canny",
+                        "depth",
+                        "pose",
+                        "normal",
+                        "tile"
+                    ],
+                    "supportsLoRA": true,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": true,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.045,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "fast-sdxl",
+                "displayName": "Stable Diffusion XL",
+                "description": "Fast SDXL with excellent quality",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 896,
+                        "height": 1152,
+                        "aspectRatio": "portrait"
+                    },
+                    {
+                        "width": 1152,
+                        "height": 896,
+                        "aspectRatio": "landscape"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1344,
+                        "aspectRatio": "portrait_wide"
+                    },
+                    {
+                        "width": 1344,
+                        "height": 768,
+                        "aspectRatio": "landscape_wide"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": true,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 1000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 15,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.01,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "sdxl-controlnet-canny",
+                "displayName": "SDXL ControlNet (Canny)",
+                "description": "SDXL with Canny edge detection for sketch-to-image",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 896,
+                        "height": 1152,
+                        "aspectRatio": "portrait"
+                    },
+                    {
+                        "width": 1152,
+                        "height": 896,
+                        "aspectRatio": "landscape"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1344,
+                        "aspectRatio": "portrait_wide"
+                    },
+                    {
+                        "width": 1344,
+                        "height": 768,
+                        "aspectRatio": "landscape_wide"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": true,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 1000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": true,
+                    "supportedControlNetTypes": [
+                        "canny"
+                    ],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.015,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "sdxl-controlnet-union",
+                "displayName": "SDXL ControlNet Union",
+                "description": "SDXL with unified ControlNet (multiple conditioning types)",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 896,
+                        "height": 1152,
+                        "aspectRatio": "portrait"
+                    },
+                    {
+                        "width": 1152,
+                        "height": 896,
+                        "aspectRatio": "landscape"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1344,
+                        "aspectRatio": "portrait_wide"
+                    },
+                    {
+                        "width": 1344,
+                        "height": 768,
+                        "aspectRatio": "landscape_wide"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": true,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 1000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": true,
+                    "supportedControlNetTypes": [
+                        "canny",
+                        "depth",
+                        "pose",
+                        "scribble",
+                        "openpose"
+                    ],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.018,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "sd35-large",
+                "displayName": "Stable Diffusion 3.5 Large",
+                "description": "Latest SD 3.5 Large model with improved quality",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 896,
+                        "height": 1152,
+                        "aspectRatio": "portrait"
+                    },
+                    {
+                        "width": 1152,
+                        "height": 896,
+                        "aspectRatio": "landscape"
+                    },
+                    {
+                        "width": 1216,
+                        "height": 832,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 832,
+                        "height": 1216,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": true,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 1500,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 20,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.03,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "sd35-turbo",
+                "displayName": "Stable Diffusion 3.5 Turbo",
+                "description": "Fast SD 3.5 Turbo for rapid generation",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 896,
+                        "height": 1152,
+                        "aspectRatio": "portrait"
+                    },
+                    {
+                        "width": 1152,
+                        "height": 896,
+                        "aspectRatio": "landscape"
+                    },
+                    {
+                        "width": 1216,
+                        "height": 832,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 832,
+                        "height": 1216,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": true,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 1500,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 8
+                },
+                "pricing": {
+                    "pricePerImage": 0.01,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "aura-sr",
+                "displayName": "AuraSR",
+                "description": "GAN-based 4x image upscaler developed by fal",
+                "supportedSizes": [],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": false,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 1000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": true,
+                    "supportedUpscaleFactors": [
+                        4
+                    ],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.01,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "ideogram-upscale",
+                "displayName": "Ideogram Upscale",
+                "description": "2x upscaling with optional prompt-guided enhancement",
+                "supportedSizes": [],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": false,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 1000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": true,
+                    "supportedUpscaleFactors": [
+                        2
+                    ],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.015,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "qwen-image",
+                "displayName": "Qwen Image (Image-to-Image)",
+                "description": "High-fidelity image transformation and style transfer",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": false,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": true,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.025,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "nano-banana-pro",
+                "displayName": "Nano Banana Pro",
+                "description": "Multi-image composition with up to 14 input images, character consistency for up to 5 people, advanced text rendering",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 2048,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 1536,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1536,
+                        "height": 2048,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 1152,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 1152,
+                        "height": 2048,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 4096,
+                        "height": 4096,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 4096,
+                        "height": 3072,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 3072,
+                        "height": 4096,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 4096,
+                        "height": 2304,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 2304,
+                        "height": 4096,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": false,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": true,
+                    "maxPromptLength": 50000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": true,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.15,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "nano-banana-pro-edit",
+                "displayName": "Nano Banana Pro Edit",
+                "description": "Image editing with multiple reference images (up to 14), ideal for creative DNA fusion and style transfer",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 2048,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 1536,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1536,
+                        "height": 2048,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 2048,
+                        "height": 1152,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 1152,
+                        "height": 2048,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 4096,
+                        "height": 4096,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 4096,
+                        "height": 3072,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 3072,
+                        "height": 4096,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 4096,
+                        "height": 2304,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 2304,
+                        "height": 4096,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": false,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": true,
+                    "maxPromptLength": 50000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": true,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.15,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "gpt-image-1.5",
+                "displayName": "GPT-Image 1.5",
+                "description": "OpenAI's multimodal model generating high-fidelity images with strong prompt adherence, preserving composition, lighting, and fine-grained detail",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 1536,
+                        "height": 1024,
+                        "aspectRatio": "3:2"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 1536,
+                        "aspectRatio": "2:3"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": false,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 4000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.034,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "recraft-v3",
+                "displayName": "Recraft V3",
+                "description": "Specializes in long-form text rendering, vector art, and brand-style generation with exceptional typography",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": true,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.04,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "z-image-turbo",
+                "displayName": "Z-Image Turbo",
+                "description": "Fast 6B parameter model by Tongyi-MAI optimized for speed without sacrificing quality",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": true,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 4,
+                    "maxInferenceSteps": 20
+                },
+                "pricing": {
+                    "pricePerImage": 0.008,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "longcat-image",
+                "displayName": "LongCat Image",
+                "description": "6B model excelling at multilingual text rendering, photorealism, and deployment efficiency",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": true,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 4000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.01,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "imagineart-1.5",
+                "displayName": "ImagineArt 1.5",
+                "description": "Generates professional-grade visuals with lifelike realism and accurate text rendering",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": true,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": true,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.025,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "vidu-q2",
+                "displayName": "Vidu Q2",
+                "description": "Supports text-to-image and reference-image-to-image generation with high consistency",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 576,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 576,
+                        "height": 1024,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1280,
+                        "height": 720,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 720,
+                        "height": 1280,
+                        "aspectRatio": "9:16"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": true,
+                    "supportsStyle": false,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": false,
+                    "maxPromptLength": 2000,
+                    "supportedStyles": [],
+                    "supportsImageToImage": true,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": true,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.03,
+                    "currency": "USD"
+                }
+            }
+        ]
+    },
+    {
+        "name": "Luma Labs",
+        "models": [
+            {
+                "modelId": "photon-1",
+                "displayName": "Photon 1",
+                "description": "Creative, intelligent and personalizable image generation model with ultra high quality",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1344,
+                        "height": 768,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1344,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1536,
+                        "height": 640,
+                        "aspectRatio": "21:9"
+                    },
+                    {
+                        "width": 640,
+                        "height": 1536,
+                        "aspectRatio": "9:21"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": false,
+                    "supportsStyle": true,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": true,
+                    "maxPromptLength": 1500,
+                    "supportedStyles": [
+                        "photorealistic",
+                        "artistic",
+                        "anime",
+                        "fantasy",
+                        "cyberpunk",
+                        "steampunk",
+                        "minimalist",
+                        "abstract"
+                    ],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.015,
+                    "currency": "USD"
+                }
+            },
+            {
+                "modelId": "photon-flash-1",
+                "displayName": "Photon Flash 1",
+                "description": "Fast, cost-effective image generation with 10x higher efficiency, best-in-class speed",
+                "supportedSizes": [
+                    {
+                        "width": 1024,
+                        "height": 1024,
+                        "aspectRatio": "1:1"
+                    },
+                    {
+                        "width": 1024,
+                        "height": 768,
+                        "aspectRatio": "4:3"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1024,
+                        "aspectRatio": "3:4"
+                    },
+                    {
+                        "width": 1344,
+                        "height": 768,
+                        "aspectRatio": "16:9"
+                    },
+                    {
+                        "width": 768,
+                        "height": 1344,
+                        "aspectRatio": "9:16"
+                    },
+                    {
+                        "width": 1536,
+                        "height": 640,
+                        "aspectRatio": "21:9"
+                    },
+                    {
+                        "width": 640,
+                        "height": 1536,
+                        "aspectRatio": "9:21"
+                    }
+                ],
+                "capabilities": {
+                    "supportsNegativePrompt": false,
+                    "supportsSeed": false,
+                    "supportsStyle": true,
+                    "supportsGuidanceScale": false,
+                    "supportsInpainting": false,
+                    "supportsOutpainting": false,
+                    "supportsVariations": true,
+                    "maxPromptLength": 1500,
+                    "supportedStyles": [
+                        "photorealistic",
+                        "artistic",
+                        "anime",
+                        "fantasy",
+                        "cyberpunk",
+                        "steampunk",
+                        "minimalist",
+                        "abstract"
+                    ],
+                    "supportsImageToImage": false,
+                    "supportsControlNet": false,
+                    "supportedControlNetTypes": [],
+                    "supportsLoRA": false,
+                    "supportsUpscaling": false,
+                    "supportedUpscaleFactors": [],
+                    "supportsStyleTransfer": false,
+                    "supportsIPAdapter": false,
+                    "minInferenceSteps": 1,
+                    "maxInferenceSteps": 50
+                },
+                "pricing": {
+                    "pricePerImage": 0.004,
+                    "currency": "USD"
+                }
+            }
+        ]
+    }
+]

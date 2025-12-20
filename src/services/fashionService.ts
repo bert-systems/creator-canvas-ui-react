@@ -641,136 +641,136 @@ class FashionService {
   // ===== Garment Design Endpoints =====
 
   async designGarment(request: DesignGarmentRequest): Promise<DesignGarmentResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/design-garment`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/design/garment`, request);
     return response.data;
   }
 
   async analyzeGarment(request: AnalyzeGarmentRequest): Promise<AnalyzeGarmentResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/analyze-garment`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/design/analyze`, request);
     return response.data;
   }
 
   async generatePattern(request: GeneratePatternRequest): Promise<GeneratePatternResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/generate-pattern`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/design/pattern`, request);
     return response.data;
   }
 
   async createTechPack(request: CreateTechPackRequest): Promise<CreateTechPackResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/create-tech-pack`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/design/tech-pack`, request);
     return response.data;
   }
 
   // ===== Textiles & Materials Endpoints =====
 
   async designTextile(request: DesignTextileRequest): Promise<DesignTextileResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/design-textile`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/textile/design`, request);
     return response.data;
   }
 
   async generateColorways(request: GenerateColorwaysRequest): Promise<GenerateColorwaysResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/generate-colorways`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/textile/colorways`, request);
     return response.data;
   }
 
   async culturalFusion(request: CulturalFusionRequest): Promise<CulturalFusionResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/cultural-fusion`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/textile/cultural-fusion`, request);
     return response.data;
   }
 
   // ===== Model & Casting Endpoints =====
 
   async castModel(request: CastModelRequest): Promise<CastModelResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/cast-model`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/model/cast`, request);
     return response.data;
   }
 
   async generatePoses(request: GeneratePosesRequest): Promise<GeneratePosesResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/generate-poses`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/model/poses`, request);
     return response.data;
   }
 
   async scaleSize(request: ScaleSizeRequest): Promise<ScaleSizeResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/scale-size`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/model/scale-size`, request);
     return response.data;
   }
 
   // ===== Styling Endpoints =====
 
   async composeOutfit(request: ComposeOutfitRequest): Promise<ComposeOutfitResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/compose-outfit`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/style/compose-outfit`, request);
     return response.data;
   }
 
   async suggestAccessories(request: SuggestAccessoriesRequest): Promise<SuggestAccessoriesResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/suggest-accessories`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/style/accessories`, request);
     return response.data;
   }
 
   async styleLayering(request: StyleLayeringRequest): Promise<StyleLayeringResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/style-layering`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/style/layering`, request);
     return response.data;
   }
 
   // ===== Photography & E-commerce Endpoints =====
 
   async virtualTryOn(request: VirtualTryOnRequest): Promise<VirtualTryOnResponse> {
-    const response = await api.post(`${this.baseUrl}/fal/virtual-try-on`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/photo/virtual-try-on`, request);
     return response.data;
   }
 
   async createFlatLay(request: CreateFlatLayRequest): Promise<CreateFlatLayResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/flat-lay`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/photo/flat-lay`, request);
     return response.data;
   }
 
   async createEcommerceShots(request: CreateEcommerceShotsRequest): Promise<CreateEcommerceShotsResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/ecommerce-shots`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/photo/ecommerce`, request);
     return response.data;
   }
 
   async createGhostMannequin(request: CreateGhostMannequinRequest): Promise<CreateGhostMannequinResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/ghost-mannequin`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/photo/ghost-mannequin`, request);
     return response.data;
   }
 
   // ===== Video & Animation Endpoints =====
 
   async createRunwayAnimation(request: CreateRunwayAnimationRequest): Promise<CreateRunwayAnimationResponse> {
-    const response = await api.post(`${this.baseUrl}/fal/runway-animation`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/video/runway`, request);
     return response.data;
   }
 
   async createFabricMotion(request: CreateFabricMotionRequest): Promise<CreateFabricMotionResponse> {
-    const response = await api.post(`${this.baseUrl}/fal/fabric-motion`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/video/fabric-motion`, request);
     return response.data;
   }
 
   async createTurnaroundVideo(request: CreateTurnaroundVideoRequest): Promise<CreateTurnaroundVideoResponse> {
-    const response = await api.post(`${this.baseUrl}/fal/turnaround-video`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/video/turnaround`, request);
     return response.data;
   }
 
   // ===== Collection Endpoints =====
 
   async buildCollection(request: BuildCollectionRequest): Promise<BuildCollectionResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/build-collection`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/collection/build`, request);
     return response.data;
   }
 
   async generateLookbook(request: GenerateLookbookRequest): Promise<GenerateLookbookResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/generate-lookbook`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/collection/lookbook`, request);
     return response.data;
   }
 
   async generateLineSheet(request: GenerateLineSheetRequest): Promise<GenerateLineSheetResponse> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/line-sheet`, request);
+    const response = await api.post(`${this.baseUrl}/fashion/collection/line-sheet`, request);
     return response.data;
   }
 
   // ===== Utility Methods =====
 
   async getDiverseModels(count: number, bodyTypes?: BodyShape[], skinTones?: SkinToneCategory[]): Promise<CastModelResponse[]> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/diverse-models`, {
+    const response = await api.post(`${this.baseUrl}/fashion/utility/diverse-models`, {
       count,
       bodyTypes,
       skinTones,
@@ -783,7 +783,7 @@ class FashionService {
     suggestedPrice?: number;
     marketCategory?: string;
   }> {
-    const response = await api.post(`${this.baseUrl}/agent/fashion/product-details`, {
+    const response = await api.post(`${this.baseUrl}/fashion/utility/product-details`, {
       garmentImage,
     });
     return response.data;

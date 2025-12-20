@@ -512,9 +512,27 @@ export type ShotType =
   | 'extreme-wide' | 'wide' | 'full' | 'medium-full' | 'medium'
   | 'medium-close' | 'close-up' | 'extreme-close' | 'two-shot';
 
-// ===== Request Interfaces =====
+// ===== LLM Configuration (Swagger v3 aligned) =====
 
-export interface StoryStartRequest {
+export interface RagContext {
+  enabled?: boolean;
+  sources?: string[];
+  maxChunks?: number;
+}
+
+export interface LlmConfigBase {
+  model?: string;           // LLM model ID (e.g., "gemini-2.5-flash")
+  temperature?: number;     // 0.0-1.0, default 0.7
+  maxTokens?: number;       // Max output tokens
+  topP?: number;            // Nucleus sampling
+  topK?: number;            // Top-K sampling
+  providerOptions?: Record<string, unknown>;
+  rag?: RagContext;
+}
+
+// ===== Request Interfaces (Swagger v3 aligned) =====
+
+export interface StoryStartRequest extends LlmConfigBase {
   starterPrompt: string;
   themes?: string[];
   genre: StoryGenre;
@@ -637,14 +655,17 @@ export interface RelationshipRequest {
   conflictPotential?: 'low' | 'medium' | 'high';
 }
 
-export interface LocationCreateRequest {
+// LocationCreateRequest - Swagger v3 aligned
+// Note: API expects 'locationDescription' and 'type', but we keep frontend-friendly names
+// and map them in the service method
+export interface LocationCreateRequest extends LlmConfigBase {
   storyId?: string;
-  concept: string;
+  concept: string;                // Maps to 'locationDescription' in API
   storyContext?: StoryData;
   lore?: WorldLoreData;
-  locationType: LocationType;
-  mood: string;
-  sensoryDetail: 'minimal' | 'moderate' | 'rich' | 'immersive';
+  locationType: LocationType;     // Maps to 'type' in API
+  mood: string;                   // Maps to 'atmosphere' in API
+  sensoryDetail: 'minimal' | 'moderate' | 'rich' | 'immersive';  // Maps to 'detailLevel'
   includeHistory?: boolean;
   includeSecrets?: boolean;
   generateImage?: boolean;
@@ -671,12 +692,14 @@ export interface TimelineRequest {
   eventDensity: 'sparse' | 'moderate' | 'dense';
 }
 
-export interface DialogueGenerateRequest {
+// DialogueGenerateRequest - Swagger v3 aligned
+// Note: API expects 'sceneContext' and 'type', mapped in service method
+export interface DialogueGenerateRequest extends LlmConfigBase {
   storyId: string;
-  characters: CharacterProfile[];
+  characters: CharacterProfile[];       // API expects CharacterVoiceProfile[]
   characterVoices?: Record<string, CharacterVoiceProfile>;
-  situation: string;
-  dialogueType: DialogueType;
+  situation: string;                    // Maps to 'sceneContext' in API
+  dialogueType: DialogueType;           // Maps to 'type' in API (PascalCase)
   subtextLevel: 'none' | 'light' | 'moderate' | 'heavy';
   length: 'brief' | 'short' | 'medium' | 'long';
   format: 'prose' | 'screenplay' | 'comic' | 'game';
@@ -732,9 +755,16 @@ export type EnhancementFocus =
   | 'prose' | 'pacing' | 'dialogue' | 'description'
   | 'emotion' | 'atmosphere' | 'tension' | 'clarity';
 
-// ===== Response Interfaces =====
+// ===== Response Interfaces (Swagger v3 aligned) =====
 
-export interface StoryStartResponse {
+// Base response fields from Swagger v3
+export interface ApiResponseBase {
+  success: boolean;
+  errors?: string[];
+  sessionId?: string;
+}
+
+export interface StoryStartResponse extends ApiResponseBase {
   story: StoryData;
   characters: CharacterSeed[];
   outline: BasicOutline;
@@ -831,7 +861,7 @@ export interface RelationshipResponse {
   dynamicArc: string;
 }
 
-export interface LocationCreateResponse {
+export interface LocationCreateResponse extends ApiResponseBase {
   location: LocationData;
   description: string;
   secrets: PlotPointData[];
@@ -868,9 +898,10 @@ export interface TimelineResponse {
   timeline: TimelineData;
 }
 
-export interface DialogueGenerateResponse {
-  dialogue: DialogueExchange;
-  subtext: SubtextAnalysis;
+export interface DialogueGenerateResponse extends ApiResponseBase {
+  dialogue: DialogueExchange[] | DialogueExchange;  // Swagger returns array
+  sceneDescription?: string;                        // From Swagger
+  subtext?: SubtextAnalysis;
   stageDirections?: StageDirection[];
 }
 
@@ -967,37 +998,37 @@ class StoryGenerationService {
   // ----- Story Generation -----
 
   async startStory(request: StoryStartRequest): Promise<StoryStartResponse> {
-    const response = await api.post<StoryStartResponse>('/api/agent/story/start', request);
+    const response = await api.post<StoryStartResponse>('/api/storytelling/start', request);
     return response.data;
   }
 
   async generateStructure(request: StoryStructureRequest): Promise<StoryStructureResponse> {
-    const response = await api.post<StoryStructureResponse>('/api/agent/story/structure', request);
+    const response = await api.post<StoryStructureResponse>('/api/storytelling/structure', request);
     return response.data;
   }
 
   async generateScene(request: SceneGenerateRequest): Promise<SceneGenerateResponse> {
-    const response = await api.post<SceneGenerateResponse>('/api/agent/story/generate-scene', request);
+    const response = await api.post<SceneGenerateResponse>('/api/storytelling/generate-scene', request);
     return response.data;
   }
 
   async generateTreatment(request: TreatmentRequest): Promise<TreatmentResponse> {
-    const response = await api.post<TreatmentResponse>('/api/agent/story/generate-treatment', request);
+    const response = await api.post<TreatmentResponse>('/api/storytelling/generate-treatment', request);
     return response.data;
   }
 
   async generatePlotTwist(request: PlotTwistRequest): Promise<PlotTwistResponse> {
-    const response = await api.post<PlotTwistResponse>('/api/agent/story/generate-twist', request);
+    const response = await api.post<PlotTwistResponse>('/api/storytelling/generate-twist', request);
     return response.data;
   }
 
   async generateChoicePoint(request: ChoicePointRequest): Promise<ChoicePointResponse> {
-    const response = await api.post<ChoicePointResponse>('/api/agent/story/generate-choice', request);
+    const response = await api.post<ChoicePointResponse>('/api/storytelling/generate-choice', request);
     return response.data;
   }
 
   async generateBranch(request: BranchGenerateRequest): Promise<BranchGenerateResponse> {
-    const response = await api.post<BranchGenerateResponse>('/api/agent/story/generate-branch', request);
+    const response = await api.post<BranchGenerateResponse>('/api/storytelling/generate-branch', request);
     return response.data;
   }
 
@@ -1025,8 +1056,35 @@ class StoryGenerationService {
 
   // ----- World Building -----
 
+  /**
+   * Create a location/environment for the story
+   * POST /api/storytelling/world/environment (Swagger v3)
+   * Maps frontend field names to API field names
+   */
   async createLocation(request: LocationCreateRequest): Promise<LocationCreateResponse> {
-    const response = await api.post<LocationCreateResponse>('/api/agent/world/create-location', request);
+    // Map frontend field names to Swagger v3 API schema
+    const apiRequest = {
+      // LLM config
+      model: request.model,
+      temperature: request.temperature,
+      maxTokens: request.maxTokens,
+      topP: request.topP,
+      topK: request.topK,
+      providerOptions: request.providerOptions,
+      rag: request.rag,
+      // Location fields (mapped to API names)
+      storyId: request.storyId,
+      locationDescription: request.concept,           // concept → locationDescription
+      type: request.locationType,                     // locationType → type
+      atmosphere: request.mood,                       // mood → atmosphere
+      detailLevel: request.sensoryDetail,             // sensoryDetail → detailLevel
+      includeHistory: request.includeHistory,
+      includeSecrets: request.includeSecrets,
+      generateImage: request.generateImage,
+      generatePanorama: request.generatePanorama,
+      generateAmbient: request.generateAmbient,
+    };
+    const response = await api.post<LocationCreateResponse>('/api/storytelling/world/environment', apiRequest);
     return response.data;
   }
 
@@ -1042,8 +1100,37 @@ class StoryGenerationService {
 
   // ----- Dialogue -----
 
+  /**
+   * Generate dialogue between characters
+   * POST /api/storytelling/dialogue/generate (Swagger v3)
+   * Maps frontend field names to API field names
+   */
   async generateDialogue(request: DialogueGenerateRequest): Promise<DialogueGenerateResponse> {
-    const response = await api.post<DialogueGenerateResponse>('/api/comicbook/dialogue/generate', request);
+    // Convert dialogueType to PascalCase for API (e.g., 'conversation' → 'Conversation')
+    const toPascalCase = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+
+    // Map frontend field names to Swagger v3 API schema
+    const apiRequest = {
+      // LLM config
+      model: request.model,
+      temperature: request.temperature,
+      maxTokens: request.maxTokens,
+      topP: request.topP,
+      topK: request.topK,
+      providerOptions: request.providerOptions,
+      rag: request.rag,
+      // Dialogue fields (mapped to API names)
+      storyId: request.storyId,
+      sceneContext: request.situation,                 // situation → sceneContext
+      characters: request.characters,
+      type: toPascalCase(request.dialogueType),        // dialogueType → type (PascalCase)
+      subtextLevel: request.subtextLevel,
+      length: request.length,
+      format: request.format,
+      emotionalBeats: request.emotionalBeats,
+      includeStageDirections: request.includeStageDirections,
+    };
+    const response = await api.post<DialogueGenerateResponse>('/api/storytelling/dialogue/generate', apiRequest);
     return response.data;
   }
 
@@ -1105,7 +1192,7 @@ class StoryGenerationService {
   }
 
   async enhanceStory(request: StoryEnhanceRequest): Promise<StoryEnhanceResponse> {
-    const response = await api.post<StoryEnhanceResponse>('/api/agent/story/enhance', request);
+    const response = await api.post<StoryEnhanceResponse>('/api/storytelling/enhance', request);
     return response.data;
   }
 
@@ -1285,6 +1372,17 @@ class StoryGenerationService {
       duration,
       ...options,
     });
+    return response.data;
+  }
+
+  // ----- Health Check -----
+
+  /**
+   * Health check for storytelling service
+   * GET /api/storytelling/health (swagger v5)
+   */
+  async healthCheck(): Promise<{ status: string }> {
+    const response = await api.get<{ status: string }>('/api/storytelling/health');
     return response.data;
   }
 }

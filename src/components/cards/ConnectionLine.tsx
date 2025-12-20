@@ -30,6 +30,15 @@ const sparkle = keyframes`
   }
 `;
 
+const dataFlow = keyframes`
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+`;
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -168,11 +177,12 @@ export const ConnectionLine = memo(function ConnectionLine({
       };
     }
 
-    // Flowing connection
+    // Flowing connection - animated dashes moving along the path
     if (isFlowing) {
       return {
         ...baseStyles,
-        strokeDasharray: '8 8',
+        strokeDasharray: '12 12',
+        animation: `${dataFlow} 1s linear infinite`,
       };
     }
 

@@ -1,11 +1,17 @@
 /**
  * Video Generation Service
- * Handles all video generation API calls for Kling 2.6, Kling O1, VEO 3.1, and Kling Avatar
+ * Handles all video generation API calls for various AI video providers
+ * Aligned with swagger v5 API schema: /api/VideoGeneration endpoints
+ *
+ * Supports: Kling 2.6, Kling O1, VEO 3.1, Kling Avatar, and unified generation
  */
 
 import { api } from './api';
 
-const VIDEO_API_BASE = '/api/video-generation';
+// Unified API endpoint (swagger v5)
+const VIDEO_API_BASE = '/api/VideoGeneration';
+// Legacy endpoints for provider-specific calls
+const VIDEO_API_LEGACY = '/api/video-generation';
 
 // ===== Type Definitions =====
 
@@ -132,6 +138,80 @@ export interface KlingAvatarRequest {
   headMotion?: boolean;
 }
 
+// ===== Unified Video Generation Request (swagger v5 schema) =====
+
+export interface VideoGenerationRequest {
+  /** Model/provider to use (e.g., 'kling-2.6', 'veo-3.1') */
+  model?: string;
+  /** Text prompt describing the video to generate */
+  prompt?: string;
+  /** Reference image URL for image-to-video */
+  referenceImage?: string;
+  /** Reference video URL for video-to-video */
+  referenceVideo?: string;
+  /** Video duration in seconds */
+  duration?: number;
+  /** Output resolution (e.g., '1080p', '720p') */
+  resolution?: string;
+  /** Aspect ratio (e.g., '16:9', '9:16', '1:1') */
+  aspectRatio?: string;
+  /** Random seed for reproducibility */
+  seed?: number;
+  /** Guidance scale for prompt adherence */
+  guidanceScale?: number;
+  /** Whether to generate audio */
+  generateAudio?: boolean;
+  /** Whether to add watermark */
+  watermark?: boolean;
+  /** First frame image URL for frame interpolation */
+  firstFrameImage?: string;
+  /** Last frame image URL for frame interpolation */
+  lastFrameImage?: string;
+  /** Additional provider-specific parameters */
+  additionalParameters?: Record<string, unknown>;
+}
+
+export interface UnifiedVideoResponse {
+  success: boolean;
+  jobId?: string;
+  status?: string;
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  duration?: number;
+  error?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface VideoModelInfo {
+  id: string;
+  name: string;
+  description?: string;
+  tier?: 'flagship' | 'production' | 'creative' | 'fast';
+  cost?: string;
+  /** Supported modes: 't2v' (text), 'i2v' (image), 'v2v' (video), 'keyframe' */
+  modes?: ('t2v' | 'i2v' | 'v2v' | 'keyframe')[];
+  maxDuration?: number;
+  hasAudio?: boolean;
+  supportedResolutions?: string[];
+}
+
+export interface ProviderInfo {
+  id: string;
+  name: string;
+  description?: string;
+  capabilities?: string[];
+  maxDuration?: number;
+  supportedResolutions?: string[];
+  /** Available models under this provider */
+  models?: VideoModelInfo[];
+}
+
+export interface VideoProvidersResponse {
+  success: boolean;
+  providers?: ProviderInfo[];
+  error?: string | null;
+}
+
 // ===== API Response Wrapper =====
 
 interface ApiResponse<T> {
@@ -172,7 +252,7 @@ export const klingService = {
    */
   async textToVideo(request: KlingTextToVideoRequest): Promise<ApiResponse<VideoJobResponse>> {
     const response = await api.post<ApiResponse<VideoJobResponse>>(
-      `${VIDEO_API_BASE}/kling/text-to-video`,
+      `${VIDEO_API_LEGACY}/kling/text-to-video`,
       {
         prompt: request.prompt,
         duration: request.duration ?? 5,
@@ -194,7 +274,7 @@ export const klingService = {
    */
   async imageToVideo(request: KlingImageToVideoRequest): Promise<ApiResponse<VideoJobResponse>> {
     const response = await api.post<ApiResponse<VideoJobResponse>>(
-      `${VIDEO_API_BASE}/kling/image-to-video`,
+      `${VIDEO_API_LEGACY}/kling/image-to-video`,
       {
         imageUrl: request.imageUrl,
         prompt: request.prompt,
@@ -217,7 +297,7 @@ export const klingService = {
    */
   async getJobStatus(jobId: string): Promise<ApiResponse<VideoJobStatusResponse>> {
     const response = await api.get<ApiResponse<VideoJobStatusResponse>>(
-      `${VIDEO_API_BASE}/kling/jobs/${jobId}`,
+      `${VIDEO_API_LEGACY}/kling/jobs/${jobId}`,
       getAuthHeaders()
     );
     return response.data;
@@ -228,7 +308,7 @@ export const klingService = {
    */
   async cancelJob(jobId: string): Promise<ApiResponse<void>> {
     const response = await api.post<ApiResponse<void>>(
-      `${VIDEO_API_BASE}/kling/jobs/${jobId}/cancel`,
+      `${VIDEO_API_LEGACY}/kling/jobs/${jobId}/cancel`,
       {},
       getAuthHeaders()
     );
@@ -251,7 +331,7 @@ export const klingO1Service = {
     }
 
     const response = await api.post<ApiResponse<VideoJobResponse>>(
-      `${VIDEO_API_BASE}/kling-o1/reference-to-video`,
+      `${VIDEO_API_LEGACY}/kling-o1/reference-to-video`,
       {
         referenceImages: request.referenceImages,
         prompt: request.prompt,
@@ -279,7 +359,7 @@ export const klingO1Service = {
     }
 
     const response = await api.post<ApiResponse<VideoJobResponse>>(
-      `${VIDEO_API_BASE}/kling-o1/video-edit`,
+      `${VIDEO_API_LEGACY}/kling-o1/video-edit`,
       {
         videoUrl: request.videoUrl,
         editType: request.editType,
@@ -297,7 +377,7 @@ export const klingO1Service = {
    */
   async getJobStatus(jobId: string): Promise<ApiResponse<VideoJobStatusResponse>> {
     const response = await api.get<ApiResponse<VideoJobStatusResponse>>(
-      `${VIDEO_API_BASE}/kling-o1/jobs/${jobId}`,
+      `${VIDEO_API_LEGACY}/kling-o1/jobs/${jobId}`,
       getAuthHeaders()
     );
     return response.data;
@@ -312,7 +392,7 @@ export const veoService = {
    */
   async generate(request: VEOGenerateRequest): Promise<ApiResponse<VideoJobResponse>> {
     const response = await api.post<ApiResponse<VideoJobResponse>>(
-      `${VIDEO_API_BASE}/veo/generate`,
+      `${VIDEO_API_LEGACY}/veo/generate`,
       {
         prompt: request.prompt,
         duration: 8, // VEO 3.1 fixed at 8s
@@ -344,7 +424,7 @@ export const veoService = {
    */
   async framesToVideo(request: VEOFramesToVideoRequest): Promise<ApiResponse<VideoJobResponse>> {
     const response = await api.post<ApiResponse<VideoJobResponse>>(
-      `${VIDEO_API_BASE}/veo/frames-to-video`,
+      `${VIDEO_API_LEGACY}/veo/frames-to-video`,
       {
         startFrameUrl: request.startFrameUrl,
         endFrameUrl: request.endFrameUrl,
@@ -362,7 +442,7 @@ export const veoService = {
    */
   async getJobStatus(jobId: string): Promise<ApiResponse<VideoJobStatusResponse>> {
     const response = await api.get<ApiResponse<VideoJobStatusResponse>>(
-      `${VIDEO_API_BASE}/veo/jobs/${jobId}`,
+      `${VIDEO_API_LEGACY}/veo/jobs/${jobId}`,
       getAuthHeaders()
     );
     return response.data;
@@ -377,7 +457,7 @@ export const klingAvatarService = {
    */
   async generate(request: KlingAvatarRequest): Promise<ApiResponse<VideoJobResponse>> {
     const response = await api.post<ApiResponse<VideoJobResponse>>(
-      `${VIDEO_API_BASE}/kling-avatar/generate`,
+      `${VIDEO_API_LEGACY}/kling-avatar/generate`,
       {
         imageUrl: request.imageUrl,
         audioUrl: request.audioUrl,
@@ -396,7 +476,7 @@ export const klingAvatarService = {
    */
   async getJobStatus(jobId: string): Promise<ApiResponse<VideoJobStatusResponse>> {
     const response = await api.get<ApiResponse<VideoJobStatusResponse>>(
-      `${VIDEO_API_BASE}/kling-avatar/jobs/${jobId}`,
+      `${VIDEO_API_LEGACY}/kling-avatar/jobs/${jobId}`,
       getAuthHeaders()
     );
     return response.data;
@@ -487,6 +567,138 @@ export const videoGenerationService = {
     const multiplier = resolutionMultipliers[resolution] ?? 1.5;
 
     return baseCost * duration * multiplier;
+  },
+
+  // ===========================================================================
+  // Unified API Methods (swagger v5 - /api/VideoGeneration)
+  // ===========================================================================
+
+  /**
+   * Get list of available video generation providers and their models
+   * GET /api/videogeneration/providers
+   * Returns provider info with available models, tiers, modes, and capabilities
+   */
+  async getProviders(): Promise<VideoProvidersResponse> {
+    const response = await api.get<VideoProvidersResponse>(
+      `${VIDEO_API_BASE}/providers`,
+      getAuthHeaders()
+    );
+    return response.data;
+  },
+
+  /**
+   * Get flat list of all available video models across all providers
+   * Useful for model selection dropdowns
+   */
+  async getAllModels(): Promise<VideoModelInfo[]> {
+    const providersResponse = await this.getProviders();
+    if (!providersResponse.success || !providersResponse.providers) {
+      return [];
+    }
+    // Flatten models from all providers
+    return providersResponse.providers.flatMap(p => p.models || []);
+  },
+
+  /**
+   * Generate video with auto-selected provider
+   * POST /api/VideoGeneration/generate
+   */
+  async generate(request: VideoGenerationRequest): Promise<UnifiedVideoResponse> {
+    const response = await api.post<UnifiedVideoResponse>(
+      `${VIDEO_API_BASE}/generate`,
+      request,
+      getAuthHeaders()
+    );
+    return response.data;
+  },
+
+  /**
+   * Generate video with specific provider
+   * POST /api/VideoGeneration/generate/{providerName}
+   */
+  async generateWithProvider(
+    providerName: string,
+    request: VideoGenerationRequest
+  ): Promise<UnifiedVideoResponse> {
+    const response = await api.post<UnifiedVideoResponse>(
+      `${VIDEO_API_BASE}/generate/${providerName}`,
+      request,
+      getAuthHeaders()
+    );
+    return response.data;
+  },
+
+  /**
+   * Create a video generation job
+   * POST /api/VideoGeneration/jobs
+   */
+  async createJob(request: VideoGenerationRequest): Promise<UnifiedVideoResponse> {
+    const response = await api.post<UnifiedVideoResponse>(
+      `${VIDEO_API_BASE}/jobs`,
+      request,
+      getAuthHeaders()
+    );
+    return response.data;
+  },
+
+  /**
+   * Get job status (unified endpoint)
+   * GET /api/VideoGeneration/jobs/{jobId}
+   */
+  async getJobStatus(jobId: string, provider?: string): Promise<UnifiedVideoResponse> {
+    const response = await api.get<UnifiedVideoResponse>(
+      `${VIDEO_API_BASE}/jobs/${jobId}`,
+      {
+        ...getAuthHeaders(),
+        params: { provider },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Cancel a video generation job
+   * DELETE /api/VideoGeneration/jobs/{jobId}
+   */
+  async cancelJob(jobId: string, provider?: string): Promise<{ success: boolean; cancelled?: boolean }> {
+    const response = await api.delete<{ success: boolean; cancelled?: boolean }>(
+      `${VIDEO_API_BASE}/jobs/${jobId}`,
+      {
+        ...getAuthHeaders(),
+        params: { provider },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Poll job using unified endpoint
+   */
+  async pollUnifiedJobStatus(
+    jobId: string,
+    provider?: string,
+    onProgress?: (status: UnifiedVideoResponse) => void,
+    intervalMs = 3000,
+    maxAttempts = 200
+  ): Promise<UnifiedVideoResponse> {
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+      const status = await this.getJobStatus(jobId, provider);
+      onProgress?.(status);
+
+      if (status.status === 'completed' || status.videoUrl) {
+        return status;
+      }
+
+      if (status.status === 'failed' || status.status === 'cancelled') {
+        throw new Error(status.error || `Job ${status.status}`);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+      attempts++;
+    }
+
+    throw new Error('Job polling timeout exceeded');
   },
 };
 

@@ -1,9 +1,70 @@
 # Storytelling System - API Requirements
 
-**Version**: 1.0
-**Date**: December 16, 2025
+**Version**: 1.1
+**Date**: December 19, 2025
 **Status**: Specification for Backend Implementation
 **Related**: `docs/STORYTELLING_NODE_STRATEGY.md`
+
+---
+
+## ⚠️ CRITICAL: API Implementation Status Audit (Dec 19, 2025)
+
+### Swagger v3 Implemented Endpoints (4 total)
+
+| Endpoint | Method | Status | Notes |
+|----------|--------|--------|-------|
+| `/api/storytelling/start` | POST | ✅ Implemented | Schema aligned |
+| `/api/storytelling/world/environment` | POST | ✅ Implemented | Schema aligned |
+| `/api/storytelling/dialogue/generate` | POST | ✅ Implemented | Schema aligned |
+| `/api/storytelling/health` | GET | ✅ Implemented | Health check |
+
+### Missing Endpoints Used by Node Execution (5 BLOCKING)
+
+These endpoints are called by storytelling node execution but return **404 Not Found**:
+
+| Endpoint | Method | Node Type | Impact |
+|----------|--------|-----------|--------|
+| `/api/storytelling/structure` | POST | `storyStructure` | ❌ **HIGH** - Node fails |
+| `/api/storytelling/generate-scene` | POST | `sceneGenerator` | ❌ **HIGH** - Node fails |
+| `/api/storytelling/generate-twist` | POST | `plotTwist` | ❌ **HIGH** - Node fails |
+| `/api/storytelling/enhance` | POST | `storyEnhancer` | ❌ **HIGH** - Node fails |
+| `/api/character-library/generate` | POST | `characterCreator` | ❌ **HIGH** - Node fails |
+
+### Missing Supporting Endpoints (21 additional)
+
+| Category | Endpoints | Status |
+|----------|-----------|--------|
+| Character | `/api/agent/character/voice-profile`, `/relationship`, `/generate-sheet` | ⏳ Pending |
+| World | `/api/agent/world/generate-lore`, `/timeline` | ⏳ Pending |
+| Dialogue | `/api/agent/dialogue/apply-voices`, `/generate-monologue` | ⏳ Pending |
+| Prompt | `/api/agent/prompt/scene-to-visuals`, `/enhance` | ⏳ Pending |
+| Story | `/api/agent/story/assemble-storyboard` | ⏳ Pending |
+| Connection | `/api/story/connection/character-meet`, `/plot-weave`, `/location-portal` | ⏳ Pending |
+| Export | `/api/export/manuscript`, `/screenplay`, `/game-script` | ⏳ Pending |
+| Audio | `/api/audio/voice-clone`, `/tts`, `/narrate`, `/ambient` | ⏳ Pending |
+
+### Swagger v3 Request Schema Requirements
+
+All storytelling endpoints must include these LLM configuration fields:
+
+```typescript
+// Base LLM Configuration (add to all requests)
+interface LlmConfigBase {
+  model?: string;           // LLM model ID (e.g., "gemini-2.5-flash")
+  temperature?: number;     // 0.0-1.0, default 0.7
+  maxTokens?: number;       // Max output tokens
+  topP?: number;            // Nucleus sampling
+  topK?: number;            // Top-K sampling
+  providerOptions?: object; // Provider-specific options
+  rag?: RagContext;         // RAG context for grounding
+}
+
+interface RagContext {
+  enabled?: boolean;
+  sources?: string[];
+  maxChunks?: number;
+}
+```
 
 ---
 

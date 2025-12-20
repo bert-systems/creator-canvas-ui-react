@@ -1,47 +1,58 @@
 /**
  * Shared port color constants for all node components
  * Centralized here to maintain consistency across all nodes
+ *
+ * Updated to use brand colors from Creator's Toolbox + SmartAI guide
  */
 
 import type { PortType } from '@/models/canvas';
+import { brandColors, portColors as themePortColors } from '@/theme';
 
 /**
  * Colors for different port types in the node connection handles
- * Used to visually distinguish between different data types
+ * Uses brand-aligned colors for visual consistency
+ *
+ * Brand Color Reference:
+ * - Teal Pulse (#26CABF) - Primary action, image data
+ * - Mint Glow (#85E7AE) - Success, video data
+ * - Tech Blue (#0A6EB9) - Info, audio data
+ * - Deep Ocean (#154366) - Text, sophisticated data
+ * - Sunset Orange (#FC7D21) - Attention, 3D data
+ * - Coral Spark (#F2492A) - Character, identity
  */
 export const PORT_COLORS: Record<PortType, string> = {
-  // Core media types
-  image: '#3b82f6',
-  video: '#8b5cf6',
-  audio: '#ec4899',
-  text: '#f97316',
+  // Core media types - Brand aligned
+  image: themePortColors.image,      // Teal Pulse
+  video: themePortColors.video,      // Mint Glow
+  audio: themePortColors.audio,      // Tech Blue
+  text: themePortColors.text,        // Deep Ocean
 
-  // Creative types
-  style: '#06b6d4',
-  character: '#a855f7',
-  mesh3d: '#f59e0b',
-  any: '#6b7280',
+  // Creative types - Brand aligned
+  style: themePortColors.style,      // Indigo
+  character: themePortColors.character, // Pink
+  mesh3d: themePortColors.mesh3d,    // Sunset Orange
+  any: themePortColors.any,          // Neutral gray
 
-  // Storytelling types
-  story: '#10b981',
-  scene: '#14b8a6',
-  plotPoint: '#f59e0b',
-  location: '#84cc16',
-  dialogue: '#f472b6',
-  treatment: '#a78bfa',
-  outline: '#22d3ee',
-  lore: '#c084fc',
-  timeline: '#fbbf24',
+  // Storytelling types - Brand aligned
+  story: themePortColors.story,      // Emerald
+  scene: themePortColors.scene,      // Light emerald
+  plotPoint: themePortColors.plotPoint, // Lime
+  location: themePortColors.location,   // Amber
+  dialogue: themePortColors.dialogue,   // Pink
+  treatment: themePortColors.treatment, // Violet
+  outline: themePortColors.outline,     // Purple
+  lore: themePortColors.lore,           // Yellow
+  timeline: themePortColors.timeline,   // Orange
 
-  // Fashion types
-  garment: '#ec4899',
-  fabric: '#f472b6',
-  pattern: '#f9a8d4',
-  model: '#c084fc',
-  outfit: '#a855f7',
-  collection: '#8b5cf6',
-  techPack: '#6366f1',
-  lookbook: '#7c3aed',
+  // Fashion types - Brand aligned
+  garment: themePortColors.garment,     // Coral Spark
+  fabric: brandColors.sunsetOrange,     // Sunset Orange for fabric/textile
+  pattern: '#F9A8D4',                   // Light pink for patterns
+  model: themePortColors.model,         // Pink
+  outfit: themePortColors.outfit,       // Light coral
+  collection: themePortColors.collection, // Deep Ocean
+  techPack: '#6366F1',                  // Indigo for technical
+  lookbook: '#7C3AED',                  // Purple for lookbooks
 };
 
 export default PORT_COLORS;

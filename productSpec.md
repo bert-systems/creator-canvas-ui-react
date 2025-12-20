@@ -1,7 +1,7 @@
 # Product Specification - Creative Canvas Studio
 
-**Last Updated:** December 11, 2025
-**Version:** 2.0
+**Last Updated:** December 17, 2025
+**Version:** 3.0
 
 ---
 
@@ -133,18 +133,151 @@ Context-aware actions triggered when nodes connect:
 | Asset Library | ✅ | Generated image storage |
 | Workflow Execution | ✅ | Multi-stage pipelines |
 
-### In Progress (v2.0)
+### Implemented (v2.0 - v3.0)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Node Palette | ✅ | CreativePalette v3 with CREATE/STYLE/ASSETS tabs |
+| Node Inspector | ✅ | Model chooser, prompt enhancer, metadata display |
+| Video Generation | ✅ | Kling 2.6, VEO 3.1, Kling Avatar |
+| Virtual Try-On | ✅ | 5 providers (FASHN, IDM-VTON, CAT-VTON, Leffa, Kling-Kolors) |
+| Character Consistency | ✅ | Character Lock (7 refs), Face Memory (5 slots), Element Library |
+| Storytelling System | ✅ | 24 nodes across narrative, character, world-building, dialogue |
+| Fashion System | ✅ | 23 nodes for design, textile, styling, photography, video |
+| Creative Cards | ✅ | 3-mode cards (Hero, Craft, Mini) |
+| Agent Collaborators | ✅ | 5 agents (Muse, Curator, Architect, Packager, Heritage Guide) |
+
+### Implementing (v3.1 - Unified Node System)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **Unified Node API** | 🔄 | Backend persistence for nodes with typed ports |
+| **Typed Port System** | 🔄 | Full input/output persistence across page loads |
+| **Edge API** | 🔄 | Backend persistence for connections with port IDs |
+| **Connection Generation** | 🔄 | Backend API for "Moments of Delight" fusion |
+| **Node Execution API** | 🔄 | Per-node execution with status tracking |
+| **Batch Node Updates** | 🔄 | Efficient position/dimension syncing |
+| **Port Compatibility API** | 🔄 | Server-side port type validation |
+| **Node Templates API** | 🔄 | Backend-stored node definitions |
+
+### Backlog (v4.0+)
 
 | Feature | Priority | Phase |
 |---------|----------|-------|
-| Node Palette | Critical | 1 |
-| Node Inspector | Critical | 1 |
-| Video Generation | Critical | 2 |
-| Virtual Try-On | High | 3 |
-| Character Consistency | High | 4 |
 | 3D Generation | High | 5 |
+| Portfolio System | High | 4 |
 | Logic Nodes | Medium | 6 |
 | Real-time Collaboration | Medium | 6 |
+
+---
+
+## Unified Node System (v3.1)
+
+> **Migration:** December 2025 - Resolves the Card/Node architectural mismatch
+
+### The Problem Solved
+
+Previously, the system had two incompatible models:
+- **Card System** (Backend): Simple workflow stages, no typed ports
+- **Node System** (Frontend): Rich typed ports, parameters - but lost on page reload
+
+### The Solution
+
+The `creator-canvas-api` backend now provides full **Node** persistence:
+
+| Capability | Before | After |
+|------------|--------|-------|
+| Typed Ports | Frontend-only, lost on reload | Persisted to backend |
+| Parameters | Embedded in config blob | First-class entity |
+| Connections | Basic source→target | Port-level: sourcePort→targetPort |
+| Execution | Card workflow stages | Node-level with agent binding |
+| Status | Card-level only | Per-node status + cached output |
+
+### New API Capabilities
+
+#### Node Operations
+```
+POST   /api/creative-canvas/boards/{boardId}/nodes     Create node with full schema
+GET    /api/creative-canvas/boards/{boardId}/nodes     List all board nodes
+GET    /api/creative-canvas/nodes/{nodeId}             Get node with ports
+PUT    /api/creative-canvas/nodes/{nodeId}             Update node
+DELETE /api/creative-canvas/nodes/{nodeId}             Delete node
+POST   /api/creative-canvas/nodes/{nodeId}/execute     Execute single node
+POST   /api/creative-canvas/nodes/{nodeId}/reset       Reset node state
+PATCH  /api/creative-canvas/boards/{boardId}/nodes/batch  Batch update
+```
+
+#### Edge Operations
+```
+POST   /api/creative-canvas/boards/{boardId}/edges     Create typed edge
+GET    /api/creative-canvas/boards/{boardId}/edges     List board edges
+PUT    /api/creative-canvas/edges/{edgeId}             Update edge
+DELETE /api/creative-canvas/edges/{edgeId}             Delete edge
+```
+
+#### Connection Actions
+```
+POST   /api/creative-canvas/connections/generate       Fusion image generation
+GET    /api/creative-canvas/connections/models         Available fusion models
+GET    /api/creative-canvas/port-types                 All port types
+GET    /api/creative-canvas/port-types/compatible      Port compatibility check
+```
+
+### Data Models
+
+**CanvasNode** (Backend Entity):
+```typescript
+{
+  id: string;
+  boardId: string;
+  nodeType: string;        // "virtualTryOn", "storyGenesis", etc.
+  category: string;        // "fashion", "narrative", etc.
+  label: string;
+  position: { x, y };
+  dimensions: { width, height };
+  inputs: NodePort[];      // ← NOW PERSISTED
+  outputs: NodePort[];     // ← NOW PERSISTED
+  parameters: {};          // ← NOW PERSISTED
+  status: "idle" | "running" | "completed" | "error";
+  lastExecution?: { startedAt, completedAt, durationMs, error };
+  agentBinding?: { agentType, endpoint, config };
+  cachedOutput?: {};       // Last execution result
+}
+```
+
+**NodePort** (Typed Connection Point):
+```typescript
+{
+  id: string;
+  name: string;
+  type: PortType;   // "image", "video", "garment", "story", etc.
+  required: boolean;
+  multi: boolean;   // Accepts multiple connections
+}
+```
+
+**CanvasEdge** (Connection):
+```typescript
+{
+  id: string;
+  boardId: string;
+  sourceNodeId: string;
+  sourcePortId: string;    // ← Port-level connection
+  targetNodeId: string;
+  targetPortId: string;    // ← Port-level connection
+  edgeType?: string;
+  label?: string;
+}
+```
+
+### User Benefits
+
+1. **Persistence** - Nodes retain full configuration across page reloads
+2. **Specialized UI** - Nodes render with correct components (VirtualTryOnNode, etc.)
+3. **Port Validation** - Incompatible connections prevented at API level
+4. **Per-Node Execution** - Execute individual nodes, not entire workflows
+5. **Cached Results** - Previous outputs available without re-execution
+6. **Collaboration-Ready** - Real-time sync via backend state
 
 ---
 

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7688';
+// New standalone API: creator-canvas-api (ports 5003 HTTP / 7003 HTTPS)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7003';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

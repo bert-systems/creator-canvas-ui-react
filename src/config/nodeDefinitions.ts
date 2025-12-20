@@ -54,14 +54,14 @@ export const nodeDefinitions: NodeDefinition[] = [
     category: 'input',
     label: 'Reference Image',
     displayName: 'Style Reference',
-    description: 'Upload reference images to guide the style, composition, or mood of generated content',
-    quickHelp: 'Upload images the AI should use as inspiration',
+    description: 'Upload reference images or provide URLs to guide the style, composition, or mood of generated content',
+    quickHelp: 'Upload images or paste URLs for AI to use as inspiration',
     useCase: 'Mood boards, style consistency, composition guides',
     icon: 'Collections',
     inputs: [],
     outputs: [{ id: 'images', name: 'Images', type: 'image', multiple: true }],
     parameters: [
-      { id: 'files', name: 'Files', type: 'file' },
+      { id: 'images', name: 'Images', type: 'file' },
     ],
   },
   {
@@ -93,10 +93,10 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Connect a text prompt → Generate beautiful images',
     useCase: 'Product photos, fashion designs, concept art',
     icon: 'AutoAwesome',
-    aiModel: 'fal-ai/flux-pro/v1.1',
+    aiModel: 'flux-2-pro',  // Maps to image-gen template on backend
     inputs: [
-      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
-      { id: 'reference', name: 'Reference', type: 'image' },
+      { id: 'prompt', name: 'Prompt (Text Input)', type: 'text', required: true },
+      { id: 'reference', name: 'Reference (Image Upload)', type: 'image' },
     ],
     outputs: [{ id: 'image', name: 'Image', type: 'image' }],
     parameters: [
@@ -115,10 +115,10 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Text prompt + optional style → Custom-styled images',
     useCase: 'Personal art styles, trained aesthetics, experimental looks',
     icon: 'Science',
-    aiModel: 'fal-ai/flux/dev',
+    aiModel: 'flux-2-dev',  // Maps to image-gen template on backend
     inputs: [
-      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
-      { id: 'style', name: 'Style LoRA', type: 'style' },
+      { id: 'prompt', name: 'Prompt (Text Input)', type: 'text', required: true },
+      { id: 'style', name: 'Style (LoRA Training)', type: 'style' },
     ],
     outputs: [{ id: 'image', name: 'Image', type: 'image' }],
     parameters: [
@@ -137,11 +137,11 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'References + Prompt → Scene with those people',
     useCase: 'Group photos, family portraits, multi-character stories',
     icon: 'GroupAdd',
-    aiModel: 'fal-ai/nano-banana-pro',
+    aiModel: 'nano-banana-pro',  // Maps to image-gen template on backend
     inputs: [
-      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
-      { id: 'references', name: 'References', type: 'image', multiple: true },
-      { id: 'characters', name: 'Characters', type: 'character', multiple: true },
+      { id: 'prompt', name: 'Prompt (Text Input)', type: 'text', required: true },
+      { id: 'references', name: 'Face Photos (Image Upload)', type: 'image', multiple: true },
+      { id: 'characters', name: 'Characters (Character Reference)', type: 'character', multiple: true },
     ],
     outputs: [{ id: 'image', name: 'Image', type: 'image' }],
     parameters: [
@@ -160,14 +160,114 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Image + "Change X to Y" → Edited image',
     useCase: 'Outfit changes, background swaps, detail modifications',
     icon: 'Transform',
-    aiModel: 'fal-ai/flux-kontext/pro',
+    aiModel: 'flux-kontext',  // Maps to image-gen template on backend
     inputs: [
-      { id: 'image', name: 'Source Image', type: 'image', required: true },
-      { id: 'prompt', name: 'Edit Prompt', type: 'text', required: true },
+      { id: 'image', name: 'Source Image (Image Upload)', type: 'image', required: true },
+      { id: 'prompt', name: 'Edit Prompt (Text Input)', type: 'text', required: true },
     ],
     outputs: [{ id: 'image', name: 'Image', type: 'image' }],
     parameters: [
       { id: 'strength', name: 'Edit Strength', type: 'slider', default: 0.8, min: 0, max: 1, step: 0.05 },
+    ],
+  },
+  // === NEW DECEMBER 2025 IMAGE MODELS ===
+  {
+    type: 'flux2Max',
+    category: 'imageGen',
+    label: 'FLUX.2 Max',
+    displayName: 'Photo Generator (Flagship)',
+    description: 'State-of-the-art image generation with exceptional realism and multi-reference synthesis (up to 10 images). Best quality available.',
+    quickHelp: 'Prompt + up to 10 references → Highest quality images',
+    useCase: 'Commercial photography, premium content, multi-reference scenes',
+    icon: 'Stars',
+    aiModel: 'flux-2-max',
+    tier: 'flagship',
+    cost: '$0.07/megapixel',
+    inputs: [
+      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
+      { id: 'references', name: 'References (up to 10)', type: 'image', multiple: true },
+    ],
+    outputs: [{ id: 'image', name: 'Image', type: 'image' }],
+    parameters: [
+      { id: 'width', name: 'Width', type: 'number', default: 1024, min: 256, max: 4096 },
+      { id: 'height', name: 'Height', type: 'number', default: 1024, min: 256, max: 4096 },
+      { id: 'guidance', name: 'Guidance Scale', type: 'slider', default: 3.5, min: 1, max: 20, step: 0.1 },
+      { id: 'numImages', name: 'Num Images', type: 'number', default: 1, min: 1, max: 4 },
+    ],
+  },
+  {
+    type: 'recraftV3',
+    category: 'imageGen',
+    label: 'Recraft V3',
+    displayName: 'Text & Brand Designer',
+    description: 'Best-in-class for text rendering, vector art, and brand-style generation. Creates posters, ads, and designs with readable long-form text.',
+    quickHelp: 'Perfect for posters, ads, logos, and branded content',
+    useCase: 'Posters, advertisements, brand materials, vector graphics',
+    icon: 'FormatShapes',
+    aiModel: 'recraft-v3',
+    tier: 'production',
+    bestFor: 'text',
+    inputs: [
+      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
+      { id: 'brandStyle', name: 'Brand Style Reference', type: 'image', multiple: true },
+    ],
+    outputs: [
+      { id: 'image', name: 'Raster Image', type: 'image' },
+      { id: 'vector', name: 'Vector (SVG)', type: 'style' },
+    ],
+    parameters: [
+      { id: 'style', name: 'Style', type: 'select', default: 'realistic', options: [
+        { label: 'Realistic', value: 'realistic' },
+        { label: 'Digital Illustration', value: 'digital_illustration' },
+        { label: 'Vector Art', value: 'vector_illustration' },
+        { label: 'Icon', value: 'icon' },
+      ]},
+      { id: 'textContent', name: 'Text to Include', type: 'text', default: '' },
+      { id: 'brandColors', name: 'Brand Colors (hex)', type: 'text', default: '' },
+      { id: 'width', name: 'Width', type: 'number', default: 1024, min: 256, max: 2048 },
+      { id: 'height', name: 'Height', type: 'number', default: 1024, min: 256, max: 2048 },
+    ],
+  },
+  {
+    type: 'gptImage',
+    category: 'imageGen',
+    label: 'GPT Image 1.5',
+    displayName: 'GPT Image Generator',
+    description: 'OpenAI multimodal image generation with strongest prompt adherence and understanding.',
+    quickHelp: 'Most accurate prompt interpretation',
+    useCase: 'Complex scenes, precise instructions, detailed compositions',
+    icon: 'Psychology',
+    aiModel: 'gpt-image-1.5',  // GPT Image maps to dalle3
+    tier: 'flagship',
+    inputs: [
+      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
+    ],
+    outputs: [{ id: 'image', name: 'Image', type: 'image' }],
+    parameters: [
+      { id: 'width', name: 'Width', type: 'number', default: 1024, min: 256, max: 2048 },
+      { id: 'height', name: 'Height', type: 'number', default: 1024, min: 256, max: 2048 },
+      { id: 'numImages', name: 'Num Images', type: 'number', default: 1, min: 1, max: 4 },
+    ],
+  },
+  {
+    type: 'zImageTurbo',
+    category: 'imageGen',
+    label: 'Z-Image Turbo',
+    displayName: 'Fast Image Generator',
+    description: 'Ultra-fast 6B parameter model for quick iterations and rapid prototyping.',
+    quickHelp: 'Fastest generation for quick previews',
+    useCase: 'Rapid prototyping, quick iterations, concept exploration',
+    icon: 'FlashOn',
+    aiModel: 'flux-schnell',  // Fast turbo model
+    tier: 'fast',
+    inputs: [
+      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
+    ],
+    outputs: [{ id: 'image', name: 'Image', type: 'image' }],
+    parameters: [
+      { id: 'width', name: 'Width', type: 'number', default: 1024, min: 256, max: 2048 },
+      { id: 'height', name: 'Height', type: 'number', default: 1024, min: 256, max: 2048 },
+      { id: 'numImages', name: 'Num Images', type: 'number', default: 1, min: 1, max: 4 },
     ],
   },
 
@@ -183,9 +283,9 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Describe a scene → Watch it come to life',
     useCase: 'Social media clips, concept videos, story sequences',
     icon: 'Videocam',
-    aiModel: 'fal-ai/kling-video/v2.6/pro/text-to-video',
+    aiModel: 'kling',  // Kling video model
     inputs: [
-      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
+      { id: 'prompt', name: 'Scene Description (Text Input)', type: 'text', required: true },
     ],
     outputs: [
       { id: 'video', name: 'Video', type: 'video' },
@@ -213,10 +313,10 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Static image → Animated video',
     useCase: 'Fashion runway videos, product animations, photo animations',
     icon: 'Animation',
-    aiModel: 'fal-ai/kling-video/v2.6/pro/image-to-video',
+    aiModel: 'kling',  // Kling i2v model
     inputs: [
-      { id: 'image', name: 'Source Image', type: 'image', required: true },
-      { id: 'prompt', name: 'Motion Prompt', type: 'text' },
+      { id: 'image', name: 'Source Image (Image Upload)', type: 'image', required: true },
+      { id: 'prompt', name: 'Motion Prompt (Text Input)', type: 'text' },
     ],
     outputs: [{ id: 'video', name: 'Video', type: 'video' }],
     parameters: [
@@ -236,10 +336,10 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Person photos + Scene → Video with that person',
     useCase: 'Personalized content, character-driven stories, product demos',
     icon: 'PersonVideo',
-    aiModel: 'fal-ai/kling-video/v1.6/pro/elements',
+    aiModel: 'kling',  // Kling elements model
     inputs: [
-      { id: 'references', name: 'References', type: 'image', multiple: true, required: true },
-      { id: 'prompt', name: 'Scene Prompt', type: 'text', required: true },
+      { id: 'references', name: 'Person Photos (Image Upload)', type: 'image', multiple: true, required: true },
+      { id: 'prompt', name: 'Scene Description (Text Input)', type: 'text', required: true },
     ],
     outputs: [{ id: 'video', name: 'Video', type: 'video' }],
     parameters: [
@@ -259,10 +359,10 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Prompt → Hollywood-quality video clip',
     useCase: 'Film teasers, high-end ads, cinematic storytelling',
     icon: 'Movie',
-    aiModel: 'fal-ai/veo3',
+    aiModel: 'veo',  // VEO video model
     inputs: [
-      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
-      { id: 'image', name: 'First Frame', type: 'image' },
+      { id: 'prompt', name: 'Scene Description (Text Input)', type: 'text', required: true },
+      { id: 'image', name: 'First Frame (Image Upload)', type: 'image' },
     ],
     outputs: [
       { id: 'video', name: 'Video', type: 'video' },
@@ -288,7 +388,7 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Face photo + Audio → Talking video',
     useCase: 'Social media content, presentations, virtual spokespersons',
     icon: 'RecordVoiceOver',
-    aiModel: 'fal-ai/kling-video/v2/avatar',
+    aiModel: 'kling',  // Kling avatar model
     inputs: [
       { id: 'image', name: 'Portrait', type: 'image', required: true },
       { id: 'audio', name: 'Audio', type: 'audio', required: true },
@@ -296,6 +396,197 @@ export const nodeDefinitions: NodeDefinition[] = [
     outputs: [{ id: 'video', name: 'Video', type: 'video' }],
     parameters: [
       { id: 'lipSyncStrength', name: 'Lip Sync Strength', type: 'slider', default: 0.8, min: 0, max: 1, step: 0.1 },
+    ],
+  },
+  // === NEW DECEMBER 2025 VIDEO MODELS ===
+  {
+    type: 'sora2',
+    category: 'videoGen',
+    label: 'Sora 2',
+    displayName: 'Sora Video Generator',
+    description: 'OpenAI\'s state-of-the-art video model with realistic physics, native audio, and multi-shot capabilities. Includes the Cameos feature.',
+    quickHelp: 'Best physics & realism with synchronized audio',
+    useCase: 'Professional video content, cinematic scenes, realistic motion',
+    icon: 'AutoAwesome',
+    aiModel: 'sora',  // Sora video model
+    tier: 'flagship',
+    hasAudio: true,
+    cost: '$0.50/sec',
+    inputs: [
+      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
+      { id: 'image', name: 'First Frame (optional)', type: 'image' },
+    ],
+    outputs: [
+      { id: 'video', name: 'Video', type: 'video' },
+      { id: 'audio', name: 'Audio', type: 'audio' },
+    ],
+    parameters: [
+      { id: 'duration', name: 'Duration', type: 'select', default: 5, options: [
+        { label: '5 seconds', value: 5 },
+        { label: '10 seconds', value: 10 },
+        { label: '15 seconds', value: 15 },
+      ]},
+      { id: 'aspectRatio', name: 'Aspect Ratio', type: 'select', default: '16:9', options: [
+        { label: '16:9 (Landscape)', value: '16:9' },
+        { label: '9:16 (Portrait)', value: '9:16' },
+        { label: '1:1 (Square)', value: '1:1' },
+      ]},
+      { id: 'enableAudio', name: 'Generate Audio', type: 'boolean', default: true },
+      { id: 'audioPrompt', name: 'Audio Direction', type: 'text', default: '' },
+    ],
+  },
+  {
+    type: 'sora2Pro',
+    category: 'videoGen',
+    label: 'Sora 2 Pro',
+    displayName: 'Sora Pro Video',
+    description: 'OpenAI\'s flagship video model. Best physics, realism, and multi-shot coherence. Premium quality output.',
+    quickHelp: 'Premium tier with best quality and control',
+    useCase: 'Commercial productions, film-quality content, premium ads',
+    icon: 'WorkspacePremium',
+    aiModel: 'sora',  // Sora Pro video model
+    tier: 'flagship',
+    hasAudio: true,
+    cost: '$0.80/sec',
+    inputs: [
+      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
+      { id: 'image', name: 'First Frame', type: 'image' },
+      { id: 'storyboard', name: 'Multi-shot Storyboard', type: 'image', multiple: true },
+    ],
+    outputs: [
+      { id: 'video', name: 'Video', type: 'video' },
+      { id: 'audio', name: 'Audio', type: 'audio' },
+    ],
+    parameters: [
+      { id: 'duration', name: 'Duration', type: 'select', default: 10, options: [
+        { label: '5 seconds', value: 5 },
+        { label: '10 seconds', value: 10 },
+        { label: '15 seconds', value: 15 },
+        { label: '20 seconds', value: 20 },
+      ]},
+      { id: 'aspectRatio', name: 'Aspect Ratio', type: 'select', default: '16:9', options: [
+        { label: '16:9 (Cinematic)', value: '16:9' },
+        { label: '21:9 (Ultra-wide)', value: '21:9' },
+        { label: '9:16 (Portrait)', value: '9:16' },
+        { label: '1:1 (Square)', value: '1:1' },
+      ]},
+      { id: 'enableAudio', name: 'Generate Audio', type: 'boolean', default: true },
+      { id: 'audioPrompt', name: 'Audio Direction', type: 'text', default: '' },
+      { id: 'multiShot', name: 'Multi-shot Mode', type: 'boolean', default: false },
+    ],
+  },
+  {
+    type: 'kling26Pro',
+    category: 'videoGen',
+    label: 'Kling 2.6 Pro',
+    displayName: 'Kling Pro Video',
+    description: 'Top-tier cinematic video with native bilingual audio (EN/ZH). Supports extended generation up to 3 minutes.',
+    quickHelp: 'Cinematic quality with voice and sound',
+    useCase: 'Long-form content, dialogue scenes, cinematic storytelling',
+    icon: 'TheaterComedy',
+    aiModel: 'kling',  // Kling Pro video model
+    tier: 'flagship',
+    hasAudio: true,
+    cost: '$0.14/sec',
+    inputs: [
+      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
+      { id: 'image', name: 'First Frame', type: 'image' },
+    ],
+    outputs: [
+      { id: 'video', name: 'Video', type: 'video' },
+      { id: 'audio', name: 'Audio', type: 'audio' },
+    ],
+    parameters: [
+      { id: 'duration', name: 'Duration', type: 'select', default: 10, options: [
+        { label: '5 seconds', value: 5 },
+        { label: '10 seconds', value: 10 },
+        { label: '30 seconds', value: 30 },
+        { label: '60 seconds', value: 60 },
+        { label: '180 seconds (3 min)', value: 180 },
+      ]},
+      { id: 'aspectRatio', name: 'Aspect Ratio', type: 'select', default: '16:9', options: [
+        { label: '16:9', value: '16:9' },
+        { label: '9:16', value: '9:16' },
+        { label: '1:1', value: '1:1' },
+      ]},
+      { id: 'enableAudio', name: 'Generate Audio', type: 'boolean', default: true },
+      { id: 'audioLanguage', name: 'Audio Language', type: 'select', default: 'en', options: [
+        { label: 'English', value: 'en' },
+        { label: 'Chinese', value: 'zh' },
+        { label: 'Auto-detect', value: 'auto' },
+      ]},
+    ],
+  },
+  {
+    type: 'ltx2',
+    category: 'videoGen',
+    label: 'LTX-2',
+    displayName: '4K Video Generator',
+    description: 'Open-source 4K video at 50fps with synchronized audio. Excellent value for high-fidelity output.',
+    quickHelp: '4K resolution with audio at competitive cost',
+    useCase: 'High-resolution content, smooth motion, professional quality',
+    icon: 'Hd',
+    aiModel: 'luma',  // LTX/Luma video model
+    tier: 'production',
+    hasAudio: true,
+    cost: '$0.16/sec',
+    inputs: [
+      { id: 'prompt', name: 'Prompt', type: 'text', required: true },
+      { id: 'image', name: 'First Frame', type: 'image' },
+    ],
+    outputs: [
+      { id: 'video', name: 'Video', type: 'video' },
+      { id: 'audio', name: 'Audio', type: 'audio' },
+    ],
+    parameters: [
+      { id: 'duration', name: 'Duration', type: 'select', default: 6, options: [
+        { label: '6 seconds', value: 6 },
+        { label: '8 seconds', value: 8 },
+        { label: '10 seconds', value: 10 },
+      ]},
+      { id: 'resolution', name: 'Resolution', type: 'select', default: '1080p', options: [
+        { label: '1080p HD', value: '1080p' },
+        { label: '4K Ultra HD', value: '4k' },
+      ]},
+      { id: 'fps', name: 'Frame Rate', type: 'select', default: 30, options: [
+        { label: '30 fps', value: 30 },
+        { label: '50 fps', value: 50 },
+      ]},
+      { id: 'enableAudio', name: 'Generate Audio', type: 'boolean', default: true },
+    ],
+  },
+  {
+    type: 'wan26',
+    category: 'videoGen',
+    label: 'WAN 2.6',
+    displayName: 'Multi-Shot Video',
+    description: 'Create multi-shot videos with scene transitions and audio. Ideal for narrative content up to 15 seconds.',
+    quickHelp: 'Multiple shots with transitions in one video',
+    useCase: 'Story sequences, trailers, multi-scene content',
+    icon: 'ViewCarousel',
+    aiModel: 'minimax',  // WAN video model
+    tier: 'creative',
+    hasAudio: true,
+    inputs: [
+      { id: 'prompt', name: 'Scene Descriptions', type: 'text', required: true },
+      { id: 'images', name: 'Scene References', type: 'image', multiple: true },
+    ],
+    outputs: [
+      { id: 'video', name: 'Video', type: 'video' },
+      { id: 'audio', name: 'Audio', type: 'audio' },
+    ],
+    parameters: [
+      { id: 'numShots', name: 'Number of Shots', type: 'number', default: 3, min: 2, max: 6 },
+      { id: 'duration', name: 'Total Duration', type: 'select', default: 10, options: [
+        { label: '10 seconds', value: 10 },
+        { label: '15 seconds', value: 15 },
+      ]},
+      { id: 'transitionStyle', name: 'Transition Style', type: 'select', default: 'cut', options: [
+        { label: 'Cut', value: 'cut' },
+        { label: 'Fade', value: 'fade' },
+        { label: 'Dissolve', value: 'dissolve' },
+      ]},
+      { id: 'enableAudio', name: 'Generate Audio', type: 'boolean', default: true },
     ],
   },
 
@@ -311,7 +602,7 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Product photo → Rotatable 3D model',
     useCase: 'E-commerce 3D views, game assets, product visualization',
     icon: 'ViewInAr',
-    aiModel: 'fal-ai/meshy',
+    aiModel: 'meshy',  // Meshy 3D model
     inputs: [
       { id: 'image', name: 'Source Image', type: 'image', required: true },
     ],
@@ -334,7 +625,7 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Image → Game-ready 3D asset',
     useCase: 'Game development, AR/VR assets, rapid prototyping',
     icon: '3dRotation',
-    aiModel: 'fal-ai/tripo',
+    aiModel: 'tripo',  // Tripo 3D model
     inputs: [
       { id: 'image', name: 'Source Image', type: 'image', required: true },
     ],
@@ -400,7 +691,7 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Save assets → Reuse across videos',
     useCase: 'Brand characters, product consistency, story continuity',
     icon: 'LibraryBooks',
-    aiModel: 'fal-ai/kling-video/v1.6/pro/elements',
+    aiModel: 'kling',  // Kling elements model
     inputs: [
       { id: 'elements', name: 'Element Images', type: 'image', multiple: true },
     ],
@@ -496,8 +787,8 @@ export const nodeDefinitions: NodeDefinition[] = [
     icon: 'Checkroom',
     aiModel: 'multi-provider',
     inputs: [
-      { id: 'model', name: 'Model Photo', type: 'image', required: true },
-      { id: 'garment', name: 'Garment', type: 'image', required: true },
+      { id: 'model', name: 'Model Photo (Image Upload)', type: 'image', required: true },
+      { id: 'garment', name: 'Garment (Image Upload)', type: 'image', required: true },
     ],
     outputs: [{ id: 'image', name: 'Result', type: 'image' }],
     parameters: [
@@ -515,7 +806,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'mode', name: 'Quality Mode', type: 'select', default: 'quality', options: [
         { label: 'Quality', value: 'quality' },
-        { label: 'Speed', value: 'speed' },
+        { label: 'Performance (Fast)', value: 'performance' },
         { label: 'Balanced', value: 'balanced' },
       ]},
       { id: 'garmentPhotoType', name: 'Garment Photo', type: 'select', default: 'auto', options: [
@@ -529,23 +820,25 @@ export const nodeDefinitions: NodeDefinition[] = [
     type: 'clothesSwap',
     category: 'composite',
     label: 'Clothes Swap',
-    displayName: 'Change Outfit (Text)',
-    description: 'Change someone\'s clothing using text descriptions. The AI replaces the outfit while keeping the person.',
-    quickHelp: '"Change to red dress" → New outfit',
+    displayName: 'Swap Garment (Image)',
+    description: 'Replace clothing in a photo with a different garment using an image reference. Uses AI to seamlessly blend.',
+    quickHelp: 'Person + Garment photo → Swapped outfit',
     useCase: 'Fashion variations, outfit exploration, lookbook creation',
     icon: 'SwapHoriz',
-    aiModel: 'fal-ai/flux-kontext/pro',
+    aiModel: 'fashn',  // Uses fashion try-on backend (Swagger v3 aligned)
     inputs: [
-      { id: 'person', name: 'Person Image', type: 'image', required: true },
-      { id: 'prompt', name: 'Clothing Prompt', type: 'text', required: true },
+      { id: 'person', name: 'Person Photo (Image Upload)', type: 'image', required: true },
+      { id: 'garment', name: 'Garment Photo (Image Upload)', type: 'image', required: true },
     ],
     outputs: [{ id: 'image', name: 'Result', type: 'image' }],
     parameters: [
-      { id: 'prompt', name: 'Clothing Description', type: 'text', default: '' },
-      { id: 'preserveIdentity', name: 'Preserve Identity', type: 'boolean', default: true },
-      { id: 'preserveBackground', name: 'Preserve Background', type: 'boolean', default: true },
-      { id: 'guidanceScale', name: 'Guidance Scale', type: 'slider', default: 7.5, min: 1, max: 20, step: 0.5 },
-      { id: 'numInferenceSteps', name: 'Steps', type: 'number', default: 30, min: 10, max: 50 },
+      { id: 'garmentDescription', name: 'Garment Description (Optional)', type: 'text', default: '' },
+      { id: 'category', name: 'Garment Type', type: 'select', default: 'tops', options: [
+        { label: 'Tops', value: 'tops' },
+        { label: 'Bottoms', value: 'bottoms' },
+        { label: 'Dresses', value: 'dresses' },
+        { label: 'Outerwear', value: 'outerwear' },
+      ]},
     ],
   },
   {
@@ -557,33 +850,29 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Fashion photo → Model walking video',
     useCase: 'Digital fashion shows, lookbook videos, collection presentations',
     icon: 'DirectionsWalk',
-    aiModel: 'fal-ai/kling-video/v2.6/pro/image-to-video',
+    aiModel: 'kling',  // Kling i2v model
     inputs: [
-      { id: 'image', name: 'Lookbook Image', type: 'image', required: true },
+      { id: 'image', name: 'Fashion Photo (Image Upload)', type: 'image', required: true },
     ],
     outputs: [{ id: 'video', name: 'Runway Video', type: 'video' }],
     parameters: [
-      { id: 'animationType', name: 'Animation Type', type: 'select', default: 'catwalk', options: [
-        { label: 'Catwalk', value: 'catwalk' },
-        { label: '360° Spin', value: 'spin' },
-        { label: 'Fabric Flow', value: 'fabric-flow' },
-        { label: 'Pose to Pose', value: 'pose-to-pose' },
+      // Aligned with Swagger v3 API schema - uses walkStyle, duration (string), cameraStyle
+      { id: 'walkStyle', name: 'Walk Style', type: 'select', default: 'commercial', options: [
+        { label: 'Haute Couture', value: 'haute-couture' },
+        { label: 'Ready-to-Wear', value: 'rtw' },
+        { label: 'Commercial', value: 'commercial' },
+        { label: 'Editorial', value: 'editorial' },
+        { label: 'Streetwear', value: 'streetwear' },
       ]},
-      { id: 'duration', name: 'Duration', type: 'select', default: 5, options: [
-        { label: '5 seconds', value: 5 },
-        { label: '10 seconds', value: 10 },
+      { id: 'duration', name: 'Duration', type: 'select', default: '5s', options: [
+        { label: '5 seconds', value: '5s' },
+        { label: '10 seconds', value: '10s' },
       ]},
-      { id: 'audioEnabled', name: 'Enable Audio', type: 'boolean', default: false },
-      { id: 'cameraMotion', name: 'Camera Motion', type: 'select', default: 'follow', options: [
+      { id: 'cameraStyle', name: 'Camera Style', type: 'select', default: 'follow', options: [
         { label: 'Static', value: 'static' },
         { label: 'Follow Model', value: 'follow' },
-        { label: 'Pan', value: 'pan' },
-      ]},
-      { id: 'musicStyle', name: 'Music Style', type: 'select', default: 'none', options: [
-        { label: 'None', value: 'none' },
-        { label: 'Electronic', value: 'electronic' },
-        { label: 'Classical', value: 'classical' },
-        { label: 'Ambient', value: 'ambient' },
+        { label: 'Crane Shot', value: 'crane' },
+        { label: 'Multi-Angle', value: 'multi-angle' },
       ]},
     ],
   },
@@ -709,7 +998,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Days', value: 'days' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'stackMultiverse',
@@ -728,7 +1017,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'frameCount', name: 'Style Count', type: 'slider', default: 4, min: 2, max: 6, step: 1 },
       { id: 'styles', name: 'Art Styles', type: 'text', default: 'photorealistic, anime, oil painting, noir' },
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'stackChrono',
@@ -752,7 +1041,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Golden Hour', value: 'golden-hour' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'stackSubconscious',
@@ -776,7 +1065,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Extreme', value: 'extreme' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'stackZAxis',
@@ -799,7 +1088,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Medium (10m)', value: 'medium' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'stackCauseEffect',
@@ -826,7 +1115,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Reveal', value: 'reveal' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
 
   // ============================================================================
@@ -854,7 +1143,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Abstract', value: 'abstract' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'queueWalkCycle',
@@ -879,7 +1168,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Custom', value: 'custom' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'queueDialogueBeat',
@@ -900,7 +1189,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'reactionPrompt', name: 'Reaction', type: 'text', default: '' },
       { id: 'beatCount', name: 'Beats', type: 'slider', default: 3, min: 3, max: 4, step: 1 },
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'queueMotionTrail',
@@ -924,7 +1213,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Custom', value: 'custom' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'queueMirror',
@@ -948,7 +1237,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Metaphorical', value: 'metaphorical' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
 
   // ============================================================================
@@ -982,7 +1271,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Custom', value: 'custom' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'gridTurnaround',
@@ -1012,7 +1301,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Natural', value: 'natural' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'gridLighting',
@@ -1035,7 +1324,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Mood', value: 'mood' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'gridExpression',
@@ -1063,7 +1352,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Custom', value: 'custom' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'gridStylePrism',
@@ -1087,7 +1376,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'customStyles', name: 'Custom Styles', type: 'text', default: '' },
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
   {
     type: 'gridEntropy',
@@ -1114,7 +1403,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Eons (1000→1M)', value: 'eons' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro-v1.1',
+    aiModel: 'flux-2-pro',
   },
 
   // ============================================================================
@@ -1144,7 +1433,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'enhanceDetail', name: 'Enhance Details', type: 'boolean', default: true },
       { id: 'denoise', name: 'Denoise Level', type: 'slider', default: 0.3, min: 0, max: 1, step: 0.1 },
     ],
-    aiModel: 'fal-ai/clarity-upscaler',
+    aiModel: 'flux-2-pro',  // Upscaler uses image generation model
   },
   {
     type: 'enhancePrompt',
@@ -1171,6 +1460,8 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'verbosity', name: 'Detail Level', type: 'slider', default: 0.7, min: 0, max: 1, step: 0.1 },
     ],
+    // Uses LLM for prompt enhancement (not image generation model)
+    aiModel: 'gemini-2.5-flash',
   },
 
   // ============================================================================
@@ -1226,7 +1517,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'complexity', name: 'Narrative Complexity', type: 'slider', default: 0.5, min: 0, max: 1, step: 0.1 },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // StoryStructure - Apply story frameworks
@@ -1267,7 +1558,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Comprehensive (Scene-level)', value: 'comprehensive' },
       ]},
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // TreatmentGenerator - Professional treatments and synopses
@@ -1306,7 +1597,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'includeLogline', name: 'Include Logline', type: 'boolean', default: true },
       { id: 'includeSynopsis', name: 'Include Synopsis', type: 'boolean', default: true },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // SceneGenerator - Write complete scenes
@@ -1360,7 +1651,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'generateVisualPrompts', name: 'Generate Visual Prompts', type: 'boolean', default: true },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // PlotPoint - Create story beats
@@ -1403,7 +1694,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Neutral/Informational', value: 'neutral' },
       ]},
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // PlotTwist - Generate surprising twists
@@ -1441,7 +1732,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'intensity', name: 'Twist Intensity', type: 'slider', default: 0.7, min: 0, max: 1, step: 0.1 },
       { id: 'includeForeshadowing', name: 'Include Foreshadowing', type: 'boolean', default: true },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // ConflictGenerator - Create obstacles
@@ -1477,7 +1768,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'intensity', name: 'Conflict Intensity', type: 'slider', default: 0.6, min: 0, max: 1, step: 0.1 },
       { id: 'includeEscalation', name: 'Include Escalation Path', type: 'boolean', default: true },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // StoryPivot - Change story direction
@@ -1510,7 +1801,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'preserveRatio', name: 'Preservation Level', type: 'slider', default: 0.4, min: 0, max: 1, step: 0.1 },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // IntrigueLift - Add mystery and tension
@@ -1546,7 +1837,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'intensity', name: 'Intrigue Intensity', type: 'slider', default: 0.6, min: 0, max: 1, step: 0.1 },
       { id: 'numSecrets', name: 'Number of Secrets', type: 'number', default: 3, min: 1, max: 10 },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // StoryEnhancer - Polish and improve
@@ -1580,7 +1871,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'intensity', name: 'Enhancement Level', type: 'slider', default: 0.5, min: 0, max: 1, step: 0.1 },
       { id: 'preserveVoice', name: 'Preserve Original Voice', type: 'boolean', default: true },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // ============================================================================
@@ -1636,7 +1927,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'generateBackstory', name: 'Generate Backstory', type: 'boolean', default: true },
       { id: 'generateArc', name: 'Generate Character Arc', type: 'boolean', default: true },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // CharacterRelationship - Map relationships
@@ -1678,7 +1969,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Cyclical (On-again/off-again)', value: 'cyclical' },
       ]},
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // CharacterVoice - Define speaking styles
@@ -1712,7 +2003,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'quirks', name: 'Add Verbal Quirks', type: 'boolean', default: true },
       { id: 'catchphrase', name: 'Generate Catchphrase', type: 'boolean', default: false },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // CharacterSheet - Visual character references
@@ -1750,7 +2041,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Comic Book', value: 'comic' },
       ]},
     ],
-    aiModel: 'fal-ai/flux-pro/v1.1',
+    aiModel: 'flux-2-pro',
   },
 
   // ============================================================================
@@ -1799,7 +2090,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'sensoryDetail', name: 'Sensory Detail Level', type: 'slider', default: 0.7, min: 0, max: 1, step: 0.1 },
       { id: 'includeHistory', name: 'Include History', type: 'boolean', default: true },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // WorldLore - Mythology and history
@@ -1837,7 +2128,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Encyclopedic (Everything)', value: 'encyclopedic' },
       ]},
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // Timeline - Chronological events
@@ -1872,7 +2163,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Detailed (Hour by hour)', value: 'detailed' },
       ]},
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // ============================================================================
@@ -1921,7 +2212,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Play Format', value: 'play' },
       ]},
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // MonologueGenerator - Speeches
@@ -1960,7 +2251,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'emotionalIntensity', name: 'Emotional Intensity', type: 'slider', default: 0.7, min: 0, max: 1, step: 0.1 },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // ============================================================================
@@ -2009,7 +2300,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Permanent (Different endings)', value: 'permanent' },
       ]},
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // ConsequenceTracker - Track impacts
@@ -2040,7 +2331,7 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Comprehensive (All)', value: 'comprehensive' },
       ]},
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // PathMerge - Reunite paths
@@ -2071,7 +2362,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'retainMemory', name: 'Retain Choice Memory', type: 'boolean', default: true },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 
   // ============================================================================
@@ -2116,7 +2407,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'characterConsistency', name: 'Character Consistency', type: 'boolean', default: true },
     ],
-    aiModel: 'fal-ai/flux-pro/v1.1',
+    aiModel: 'flux-2-pro',
   },
 
   // ScreenplayFormatter - Script formatting
@@ -2148,7 +2439,7 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'includeSluglines', name: 'Include Scene Headers', type: 'boolean', default: true },
       { id: 'includeParentheticals', name: 'Include Parentheticals', type: 'boolean', default: true },
     ],
-    aiModel: 'claude-sonnet',
+    aiModel: 'gemini-2.5-flash',
   },
 ];
 

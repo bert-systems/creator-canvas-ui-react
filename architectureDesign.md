@@ -1,6 +1,6 @@
 # Architecture Design - Creative Canvas Studio
 
-**Last Updated:** December 14, 2025
+**Last Updated:** December 17, 2025
 
 ## Overview
 
@@ -33,7 +33,7 @@ Creative Canvas Studio is a standalone React application providing an infinity-b
 │                                ▼                                            │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
 │  │                     Backend API (ASP.NET Core)                        │  │
-│  │           https://localhost:7688/api/creative-canvas/*                │  │
+│  │      creator-canvas-api @ https://localhost:7003/api/*                │  │
 │  └───────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -486,24 +486,76 @@ Persistence is handled via Zustand middleware with `localStorage`.
 ```
 src/services/
 ├── api.ts                    # Axios instance, interceptors
-└── creativeCanvasService.ts  # Creative Canvas API methods
-    ├── boards.*              # Board CRUD
-    ├── cards.*               # Card CRUD + workflow execution
-    ├── groups.*              # Card grouping
-    ├── templates.*           # Template management
-    ├── libraries.*           # Asset library management
-    └── marketplace.*         # Marketplace operations
+├── creativeCanvasService.ts  # Creative Canvas API methods
+│   ├── boards.*              # Board CRUD
+│   ├── cards.*               # Card CRUD + workflow execution
+│   ├── groups.*              # Card grouping
+│   ├── templates.*           # Template management
+│   ├── libraries.*           # Asset library management
+│   └── marketplace.*         # Marketplace operations
+├── nodeService.ts            # Unified Node System CRUD
+├── edgeService.ts            # Edge/Connection CRUD
+├── imageGenerationService.ts # NEW: Unified image gen API (/api/ImageGeneration)
+├── videoGenerationService.ts # Video gen API (/api/VideoGeneration)
+├── virtualTryOnService.ts    # Virtual try-on API (/api/VirtualTryOn, /api/ImageGeneration/virtual-tryon)
+├── promptService.ts          # NEW: Prompt agent API (/api/prompt)
+├── fashionService.ts         # Fashion-specific API (/api/fashion)
+├── storyGenerationService.ts # Storytelling API (/api/storytelling)
+└── connectionGenerationService.ts # Connection action/fusion service
 ```
 
-### API Endpoints
+### API Endpoints (swagger v5 - Updated Dec 2025)
 
+#### Creative Canvas API
 | Endpoint | Purpose |
 |----------|---------|
 | `POST /api/creative-canvas/boards` | Create board |
 | `GET /api/creative-canvas/boards` | List boards |
-| `POST /api/creative-canvas/boards/{id}/cards` | Create card |
-| `POST /api/creative-canvas/cards/{id}/execute` | Execute workflow |
-| `GET /api/creative-canvas/cards/{id}/workflow/status` | Poll status |
+| `POST /api/creative-canvas/boards/{id}/nodes` | Create node |
+| `POST /api/creative-canvas/nodes/{id}/execute` | Execute node |
+
+#### Image Generation API
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/ImageGeneration/providers` | List available providers |
+| `POST /api/ImageGeneration/generate` | Generate with auto-selected provider |
+| `POST /api/ImageGeneration/generate/{provider}` | Generate with specific provider |
+
+#### Video Generation API
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/VideoGeneration/providers` | List available providers |
+| `POST /api/VideoGeneration/generate` | Generate video |
+| `POST /api/VideoGeneration/jobs` | Create video job |
+| `GET /api/VideoGeneration/jobs/{jobId}` | Get job status |
+
+#### Virtual Try-On API
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/VirtualTryOn/models` | List available models |
+| `POST /api/VirtualTryOn/generate` | Generate with auto-selected model |
+| `POST /api/VirtualTryOn/generate/{model}` | Generate with specific model |
+| `POST /api/ImageGeneration/virtual-tryon/{provider}` | Provider-specific try-on |
+
+#### Prompt Agent API
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/prompt/improve` | Improve existing prompt |
+| `POST /api/prompt/image/generate` | Generate image prompt |
+| `POST /api/prompt/niche` | Generate niche-specific prompt |
+
+#### Storytelling API
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/storytelling/start` | Start new story |
+| `POST /api/storytelling/world/environment` | Create location |
+| `POST /api/storytelling/dialogue/generate` | Generate dialogue |
+
+#### Fashion API
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/fashion/model/cast` | Cast AI model |
+| `POST /api/fashion/design/garment` | Design garment |
 
 ## Auto-Connect on Drop (NEW in v3.0)
 
@@ -555,6 +607,76 @@ When nodes are connected, special context-aware actions are triggered:
 4. **Variation Bridge** - Generate spectrum between concepts
 5. **Character Inject** - Place character into scene
 
+## ⚠️ CRITICAL ANTI-PATTERNS TO AVOID
+
+> **Last Updated:** December 19, 2025
+> **Status:** MANDATORY READING - These patterns cause technical debt and dilute platform quality
+
+### 1. ❌ DO NOT Work Around Missing API Endpoints
+
+**Anti-Pattern:** When a backend API endpoint returns 404 or doesn't exist, DO NOT create frontend workarounds that:
+- Route calls through different endpoints
+- Mock responses locally
+- Use generic fallback endpoints
+- Implement client-side alternatives
+
+**Why This Is Harmful:**
+- Creates hidden technical debt
+- Bypasses the designed architecture
+- Makes the codebase harder to maintain
+- Causes inconsistent behavior between "real" and "workaround" features
+- Can introduce security vulnerabilities
+- Makes testing and debugging significantly harder
+
+**Correct Approach:**
+1. **Document the missing endpoint** as an API requirement
+2. **Communicate with the API team** to request the endpoint
+3. **Block the feature** in the UI until the endpoint exists OR
+4. **Show a "Coming Soon" state** rather than a broken workaround
+
+**Example of the Anti-Pattern (DO NOT DO THIS):**
+```typescript
+// ❌ BAD: Working around missing /api/fashion/clothes-swap endpoint
+const executeClothesSwap = async (params) => {
+  // Workaround: route through generic nodeService.execute()
+  const result = await nodeService.execute(nodeId, {
+    ...params,
+    nodeType: 'clothesSwap'  // Hope backend figures it out
+  });
+  return result;
+};
+```
+
+**Example of the Correct Approach:**
+```typescript
+// ✅ GOOD: Document requirement and fail gracefully
+const executeClothesSwap = async (params) => {
+  // Endpoint: POST /api/fashion/clothes-swap
+  // Status: MISSING - Requested in FASHION_API_REQUIREMENTS.md
+  const result = await fashionService.clothesSwap(params);
+  // If 404, the error will surface properly for debugging
+  return result;
+};
+```
+
+### 2. Missing API Endpoints - Request Tracker
+
+**Status:** Track endpoints that need implementation by the API team.
+
+| Endpoint | Method | Description | Requested Date | Status |
+|----------|--------|-------------|----------------|--------|
+| `/api/fashion/clothes-swap` | POST | Swap garments between images | Dec 19, 2025 | ✅ Implemented |
+| `/api/fashion/runway-animation` | POST | Generate fashion runway videos | Dec 19, 2025 | ✅ Implemented |
+
+**How to Add New Requirements:**
+1. Add the endpoint to this table with ⏳ Pending status
+2. Create detailed specification in `docs/FASHION_API_REQUIREMENTS.md` or relevant doc
+3. Notify the API team via proper channels
+4. DO NOT implement workarounds - wait for proper implementation
+5. Update status to ✅ Implemented when the API team completes the endpoint
+
+---
+
 ## Key Design Decisions
 
 ### 1. React Flow for Canvas
@@ -570,21 +692,382 @@ Four distinct creative domains, each with specialized templates:
 - **Stock** - Commercial photos, illustrations
 - **Story** - Scenes, characters, narratives
 
-### 3. Workflow-Based Execution
-Cards don't execute immediately; they trigger multi-stage workflows:
-1. Prompt enhancement (LLM)
-2. Image generation (FLUX/Nano Banana)
-3. Variation generation
-4. Asset storage
+### 3. Unified Node System (v3.1 - December 2025)
 
-### 4. Dual Model System
-Parallel type systems for different contexts:
-- `src/models/canvas.ts` - React Flow compatible types (Node taxonomy)
-- `src/models/creativeCanvas.ts` - API/business logic types (Cards/Boards)
+> **IMPORTANT:** This replaces the legacy dual Card/Node system with a unified backend-persisted Node architecture.
+
+The backend API now supports full Node persistence with typed ports, parameters, and execution tracking.
+
+### 4. Node-First Architecture
+All workflow elements are now **Nodes** (not Cards):
+- `src/models/canvas.ts` - Unified Node types aligned with backend API
+- `src/services/nodeService.ts` - Node CRUD operations
+- `src/services/edgeService.ts` - Edge CRUD operations
 
 ---
 
-## Legacy Code Patterns (Reference)
+## Unified Node System Architecture (v3.1)
+
+> **Migration:** December 2025 - Full backend support for typed node system
+
+### Overview
+
+The Unified Node System resolves the architectural mismatch between the frontend node definitions (with typed ports) and backend persistence (previously Card-only). The `creator-canvas-api` now provides:
+
+- **CanvasNode** - Full node entity with inputs, outputs, parameters
+- **CanvasEdge** - Typed edge connections with port references
+- **NodePort** - Typed connection points (input/output)
+- **CanvasNodeTemplate** - Node definition templates
+
+### Data Flow Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         Unified Node System                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                      │
+│  │  Palette    │───▶│  onDrop     │───▶│  Backend    │                      │
+│  │  (nodeDefs) │    │  Handler    │    │  POST /nodes│                      │
+│  └─────────────┘    └─────────────┘    └──────┬──────┘                      │
+│                                               │                              │
+│                                               ▼                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                    CanvasNode (Backend Entity)                       │    │
+│  │  {                                                                   │    │
+│  │    id, boardId, nodeType, category, label,                          │    │
+│  │    position: { x, y },                                              │    │
+│  │    dimensions: { width, height },                                   │    │
+│  │    inputs: NodePort[],     // ← Typed ports now persisted!          │    │
+│  │    outputs: NodePort[],    // ← Typed ports now persisted!          │    │
+│  │    parameters: {},         // ← Node config now persisted!          │    │
+│  │    status, lastExecution, agentBinding, cachedOutput                │    │
+│  │  }                                                                   │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                               │                              │
+│                                               ▼                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                    React Flow Node (Frontend)                        │    │
+│  │  - Specialized component based on nodeType                          │    │
+│  │  - Renders inputs/outputs from backend data                         │    │
+│  │  - Full port functionality on reload                                │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Backend API Endpoints
+
+#### Node Operations
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/creative-canvas/boards/{boardId}/nodes` | Create node |
+| GET | `/api/creative-canvas/boards/{boardId}/nodes` | List board nodes |
+| GET | `/api/creative-canvas/nodes/{nodeId}` | Get node details |
+| PUT | `/api/creative-canvas/nodes/{nodeId}` | Update node |
+| DELETE | `/api/creative-canvas/nodes/{nodeId}` | Delete node |
+| PATCH | `/api/creative-canvas/boards/{boardId}/nodes/batch` | Batch update positions |
+| POST | `/api/creative-canvas/nodes/{nodeId}/execute` | Execute node |
+| POST | `/api/creative-canvas/nodes/{nodeId}/reset` | Reset node state |
+
+#### Edge Operations
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/creative-canvas/boards/{boardId}/edges` | Create edge |
+| GET | `/api/creative-canvas/boards/{boardId}/edges` | List board edges |
+| PUT | `/api/creative-canvas/edges/{edgeId}` | Update edge |
+| DELETE | `/api/creative-canvas/edges/{edgeId}` | Delete edge |
+
+#### Connection Actions ("Moments of Delight")
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/creative-canvas/connections/generate` | Generate fusion images |
+| GET | `/api/creative-canvas/connections/models` | List available models |
+
+#### Port Compatibility
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/creative-canvas/port-types` | List all port types |
+| GET | `/api/creative-canvas/port-types/compatible` | Check port compatibility |
+
+### Core Data Models
+
+#### CanvasNode (Backend Schema)
+```typescript
+interface CanvasNode {
+  id: string;                    // UUID
+  boardId: string;               // Parent board
+  nodeType: string;              // e.g., "flux2Pro", "virtualTryOn", "storyGenesis"
+  category: string;              // e.g., "imageGen", "fashion", "narrative"
+  label: string;                 // Display name
+  position: { x: number; y: number };
+  dimensions: { width: number; height: number };
+  inputs: NodePort[];            // Typed input ports
+  outputs: NodePort[];           // Typed output ports
+  parameters: Record<string, unknown>;  // Node-specific config
+  status: 'idle' | 'running' | 'completed' | 'error';
+  lastExecution?: {
+    startedAt: string;
+    completedAt?: string;
+    durationMs?: number;
+    error?: string;
+  };
+  agentBinding?: {               // AI agent configuration
+    agentType: string;
+    endpoint: string;
+    config: Record<string, unknown>;
+  };
+  cachedOutput?: Record<string, unknown>;  // Last execution result
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### NodePort (Typed Connection Point)
+```typescript
+interface NodePort {
+  id: string;           // Unique port ID within node
+  name: string;         // Display name (e.g., "Model Photo", "Garment")
+  type: PortType;       // Port data type (see Port Type System)
+  required: boolean;    // Must be connected before execution
+  multi: boolean;       // Accepts multiple connections
+}
+```
+
+#### CanvasEdge (Connection)
+```typescript
+interface CanvasEdge {
+  id: string;
+  boardId: string;
+  sourceNodeId: string;
+  sourcePortId: string;    // Output port ID
+  targetNodeId: string;
+  targetPortId: string;    // Input port ID
+  edgeType?: string;       // Visual style type
+  label?: string;
+  style?: EdgeStyle;
+  createdAt: string;
+}
+```
+
+### Port Type System
+
+The backend supports the full port type ecosystem:
+
+#### Core Types
+| Type | Color | Description |
+|------|-------|-------------|
+| `image` | Blue (#3b82f6) | Static images (PNG, JPG, WebP) |
+| `video` | Green (#22c55e) | Video content |
+| `audio` | Purple (#a855f7) | Audio content |
+| `text` | Orange (#f97316) | Text/prompts |
+| `mesh3d` | Pink (#ec4899) | 3D models |
+| `any` | Gray (#6b7280) | Universal connector |
+
+#### Domain-Specific Types
+| Type | Color | Domain |
+|------|-------|--------|
+| `garment` | Fuchsia | Fashion |
+| `model` | Rose | Fashion |
+| `textile` | Amber | Fashion |
+| `story` | Emerald | Storytelling |
+| `scene` | Lime | Storytelling |
+| `character` | Violet | Storytelling |
+| `dialogue` | Pink | Storytelling |
+| `location` | Lime | World-building |
+| `lore` | Amber | World-building |
+| `style` | Cyan | Style system |
+| `styleDna` | Magenta | Style system |
+
+### Node Creation Pattern
+
+When a node is dropped from the palette:
+
+```typescript
+const handleNodeDrop = async (nodeDefinition: NodeDefinition, position: XYPosition) => {
+  // 1. Create node via backend API (persists inputs/outputs/parameters)
+  const response = await nodeService.create(boardId, {
+    nodeType: nodeDefinition.nodeType,
+    label: nodeDefinition.label,
+    category: nodeDefinition.category,
+    position: { x: position.x, y: position.y },
+    dimensions: nodeDefinition.defaultDimensions || { width: 320, height: 400 },
+    inputs: nodeDefinition.inputs,      // ← Now persisted!
+    outputs: nodeDefinition.outputs,    // ← Now persisted!
+    parameters: nodeDefinition.defaultParameters || {},
+    agentBinding: nodeDefinition.agentBinding,
+  });
+
+  // 2. Convert backend node to React Flow node
+  const flowNode = apiNodeToFlowNode(response.data.node);
+
+  // 3. Update local state
+  setNodes((nds) => [...nds, flowNode]);
+};
+```
+
+### Board Load Pattern
+
+When a board loads, nodes retain their full configuration:
+
+```typescript
+const loadBoard = async (boardId: string) => {
+  // 1. Fetch board with nodes and edges
+  const boardResponse = await boardService.get(boardId, {
+    includeCards: false,  // Legacy - deprecated
+  });
+
+  const nodesResponse = await nodeService.list(boardId);
+  const edgesResponse = await edgeService.list(boardId);
+
+  // 2. Convert to React Flow format
+  const flowNodes = nodesResponse.data.nodes.map(apiNodeToFlowNode);
+  const flowEdges = edgesResponse.data.edges.map(apiEdgeToFlowEdge);
+
+  // 3. Nodes now have full inputs/outputs/parameters from backend
+  // No need to hydrate from nodeDefinitions.ts
+  setNodes(flowNodes);
+  setEdges(flowEdges);
+};
+```
+
+### Edge Creation Pattern
+
+When nodes are connected:
+
+```typescript
+const onConnect = async (connection: Connection) => {
+  // 1. Validate port compatibility (optional - can also be done client-side)
+  const isValid = await edgeService.checkCompatibility(
+    connection.sourceHandle,  // sourcePortId
+    connection.targetHandle   // targetPortId
+  );
+
+  if (!isValid) {
+    showError('Incompatible port types');
+    return;
+  }
+
+  // 2. Create edge via backend API
+  const response = await edgeService.create(boardId, {
+    sourceNodeId: connection.source,
+    sourcePortId: connection.sourceHandle,
+    targetNodeId: connection.target,
+    targetPortId: connection.targetHandle,
+    edgeType: determineEdgeType(connection),
+  });
+
+  // 3. Update local state
+  setEdges((eds) => [...eds, apiEdgeToFlowEdge(response.data.edge)]);
+
+  // 4. Optionally trigger "Moment of Delight" menu
+  if (shouldShowDelightMenu(connection)) {
+    showConnectionActionMenu(connection);
+  }
+};
+```
+
+### Connection Action Pattern (Moments of Delight)
+
+```typescript
+const executeConnectionAction = async (
+  actionType: ConnectionActionType,
+  sourceNode: CanvasNode,
+  targetNode: CanvasNode
+) => {
+  // 1. Gather images from connected nodes
+  const sourceImages = sourceNode.cachedOutput?.images || [];
+  const targetImages = targetNode.cachedOutput?.images || [];
+
+  // 2. Call backend fusion API
+  const response = await api.post('/api/creative-canvas/connections/generate', {
+    prompt: generateFusionPrompt(actionType, sourceNode, targetNode),
+    imageUrls: [...sourceImages, ...targetImages],
+    model: 'flux-redux-dev',  // or 'nano-banana-pro'
+    numImages: 4,
+    boardId,
+  });
+
+  // 3. Create new node with generated results
+  const resultNode = await nodeService.create(boardId, {
+    nodeType: 'fusionResult',
+    label: `${actionType} Result`,
+    category: 'generated',
+    position: calculateMidpoint(sourceNode.position, targetNode.position),
+    parameters: {
+      actionType,
+      sourceNodeId: sourceNode.id,
+      targetNodeId: targetNode.id,
+    },
+    cachedOutput: {
+      images: response.data.images.map(img => img.url),
+    },
+  });
+
+  setNodes((nds) => [...nds, apiNodeToFlowNode(resultNode.data.node)]);
+};
+```
+
+### Node Execution Pattern
+
+```typescript
+const executeNode = async (nodeId: string) => {
+  // 1. Update local status
+  updateNodeStatus(nodeId, 'running');
+
+  // 2. Call backend execution
+  const response = await nodeService.execute(nodeId);
+
+  // 3. Poll for completion
+  const pollExecution = async () => {
+    const status = await boardService.getExecutionStatus(boardId);
+    const nodeStatus = status.data.nodeStatuses[nodeId];
+
+    updateNodeProgress(nodeId, nodeStatus.progress);
+
+    if (nodeStatus.status === 'completed') {
+      // Refresh node to get cachedOutput
+      const updatedNode = await nodeService.get(nodeId);
+      updateNode(nodeId, updatedNode.data.node);
+    } else if (nodeStatus.status === 'error') {
+      updateNodeStatus(nodeId, 'error', nodeStatus.error);
+    } else {
+      setTimeout(pollExecution, 2000);
+    }
+  };
+
+  pollExecution();
+};
+```
+
+### Migration from Card System
+
+The Card system is deprecated but remains for backward compatibility:
+
+| Old (Cards) | New (Nodes) | Notes |
+|-------------|-------------|-------|
+| `POST /boards/{id}/cards` | `POST /boards/{id}/nodes` | Use nodes for new features |
+| `CanvasCard.workflow.stages` | `CanvasNode.agentBinding` | Agent-based execution |
+| `CanvasCard.config.basePrompt` | `CanvasNode.parameters.prompt` | Unified parameters |
+| `cardToNode()` | `apiNodeToFlowNode()` | Direct mapping |
+| No inputs/outputs persistence | Full port persistence | Key improvement |
+
+### Service Layer Structure
+
+```
+src/services/
+├── api.ts                    # Axios instance
+├── nodeService.ts            # Node CRUD + execution (NEW)
+├── edgeService.ts            # Edge CRUD + validation (NEW)
+├── connectionService.ts      # Fusion generation (NEW)
+├── boardService.ts           # Board operations (refactored)
+├── creativeCanvasService.ts  # Legacy card operations (deprecated)
+└── ...
+```
+
+---
+
+## Legacy Code Patterns (Deprecated)
 
 > **Source:** Patterns extracted from `ssgp-v2-agents-ui-react` legacy codebase for consistency.
 

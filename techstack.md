@@ -1,6 +1,6 @@
 # Tech Stack - Creative Canvas Studio
 
-**Last Updated:** December 11, 2025
+**Last Updated:** December 17, 2025
 
 ## Frontend Framework
 
@@ -59,9 +59,12 @@ Features used:
 
 | Component | Technology | Notes |
 |-----------|------------|-------|
-| **API Server** | ASP.NET Core | Base URL: `https://localhost:7688` |
-| **API Prefix** | `/api/creative-canvas/*` | Creative Canvas endpoints |
-| **Auth** | X-User-Id header | User identification |
+| **API Project** | creator-canvas-api | Standalone ASP.NET Core API |
+| **API Server** | ASP.NET Core | HTTPS: `https://localhost:7003`, HTTP: `http://localhost:5003` |
+| **API Prefix** | `/api/*` | Creative Canvas endpoints |
+| **Auth** | JWT Bearer | PostgreSQL identity provider |
+| **Storage** | Google Cloud Storage | Asset storage |
+| **Queue** | Memory/File-based | Job processing |
 
 ## AI Model Integration (via fal.ai Backend)
 
@@ -95,7 +98,7 @@ Features used:
 {
   server: { port: 3001 },
   resolve: { alias: { '@': '/src' } },
-  proxy: { '/api': 'https://localhost:7688' }
+  proxy: { '/api': 'https://localhost:7003' }
 }
 ```
 
@@ -108,7 +111,7 @@ Features used:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `VITE_API_BASE_URL` | `https://localhost:7688` | Backend API URL |
+| `VITE_API_BASE_URL` | `https://localhost:7003` | Backend API URL |
 
 ## Package Scripts
 

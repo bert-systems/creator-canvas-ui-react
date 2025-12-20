@@ -6,7 +6,11 @@
 
 import { api } from './api';
 
+// Provider-specific virtual try-on endpoints
 const TRYON_API_BASE = '/api/ImageGeneration/virtual-tryon';
+// Unified virtual try-on API (swagger v5)
+const UNIFIED_TRYON_API = '/api/VirtualTryOn';
+// Fashion-specific endpoints
 const FASHION_API_BASE = '/api/fashion';
 
 // ===== Type Definitions =====
@@ -17,7 +21,7 @@ export type TryOnProvider = 'fashn' | 'idm-vton' | 'cat-vton' | 'leffa' | 'kling
 // Garment Types
 export type GarmentType = 'top' | 'bottom' | 'dress' | 'full-outfit' | 'upper_body' | 'lower_body' | 'dresses';
 export type GarmentPhotoType = 'auto' | 'flat-lay' | 'model';
-export type TryOnMode = 'quality' | 'speed' | 'balanced';
+export type TryOnMode = 'quality' | 'performance' | 'balanced';  // fal.ai FASHN expects 'performance' not 'speed'
 export type TryOnCategory = 'tops' | 'bottoms' | 'one-pieces';
 
 // Animation Types
@@ -82,24 +86,40 @@ export interface VirtualTryOnRequest {
   sessionId?: string;
 }
 
+// Swagger v3 aligned types
 export interface ClothesSwapRequest {
-  personImageUrl: string;
-  prompt: string;
-  preserveIdentity?: boolean;
-  preserveBackground?: boolean;
-  negativePrompt?: string;
-  guidanceScale?: number;
-  numInferenceSteps?: number;
-  seed?: number;
+  modelImage: string;           // Required - URL of model/person image
+  garmentImage: string;         // Required - URL of garment to swap in
+  garmentDescription?: string;  // Optional description of garment
+  category?: 'tops' | 'bottoms' | 'dresses' | 'outerwear';  // Garment category
+  modelId?: string;             // Optional model ID for consistency
 }
 
+// Walk style options for runway animation (Swagger v3 uses plain string type)
+export type WalkStyle = 'haute-couture' | 'rtw' | 'commercial' | 'editorial' | 'streetwear' | string;
+export type CameraStyle = 'static' | 'follow' | 'crane' | 'multi-angle' | string;
+
 export interface RunwayAnimationRequest {
-  lookbookImageUrl: string;
-  animationType: RunwayAnimationType;
-  duration?: 5 | 10;
-  audioEnabled?: boolean;
-  cameraMotion?: 'static' | 'follow' | 'pan';
-  musicStyle?: 'electronic' | 'classical' | 'ambient' | 'none';
+  onModelImage: string;         // Required - URL of styled model image
+  model?: ModelData;            // Optional model data
+  garment?: GarmentData;        // Optional garment data
+  walkStyle?: string;           // Walk style: haute-couture, rtw, commercial, editorial, streetwear
+  duration?: string | number;   // Animation duration: "5s" or "10s" (or number for backward compat)
+  cameraStyle?: string;         // Camera movement style: static, follow, crane, multi-angle
+}
+
+// Supporting types for RunwayAnimationRequest
+export interface ModelData {
+  id?: string;
+  bodyType?: string;
+  skinTone?: string;
+  pose?: string;
+}
+
+export interface GarmentData {
+  id?: string;
+  type?: string;
+  description?: string;
 }
 
 // ===== Response Types =====
@@ -115,23 +135,21 @@ export interface VirtualTryOnResponse {
   generationTime?: number;
 }
 
+// Swagger v3 aligned response types
 export interface ClothesSwapResponse {
-  imageUrl: string;
-  thumbnailUrl?: string;
-  requestId?: string;
-  generationTime?: number;
-  metadata?: Record<string, unknown>;
+  success: boolean;
+  images?: string[];              // Array of generated image URLs
+  jobId?: string;                 // Job ID for async operations
+  cost?: number;                  // Cost of the operation
+  errors?: string[];              // Error messages if any
 }
 
 export interface RunwayAnimationResponse {
-  jobId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  videoUrl?: string;
-  thumbnailUrl?: string;
-  duration?: number;
-  hasAudio?: boolean;
-  progress?: number;
-  error?: string;
+  success: boolean;
+  jobId?: string;                 // Job ID for polling
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
+  videoUrl?: string;              // Video URL when completed
+  errors?: string[];              // Error messages if any
 }
 
 // ===== API Response Wrapper =====
@@ -353,28 +371,32 @@ export const virtualTryOnService = {
   },
 };
 
-// ===== Clothes Swap Service (FLUX Kontext) =====
+// ===== Clothes Swap Service =====
 
 export const clothesSwapService = {
   /**
-   * Swap clothes on a person using FLUX Kontext
+   * Swap clothes on a person using virtual try-on AI
+   * Aligned with Swagger v3 API schema
+   * Note: ASP.NET controller may expect payload wrapped in "request" object
    */
   async swap(request: ClothesSwapRequest): Promise<ApiResponse<ClothesSwapResponse>> {
+    const requestPayload = {
+      modelImage: request.modelImage,
+      garmentImage: request.garmentImage,
+      garmentDescription: request.garmentDescription,
+      category: request.category,
+      modelId: request.modelId,
+    };
+
+    console.log('[clothesSwapService.swap] Sending payload:', requestPayload);
+
     const response = await api.post<ClothesSwapResponse>(
       `${FASHION_API_BASE}/clothes-swap`,
-      {
-        personImageUrl: request.personImageUrl,
-        prompt: request.prompt,
-        preserveIdentity: request.preserveIdentity ?? true,
-        preserveBackground: request.preserveBackground ?? true,
-        negativePrompt: request.negativePrompt ?? 'blurry, distorted, low quality',
-        guidanceScale: request.guidanceScale ?? 7.5,
-        numInferenceSteps: request.numInferenceSteps ?? 30,
-        seed: request.seed,
-      },
+      // Wrap payload in "request" object as expected by ASP.NET controller
+      { request: requestPayload },
       getAuthHeaders()
     );
-    return { success: true, data: response.data };
+    return { success: response.data.success, data: response.data };
   },
 };
 
@@ -382,22 +404,34 @@ export const clothesSwapService = {
 
 export const runwayAnimationService = {
   /**
-   * Create runway/fashion animation from lookbook image
+   * Create runway/fashion animation from styled model image
+   * Aligned with Swagger v3 API schema
+   * Note: ASP.NET controller expects payload wrapped in "request" object
    */
   async create(request: RunwayAnimationRequest): Promise<ApiResponse<RunwayAnimationResponse>> {
+    // Ensure duration is a string (e.g., "5s", "10s")
+    const durationStr = typeof request.duration === 'number'
+      ? `${request.duration}s`
+      : (request.duration ?? '5s');
+
+    const requestPayload = {
+      onModelImage: request.onModelImage,
+      model: request.model,
+      garment: request.garment,
+      walkStyle: request.walkStyle ?? 'commercial',
+      duration: durationStr,
+      cameraStyle: request.cameraStyle ?? 'follow',
+    };
+
+    console.log('[runwayAnimationService.create] Sending payload:', requestPayload);
+
     const response = await api.post<RunwayAnimationResponse>(
       `${FASHION_API_BASE}/runway-animation`,
-      {
-        lookbookImageUrl: request.lookbookImageUrl,
-        animationType: request.animationType,
-        duration: request.duration ?? 5,
-        audioEnabled: request.audioEnabled ?? false,
-        cameraMotion: request.cameraMotion ?? 'follow',
-        musicStyle: request.musicStyle ?? 'none',
-      },
+      // Wrap payload in "request" object as expected by ASP.NET controller
+      { request: requestPayload },
       getAuthHeaders()
     );
-    return { success: true, data: response.data };
+    return { success: response.data.success, data: response.data };
   },
 
   /**
@@ -408,11 +442,12 @@ export const runwayAnimationService = {
       `${FASHION_API_BASE}/runway-animation/jobs/${jobId}`,
       getAuthHeaders()
     );
-    return { success: true, data: response.data };
+    return { success: response.data.success, data: response.data };
   },
 
   /**
    * Poll for job completion
+   * Aligned with Swagger v3 response structure
    */
   async pollJobStatus(
     jobId: string,
@@ -437,7 +472,7 @@ export const runwayAnimationService = {
       }
 
       if (status.status === 'failed') {
-        throw new Error(status.error || 'Animation generation failed');
+        throw new Error(status.errors?.[0] || 'Animation generation failed');
       }
 
       await new Promise(resolve => setTimeout(resolve, intervalMs));
@@ -448,10 +483,83 @@ export const runwayAnimationService = {
   },
 };
 
+// ============================================================================
+// Unified Virtual Try-On API (swagger v5 - /api/VirtualTryOn)
+// ============================================================================
+
+export interface VirtualTryOnModelInfo {
+  modelId: string;
+  displayName: string;
+  description?: string;
+  resolution?: string;
+  pricing?: string;
+  capabilities?: string[];
+  requiresDescription?: boolean;
+  supportsFlatLay?: boolean;
+  returnsMask?: boolean;
+  supportedGarmentTypes?: string[];
+}
+
+export const unifiedTryOnService = {
+  /**
+   * Get list of available virtual try-on models
+   * GET /api/VirtualTryOn/models
+   */
+  async getModels(): Promise<VirtualTryOnModelInfo[]> {
+    const response = await api.get<VirtualTryOnModelInfo[]>(
+      `${UNIFIED_TRYON_API}/models`,
+      getAuthHeaders()
+    );
+    return response.data;
+  },
+
+  /**
+   * Generate virtual try-on with auto-selected model
+   * POST /api/VirtualTryOn/generate
+   */
+  async generate(request: VirtualTryOnRequest): Promise<ApiResponse<VirtualTryOnResponse>> {
+    const response = await api.post<VirtualTryOnResponse>(
+      `${UNIFIED_TRYON_API}/generate`,
+      request,
+      getAuthHeaders()
+    );
+    return { success: true, data: response.data };
+  },
+
+  /**
+   * Generate virtual try-on with specific model
+   * POST /api/VirtualTryOn/generate/{model}
+   */
+  async generateWithModel(
+    model: string,
+    request: VirtualTryOnRequest
+  ): Promise<ApiResponse<VirtualTryOnResponse>> {
+    const response = await api.post<VirtualTryOnResponse>(
+      `${UNIFIED_TRYON_API}/generate/${model}`,
+      { ...request, model },
+      getAuthHeaders()
+    );
+    return { success: true, data: response.data };
+  },
+
+  /**
+   * Validate virtual try-on request
+   * GET /api/VirtualTryOn/validate
+   */
+  async validate(): Promise<{ valid: boolean; message?: string }> {
+    const response = await api.get<{ valid: boolean; message?: string }>(
+      `${UNIFIED_TRYON_API}/validate`,
+      getAuthHeaders()
+    );
+    return response.data;
+  },
+};
+
 // ===== Unified Fashion Service =====
 
 export const fashionService = {
   virtualTryOn: virtualTryOnService,
+  unifiedTryOn: unifiedTryOnService,
   clothesSwap: clothesSwapService,
   runwayAnimation: runwayAnimationService,
 

@@ -58,6 +58,10 @@ export type NodeType =
   | 'flux2Dev'
   | 'nanoBananaPro'
   | 'fluxKontext'
+  | 'flux2Max'      // NEW Dec 2025 - Flagship multi-reference
+  | 'recraftV3'     // NEW Dec 2025 - Text rendering & vector art
+  | 'gptImage'      // NEW Dec 2025 - GPT Image 1.5
+  | 'zImageTurbo'   // NEW Dec 2025 - Fast generation
   // Video generation nodes
   | 'kling26T2V'
   | 'kling26I2V'
@@ -66,6 +70,11 @@ export type NodeType =
   | 'veo31'
   | 'veo31Fast'
   | 'klingAvatar'
+  | 'sora2'         // NEW Dec 2025 - OpenAI with audio
+  | 'sora2Pro'      // NEW Dec 2025 - OpenAI flagship
+  | 'kling26Pro'    // NEW Dec 2025 - Kling flagship with audio
+  | 'ltx2'          // NEW Dec 2025 - 4K @ 50fps with audio
+  | 'wan26'         // NEW Dec 2025 - Multi-shot with audio
   // 3D generation nodes
   | 'meshy6'
   | 'tripoV25'
@@ -244,12 +253,20 @@ export interface NodeDefinition {
   outputs: Port[];
   parameters: NodeParameter[];
   aiModel?: string;
+  /** Model tier: flagship, production, creative, fast */
+  tier?: 'flagship' | 'production' | 'creative' | 'fast';
+  /** Cost estimate string e.g. "$0.07/megapixel" */
+  cost?: string;
+  /** Whether model has native audio generation */
+  hasAudio?: boolean;
+  /** Best use case indicator: 'text', 'faces', etc. */
+  bestFor?: string;
 }
 
 export interface NodeParameter {
   id: string;
   name: string;
-  type: 'text' | 'number' | 'select' | 'slider' | 'boolean' | 'color' | 'file';
+  type: 'text' | 'number' | 'select' | 'slider' | 'boolean' | 'color' | 'file' | 'image' | 'video' | 'audio';
   default?: unknown;
   options?: { label: string; value: unknown }[];
   min?: number;
