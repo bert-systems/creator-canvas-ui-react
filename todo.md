@@ -1,6 +1,240 @@
 # TODO - Creative Canvas Studio
 
-**Last Updated:** December 19, 2025
+**Last Updated:** December 20, 2025
+
+---
+
+## ACTIVE: Unified Node Architecture v4.0 Implementation
+
+> **Strategy:** `docs/UNIFIED_NODE_ARCHITECTURE_STRATEGY.md`
+> **API Requirements:** `docs/UNIFIED_NODE_API_REQUIREMENTS.md`
+> **API Status:** ✅ READY (Swagger v4 - all endpoints implemented)
+
+### Implementation Phases
+
+#### Phase 1: UnifiedNode Component & Types ✅ COMPLETE
+
+**Goal:** Create single node component to replace CanvasNode, FlowNode, CreativeCard
+
+- [x] **1.1 Create type definitions** (`src/models/unifiedNode.ts`)
+  - [x] `UnifiedNodeData` interface (replaces CanvasCard + CanvasNodeData)
+  - [x] `DisplayMode` type ('compact' | 'standard' | 'expanded')
+  - [x] `NodeSlotConfig` interfaces (preview, parameters, actions)
+  - [x] Port compatibility matrix, port colors
+
+- [x] **1.2 Create UnifiedNode component** (`src/components/nodes/UnifiedNode.tsx`)
+  - [x] Header slot (icon, label, status, menu)
+  - [x] Port columns (typed input/output handles)
+  - [x] Content zone with slot rendering
+  - [x] Footer slot (progress, actions)
+  - [x] Three display modes (compact: 80px, standard: 280px, expanded: 500px+)
+  - [x] Mode switching (double-click, context menu)
+
+- [x] **1.3 Create slot components** (`src/components/nodes/slots/`)
+  - [x] `PreviewSlot.tsx` - image/video/text/3D preview
+  - [x] `ParameterSlot.tsx` - inline parameter controls
+  - [x] `ActionSlot.tsx` - execute, download buttons
+
+- [x] **1.4 Create new API service layer**
+  - [x] `src/services/unifiedNodeService.ts` - CRUD with new endpoints
+  - [x] `src/services/toolbarService.ts` - Category toolbar fetching
+  - [x] `src/services/graphValidationService.ts` - Validation + execution order
+
+#### Phase 2: Integrate with CreativeCanvasStudio ✅ COMPLETE
+
+- [x] **2.1 Update nodeTypes registration**
+  - [x] Register `unifiedNode` as node type in nodeTypes
+  - [x] Import UnifiedNode component
+  - [x] Keep legacy types for backwards compatibility
+
+#### Phase 3: New Creative Palette UX ✅ COMPLETE
+
+- [x] **3.1 Redesign CreativePalette** (`src/components/panels/CreativePalette.tsx`)
+  - [x] Vertical-first layout (no horizontal scrolling)
+  - [x] Category quick-filter chips
+  - [x] Quick Actions row (category-aware toolbar)
+  - [x] Favorites section with localStorage persistence
+  - [x] Recent nodes section with localStorage persistence
+  - [x] Unified drag-and-drop using UnifiedNode type
+
+#### Phase 4: Toolbar & Menu System ✅ COMPLETE
+
+- [x] **4.1 Create toolbar components** (`src/components/toolbars/`)
+  - [x] `TopMenuBar.tsx` - File/Edit/View menus, zoom controls, execute
+  - [x] `ContextToolbar.tsx` - Category-aware quick actions
+  - [x] `FloatingToolbar.tsx` - Selection toolbar, speed dial for quick add
+  - [x] `StatusBar.tsx` - Validation status, canvas stats, sync indicator
+
+#### Phase 4b: Integration ✅ COMPLETE
+
+- [x] **4.2 Integrate toolbars into CreativeCanvasStudio**
+  - [x] Add ContextToolbar above canvas (category-aware quick actions)
+  - [x] Add StatusBar below canvas (node/edge counts, execution status)
+  - [x] Add FloatingToolbar for selection actions
+  - [x] Use CreativePaletteV4 as default palette (feature flag)
+  - [x] Wire handleToolbarAction for node creation
+
+- [x] **4.3 Update drop handler** (use new API)
+  - [x] Create nodes via `POST /boards/{id}/nodes` (unified + legacy paths)
+  - [x] Use `displayMode` from node definition
+  - [x] Persist typed ports to backend
+
+- [x] **4.4 Update board loading**
+  - [x] Use `GET /boards/{id}/full-graph` endpoint (with fallback)
+  - [x] Added getFullGraph to unifiedNodeService
+  - [x] Convert backend nodes to React Flow format
+
+- [x] **4.5 Wire TopMenuBar** (added Dec 20, 2025)
+  - [x] Add TopMenuBar to layout
+  - [x] Wire zoom controls (zoomIn, zoomOut, fitView)
+  - [x] Wire grid/minimap toggles
+  - [x] Add save/execute handlers
+
+#### Phase 4c: Bug Fixes ✅ COMPLETE (Dec 20, 2025)
+
+- [x] **4.6 API User ID Header**
+  - [x] Fixed "User ID is required" error from API
+  - [x] Added `X-User-Id` header to global axios interceptor in `api.ts`
+  - [x] Reads userId from localStorage (authUser, userId, or user objects)
+
+- [x] **4.7 Edge/Node Deletion**
+  - [x] Added `onEdgesDelete` callback to sync deletions with backend
+  - [x] Added `onNodesDelete` callback for node deletion
+  - [x] Added `deleteKeyCode` prop for Backspace/Delete keyboard shortcuts
+  - [x] Deletes edges via `edgeService.delete()` endpoint
+
+- [x] **4.8 CharacterCreatorNode Execution**
+  - [x] Created `CanvasActionsContext` to provide `onExecute` callback to nodes
+  - [x] Connected CharacterCreatorNode generate button to context
+  - [x] Fixed parameter mismatch (characterName, role, archetype → concept)
+  - [x] Node now properly shows "moment of delight" and updates after generation
+
+- [x] **4.9 Data URL Display Fix** (`ParameterSlot.tsx`)
+  - [x] Fixed image upload nodes stretching to extreme widths
+  - [x] Added thumbnail preview for file/image parameters
+  - [x] Truncated long strings and data URLs in parameter chips
+  - [x] Base64 data URLs now show "Data URL" instead of full string
+
+#### Phase 5: Cleanup & Migration [IN PROGRESS]
+
+- [x] **5.1 Deprecate legacy components** (partial)
+  - [x] Mark CanvasNode.tsx as deprecated
+  - [x] Mark FlowNode.tsx as deprecated
+  - [x] Mark EnhancedNode.tsx as deprecated
+  - [ ] Remove 50+ custom node components (keep slot escapes)
+
+- [x] **5.2 Update node definitions** (Dec 20, 2025)
+  - [x] Extended `NodeDefinition` interface in `canvas.ts` with `slots` and `defaultDisplayMode`
+  - [x] Added slot types: `PreviewSlotConfig`, `ParameterSlotConfig`, `ActionSlotConfig`, `MetadataSlotConfig`
+  - [x] Updated 18 key node definitions with slots config:
+    - Input: textInput, imageUpload, videoUpload, referenceImage, characterReference
+    - Image Gen: flux2Pro, flux2Dev, nanoBananaPro, fluxKontext
+    - Video Gen: kling26T2V, kling26I2V, klingO1Ref2V, veo31, klingAvatar
+    - Composite: virtualTryOn, clothesSwap
+    - Output: preview, export
+  - [ ] Remaining nodes can inherit from `DEFAULT_SLOT_CONFIGS` by category
+
+#### Phase 5b: UX Enhancements (Dec 20, 2025)
+
+- [x] **5.4 Auto-Create Connected Input Node** (v4.1 Feature)
+  - [x] Extended `CanvasActionsContext` with `onCreateConnectedInputNode` and `getCompatibleInputNodes`
+  - [x] Added right-click context menu on input port handles in UnifiedNode
+  - [x] Context menu shows compatible input node types for the port type
+  - [x] Clicking a menu item creates the node to the left and auto-connects it
+  - [x] Supported port types: text, image, video, audio, character, style, garment, model, story, scene
+  - [x] Visual hover indicator (+icon) on input ports
+  - **Usage:** Right-click on any input port → Select node type → Node created & connected
+
+- [ ] **5.3 Testing & polish**
+  - [ ] Test all node types with UnifiedNode
+  - [ ] Verify execution flow
+  - [ ] Test display mode switching
+  - [ ] Performance testing (100+ nodes)
+
+#### Phase 5c: New Domain Categories (Dec 20, 2025) ✅ COMPLETE
+
+- [x] **5.5 Interior Design Category**
+  - [x] Added `interior` as BoardCategory
+  - [x] Added `interiorDesign`, `spacePlanning` as NodeCategory
+  - [x] Added 10 NodeTypes: roomRedesign, virtualStaging, floorPlanGenerator, furnitureSuggestion, materialPalette, room3DVisualizer, roomPhotoUpload, roomAnalyzer, roomTypeSelector, designStyleSelector
+  - [x] Added 6 PortTypes: room, floorPlan, material, furniture, designStyle, roomLayout
+  - [x] Created 6 comprehensive node definitions with AI model mappings and slot configs
+
+- [x] **5.6 Moodboard & Creative Direction Category**
+  - [x] Added `moodboard` as BoardCategory
+  - [x] Added `moodboard`, `brandIdentity` as NodeCategory
+  - [x] Added 10 NodeTypes: moodboardGenerator, colorPaletteExtractor, brandKitGenerator, typographySuggester, aestheticAnalyzer, textureGenerator, visualThemeGenerator, inspirationCurator, colorHarmony, pantoneMatchFinder
+  - [x] Added 6 PortTypes: moodboard, colorPalette, brandKit, typography, texture, aesthetic
+  - [x] Created 6 comprehensive node definitions with AI model mappings and slot configs
+
+- [x] **5.7 Social Media Content Category**
+  - [x] Added `social` as BoardCategory
+  - [x] Added `socialMedia`, `contentCreation` as NodeCategory
+  - [x] Added 12 NodeTypes: socialPostGenerator, carouselGenerator, captionGenerator, contentScheduler, storyCreator, templateCustomizer, postGenerator, storyTemplate, thumbnailGenerator, hookGenerator, hashtagOptimizer, contentCalendar
+  - [x] Added 5 PortTypes: post, carousel, caption, template, platform
+  - [x] Created 6 comprehensive node definitions with AI model mappings and slot configs
+
+- [x] **5.8 Model & Type Updates**
+  - [x] Extended PreviewSlotConfig with new types: '3d', 'colorSwatches', 'calendar', 'comparison'
+  - [x] Extended PreviewSlotConfig with `showTiled` property for texture previews
+  - [x] Extended ParameterSlotConfig with 'stack' layout option
+  - [x] Updated PORT_COLORS in 6+ files for new port types
+  - [x] Updated PORT_COMPATIBILITY matrix for new port types
+  - [x] Updated categoryColors in theme.ts for new categories
+  - [x] Updated CATEGORY_INFO in creativeCanvas.ts
+  - [x] Updated BoardManager with new category icons
+  - [x] Updated ContextToolbar with category-specific quick actions
+  - [x] Build verified ✅
+
+#### Phase 5d: API Service Integration (Dec 20, 2025) ✅ COMPLETE
+
+- [x] **5.9 New Category API Services**
+  - [x] Created `src/services/interiorDesignService.ts` (6 endpoints)
+    - redesignRoom, stageRoom, generateFloorPlan
+    - suggestFurniture, generateMaterialPalette, visualize3D
+  - [x] Created `src/services/moodboardService.ts` (6 endpoints)
+    - generateMoodboard, extractColorPalette, generateBrandKit
+    - suggestTypography, analyzeAesthetic, generateTexture
+  - [x] Created `src/services/socialMediaService.ts` (6 endpoints)
+    - generatePost, generateCarousel, generateCaption
+    - scheduleContent, createStory, customizeTemplate
+  - [x] All types aligned with backend API schema (per API team fixes)
+    - Position → FloorPosition (Interior)
+    - VisualStyle → SocialVisualStyle (Social)
+    - JobStatus → Consolidated Common.JobStatus
+
+- [x] **5.10 API Requirements Documentation**
+  - [x] Updated `docs/NEW_CATEGORIES_API_REQUIREMENTS.md` to v1.1
+  - [x] Marked all 18 endpoints as ✅ READY
+  - [x] Added implementation summary and schema fix notes
+
+### API Endpoints Ready (Swagger v4)
+
+| Endpoint | Method | Status |
+|----------|--------|--------|
+| `/toolbars` | GET | ✅ Ready |
+| `/toolbars/{category}` | GET | ✅ Ready |
+| `/boards/{id}/toolbar` | GET | ✅ Ready |
+| `/boards/{id}/full-graph` | GET | ✅ Ready |
+| `/boards/{id}/validate` | POST | ✅ Ready |
+| `/boards/{id}/check-compatibility` | POST | ✅ Ready |
+| `/boards/{id}/execution-order` | GET | ✅ Ready |
+| `/boards/{id}/nodes` | POST/GET | ✅ Ready |
+| `/nodes/{id}` | GET/PUT/DELETE | ✅ Ready |
+| `/nodes/{id}/display-mode` | PUT | ✅ Ready |
+| `/boards/{id}/nodes/batch` | PATCH | ✅ Ready |
+| `/port-types` | GET | ✅ Ready |
+| `/port-types/compatible` | GET | ✅ Ready |
+
+### Definition of Done
+
+- [ ] Single UnifiedNode component renders all 53+ node types
+- [ ] Display modes work (compact/standard/expanded)
+- [ ] Category toolbars load from API
+- [ ] Graph validation works
+- [ ] Palette vertical-first, no horizontal scroll
+- [ ] Build passes with no errors
+- [ ] Legacy components removed or deprecated
 
 ---
 

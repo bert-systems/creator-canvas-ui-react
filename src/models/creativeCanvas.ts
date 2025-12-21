@@ -4,7 +4,7 @@
  */
 
 // ===== Card Types =====
-export type CardCategory = 'fashion' | 'interior' | 'stock' | 'story';
+export type CardCategory = 'fashion' | 'interior' | 'stock' | 'story' | 'moodboard' | 'social';
 
 export type CardType =
   | 'fashion-concept'
@@ -858,8 +858,8 @@ export const CATEGORY_INFO: Record<CardCategory, { name: string; icon: string; c
   interior: {
     name: 'Interior Design',
     icon: 'Weekend',
-    color: '#4CAF50',
-    description: 'Design rooms, mood boards, and interior layouts',
+    color: '#8B5CF6',
+    description: 'Design rooms, staging, and interior layouts',
   },
   stock: {
     name: 'Stock Images',
@@ -872,6 +872,18 @@ export const CATEGORY_INFO: Record<CardCategory, { name: string; icon: string; c
     icon: 'MenuBook',
     color: '#FF9800',
     description: 'Write and illustrate stories with AI assistance',
+  },
+  moodboard: {
+    name: 'Moodboards',
+    icon: 'ColorLens',
+    color: '#F472B6',
+    description: 'Create visual moodboards, brand kits, and creative direction',
+  },
+  social: {
+    name: 'Social Media',
+    icon: 'Share',
+    color: '#4ADE80',
+    description: 'Generate social posts, carousels, and content for all platforms',
   },
 };
 

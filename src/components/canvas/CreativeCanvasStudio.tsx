@@ -107,6 +107,14 @@ import { fashionService, type TryOnProvider, type TryOnCategory } from '../../se
 import { storyGenerationService, type StoryGenre, type StoryTone, type POV, type TargetLength, type Audience, type StoryFramework, type SceneFormat, type SceneType, type SceneLength, type TwistType, type CharacterArchetype, type CharacterRole, type LocationType, type DialogueType } from '../../services/storyGenerationService';
 // Unified Node System v3.1 - Backend-persisted nodes with typed ports
 import { nodeService, type NodePort } from '../../services/nodeService';
+// Unified Node v4.0 - Single node component for all node types
+import { UnifiedNode } from '../nodes/UnifiedNode';
+// Unified Node v4.0 - Toolbar system
+import { TopMenuBar, ContextToolbar, FloatingToolbar, StatusBar } from '../toolbars';
+// Unified Node v4.0 - Redesigned palette
+import { CreativePalette as CreativePaletteV4 } from '../panels/CreativePalette';
+import type { ToolbarAction, UnifiedNodeData } from '../../models/unifiedNode';
+import { unifiedNodeService } from '../../services/unifiedNodeService';
 import { edgeService, apiEdgeToFlowEdge } from '../../services/edgeService';
 import { DomainToolbar } from './DomainToolbar';
 import { CanvasNode } from '../nodes/CanvasNode';
@@ -206,9 +214,35 @@ const WorkflowContext = React.createContext<{
   userPersona?: PersonaType;
 }>({});
 
+// Context for node actions - allows nodes to trigger execution, deletion, etc.
+export interface CanvasActionsContextValue {
+  onExecute?: (nodeId: string) => void;
+  onDelete?: (nodeId: string) => void;
+  onParameterChange?: (nodeId: string, paramId: string, value: unknown) => void;
+  /** Create a new node and connect it to the specified input port */
+  onCreateConnectedInputNode?: (
+    targetNodeId: string,
+    targetPortId: string,
+    targetPortType: string,
+    sourceNodeType: string
+  ) => void;
+  /** Get compatible input node types for a port type */
+  getCompatibleInputNodes?: (portType: string) => Array<{
+    type: string;
+    label: string;
+    icon: string;
+    outputPortId: string;
+  }>;
+}
+
+export const CanvasActionsContext = React.createContext<CanvasActionsContextValue>({});
+
 // Node types for React Flow
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const nodeTypes: NodeTypes = {
+  // === v4.0 Unified Node - Single component for all node types ===
+  unifiedNode: UnifiedNode as any,
+  // === Legacy node types (to be deprecated) ===
   canvasCard: CanvasNode,
   creativeCard: CreativeCard as any, // New Creative Card (Elevated Vision v3.0)
   canvasNode: FlowNode as any,  // New flow node type for palette nodes
@@ -344,6 +378,12 @@ const CreativeCanvasInner: React.FC = () => {
   const [nodeInspectorOpen, setNodeInspectorOpen] = useState(true);
   const [selectedFlowNode, setSelectedFlowNode] = useState<{ id: string; data: CanvasNodeData } | null>(null);
 
+  // v4.0 Unified Node Architecture - Feature flags and state
+  const [useUnifiedPalette] = useState(true); // Use new CreativePalette v4 (toggle in settings later)
+  const [showMinimap, setShowMinimap] = useState(true);
+  const [isExecutingAll, setIsExecutingAll] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(100);
+
   // Settings
   const [gridEnabled, setGridEnabled] = useState(true);
   const [snapToGrid] = useState(true);
@@ -435,21 +475,42 @@ const CreativeCanvasInner: React.FC = () => {
       });
 
       if (edgeResponse.success && edgeResponse.edge) {
-        // Add the persisted edge to React Flow
-        const flowEdge = apiEdgeToFlowEdge(edgeResponse.edge);
+        // Add the persisted edge to React Flow with highlight effect
+        const flowEdge = apiEdgeToFlowEdge(edgeResponse.edge, { isHighlighted: true });
         setEdges((eds) => [...eds, flowEdge]);
+
+        // Clear the highlight after animation completes (1.5s)
+        setTimeout(() => {
+          setEdges((eds) => eds.map(e =>
+            e.id === flowEdge.id
+              ? { ...e, data: { ...e.data, isHighlighted: false } }
+              : e
+          ));
+        }, 1500);
       } else {
-        // Fallback: add edge locally even if backend fails
+        // Fallback: add edge locally even if backend fails - with highlight
         const edgeStyle = validation.sourcePort && validation.targetPort
           ? getEdgeStyle(validation.sourcePort.type, validation.targetPort.type)
           : { stroke: '#9c27b0', strokeWidth: 2 };
 
+        const fallbackEdgeId = `e-${connection.source}-${connection.target}-${Date.now()}`;
         setEdges((eds) => addEdge({
           ...connection,
+          id: fallbackEdgeId,
           type: 'smoothstep',
           animated: true,
           style: edgeStyle,
+          data: { isHighlighted: true },
         }, eds));
+
+        // Clear the highlight after animation completes
+        setTimeout(() => {
+          setEdges((eds) => eds.map(e =>
+            e.id === fallbackEdgeId
+              ? { ...e, data: { ...e.data, isHighlighted: false } }
+              : e
+          ));
+        }, 1500);
       }
 
       // Open the connection action menu for "Moments of Delight"
@@ -471,17 +532,29 @@ const CreativeCanvasInner: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to create edge:', err);
-      // Still add edge locally for immediate feedback
+      // Still add edge locally for immediate feedback - with highlight
       const edgeStyle = validation.sourcePort && validation.targetPort
         ? getEdgeStyle(validation.sourcePort.type, validation.targetPort.type)
         : { stroke: '#9c27b0', strokeWidth: 2 };
 
+      const errorEdgeId = `e-${connection.source}-${connection.target}-${Date.now()}`;
       setEdges((eds) => addEdge({
         ...connection,
+        id: errorEdgeId,
         type: 'smoothstep',
         animated: true,
         style: edgeStyle,
+        data: { isHighlighted: true },
       }, eds));
+
+      // Clear the highlight after animation completes
+      setTimeout(() => {
+        setEdges((eds) => eds.map(e =>
+          e.id === errorEdgeId
+            ? { ...e, data: { ...e.data, isHighlighted: false } }
+            : e
+        ));
+      }, 1500);
     }
   }, [nodes, edges, setEdges, currentBoard]);
 
@@ -732,7 +805,57 @@ const CreativeCanvasInner: React.FC = () => {
       if (!currentBoard) return;
 
       try {
-        // Fetch nodes and edges from backend in parallel
+        // === UNIFIED SYSTEM v4.0 ===
+        // Try full-graph endpoint first (single API call for nodes + edges + toolbar)
+        if (useUnifiedPalette) {
+          try {
+            const fullGraph = await unifiedNodeService.getFullGraph(currentBoard.id);
+
+            if (fullGraph.nodes) {
+              const flowNodes: Node[] = fullGraph.nodes.map((apiNode) => ({
+                id: apiNode.id,
+                type: 'unifiedNode',
+                position: (apiNode as unknown as { position: { x: number; y: number } }).position || { x: 0, y: 0 },
+                data: {
+                  ...apiNode,
+                  status: apiNode.status || 'idle',
+                },
+              }));
+              setNodes(flowNodes);
+            }
+
+            if (fullGraph.edges) {
+              const flowEdges: Edge[] = fullGraph.edges.map((edge) => ({
+                id: edge.id,
+                source: edge.sourceNodeId,
+                target: edge.targetNodeId,
+                sourceHandle: edge.sourcePortId,
+                targetHandle: edge.targetPortId,
+                type: edge.edgeType || 'default',
+              }));
+              setEdges(flowEdges);
+            }
+
+            // Restore viewport from full graph or board
+            const viewport = fullGraph.board?.viewportState || currentBoard.viewportState;
+            if (viewport && reactFlowInstance) {
+              reactFlowInstance.setViewport({
+                x: viewport.x,
+                y: viewport.y,
+                zoom: viewport.zoom,
+              });
+            }
+
+            // Successfully loaded via full-graph endpoint
+            return;
+          } catch (fullGraphErr) {
+            console.warn('Full-graph endpoint failed, falling back to separate calls:', fullGraphErr);
+            // Fall through to legacy loading
+          }
+        }
+
+        // === LEGACY SYSTEM v3.1 ===
+        // Fetch nodes and edges from backend in parallel (separate API calls)
         const [nodesResponse, edgesResponse] = await Promise.all([
           nodeService.list(currentBoard.id),
           edgeService.list(currentBoard.id),
@@ -773,7 +896,7 @@ const CreativeCanvasInner: React.FC = () => {
 
         // Convert backend edges to React Flow edges
         if (edgesResponse.success && edgesResponse.edges) {
-          const flowEdges: Edge[] = edgesResponse.edges.map(apiEdgeToFlowEdge);
+          const flowEdges: Edge[] = edgesResponse.edges.map(e => apiEdgeToFlowEdge(e));
           setEdges(flowEdges);
         } else {
           setEdges([]);
@@ -801,7 +924,7 @@ const CreativeCanvasInner: React.FC = () => {
     };
 
     loadBoardContent();
-  }, [currentBoard, setNodes, setEdges, reactFlowInstance, cardCallbacks]);
+  }, [currentBoard, setNodes, setEdges, reactFlowInstance, cardCallbacks, useUnifiedPalette]);
 
   // === PORT DOUBLE-CLICK: Auto-add Input Node ===
   // Map port types to appropriate input node types
@@ -1287,6 +1410,40 @@ const CreativeCanvasInner: React.FC = () => {
     setContextMenu({ x: event.clientX, y: event.clientY, nodeId });
   }, []);
 
+  // Handle edge deletion (keyboard delete or UI action)
+  const onEdgesDelete = useCallback(async (deletedEdges: Edge[]) => {
+    if (!currentBoard) return;
+
+    // Sync each deleted edge with the backend
+    const deletePromises = deletedEdges.map(async (edge) => {
+      try {
+        await edgeService.delete(edge.id);
+      } catch (err) {
+        console.error(`Failed to delete edge ${edge.id}:`, err);
+      }
+    });
+
+    await Promise.all(deletePromises);
+    setSuccessMessage(`Deleted ${deletedEdges.length} connection${deletedEdges.length > 1 ? 's' : ''}`);
+  }, [currentBoard]);
+
+  // Handle node deletion (keyboard delete) - sync with backend
+  const onNodesDelete = useCallback(async (deletedNodes: Node[]) => {
+    if (!currentBoard) return;
+
+    // Sync each deleted node with the backend
+    const deletePromises = deletedNodes.map(async (node) => {
+      try {
+        await nodeService.delete(node.id);
+      } catch (err) {
+        console.error(`Failed to delete node ${node.id}:`, err);
+      }
+    });
+
+    await Promise.all(deletePromises);
+    setSuccessMessage(`Deleted ${deletedNodes.length} node${deletedNodes.length > 1 ? 's' : ''}`);
+  }, [currentBoard]);
+
   // Save board viewport
   const saveViewport = useCallback(async () => {
     if (!currentBoard) return;
@@ -1305,10 +1462,116 @@ const CreativeCanvasInner: React.FC = () => {
     }
   }, [currentBoard, reactFlowInstance]);
 
-  // Auto-save viewport on change
+  // Auto-save viewport on change and track zoom level
   const onMoveEnd = useCallback(() => {
     saveViewport();
-  }, [saveViewport]);
+    setZoomLevel(Math.round(reactFlowInstance.getZoom() * 100));
+  }, [saveViewport, reactFlowInstance]);
+
+  // === v4.0 TOOLBAR HANDLERS ===
+
+  // Handle toolbar action (from ContextToolbar)
+  const handleToolbarAction = useCallback((action: ToolbarAction) => {
+    // Create a new node of the specified type at center of viewport
+    const center = reactFlowInstance.screenToFlowPosition({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    });
+
+    const nodeDefinition = nodeDefinitions.find(n => n.type === action.nodeType);
+    if (!nodeDefinition) {
+      console.warn('No definition found for node type:', action.nodeType);
+      return;
+    }
+
+    const newNode = {
+      id: `node-${Date.now()}`,
+      type: 'unifiedNode',
+      position: center,
+      data: {
+        id: `node-${Date.now()}`,
+        nodeType: action.nodeType,
+        category: nodeDefinition.category,
+        label: nodeDefinition.label,
+        displayMode: 'standard',
+        inputs: nodeDefinition.inputs?.map(p => ({ ...p, required: p.required ?? false, multi: p.multiple ?? false })) || [],
+        outputs: nodeDefinition.outputs?.map(p => ({ ...p, required: p.required ?? false, multi: p.multiple ?? false })) || [],
+        parameters: nodeDefinition.parameters?.reduce<Record<string, unknown>>((acc, p) => ({ ...acc, [p.id]: p.default }), {}) || {},
+        status: 'idle',
+        aiModel: nodeDefinition.aiModel,
+      },
+    };
+
+    setNodes(prev => [...prev, newNode]);
+    setSuccessMessage(`Added ${nodeDefinition.label} node`);
+  }, [reactFlowInstance, setNodes]);
+
+  // === TOP MENU BAR HANDLERS ===
+
+  const handleZoomIn = useCallback(() => {
+    reactFlowInstance.zoomIn();
+    setZoomLevel(Math.round(reactFlowInstance.getZoom() * 100));
+  }, [reactFlowInstance]);
+
+  const handleZoomOut = useCallback(() => {
+    reactFlowInstance.zoomOut();
+    setZoomLevel(Math.round(reactFlowInstance.getZoom() * 100));
+  }, [reactFlowInstance]);
+
+  const handleFitView = useCallback(() => {
+    reactFlowInstance.fitView({ padding: 0.2 });
+    setTimeout(() => setZoomLevel(Math.round(reactFlowInstance.getZoom() * 100)), 100);
+  }, [reactFlowInstance]);
+
+  const handleToggleGrid = useCallback(() => {
+    setGridEnabled(prev => !prev);
+  }, []);
+
+  const handleToggleMinimap = useCallback(() => {
+    setShowMinimap(prev => !prev);
+  }, []);
+
+  const handleSaveBoard = useCallback(async () => {
+    if (!currentBoard) return;
+    try {
+      await creativeCanvasService.boards.update(currentBoard.id, {
+        name: currentBoard.name,
+        viewportState: reactFlowInstance.getViewport(),
+      });
+      setSuccessMessage('Board saved');
+    } catch (err) {
+      console.error('Failed to save board:', err);
+      setError('Failed to save board');
+    }
+  }, [currentBoard, reactFlowInstance]);
+
+  const handleExecuteAll = useCallback(async () => {
+    if (isExecutingAll) return;
+    setIsExecutingAll(true);
+    try {
+      // Execute nodes in topological order
+      // TODO: Use /boards/{id}/execution-order endpoint to get proper order
+      // TODO: Implement individual node execution through handleNodeExecute (defined later)
+      setSuccessMessage('Executing all nodes...');
+
+      // For now, just show the running state briefly
+      // Full execution will be wired up once execution order endpoint is integrated
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setSuccessMessage('Execution complete');
+    } catch (err) {
+      console.error('Failed to execute all nodes:', err);
+      setError('Execution failed');
+    } finally {
+      setIsExecutingAll(false);
+    }
+  }, [isExecutingAll]);
+
+  const handleStopAll = useCallback(() => {
+    // TODO: Implement stop functionality when execution system is ready
+    setIsExecutingAll(false);
+    setSuccessMessage('Execution stopped');
+  }, []);
 
   // Handle drop from Node Palette
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -1370,7 +1633,6 @@ const CreativeCanvasInner: React.FC = () => {
       const nodeDataStr = event.dataTransfer.getData('nodeData');
 
       if (reactFlowType && nodeDataStr && canvasContainerRef.current && currentBoard) {
-        const nodeData = JSON.parse(nodeDataStr) as CanvasNodeData;
         const bounds = canvasContainerRef.current.getBoundingClientRect();
 
         // Calculate position in canvas coordinates
@@ -1394,76 +1656,113 @@ const CreativeCanvasInner: React.FC = () => {
         }
 
         try {
-          // === UNIFIED NODE SYSTEM v3.1 ===
-          // Create node via backend API with full typed ports persistence
-          // Convert local Port[] to NodePort[] for API
-          const apiInputs: NodePort[] = (nodeData.inputs || []).map(p => ({
-            id: p.id,
-            name: p.name,
-            type: p.type,
-            required: p.required ?? false,
-            multi: false,
-          }));
-          const apiOutputs: NodePort[] = (nodeData.outputs || []).map(p => ({
-            id: p.id,
-            name: p.name,
-            type: p.type,
-            required: p.required ?? false,
-            multi: false,
-          }));
+          let newNode: Node;
 
-          const nodeResponse = await nodeService.create(currentBoard.id, {
-            nodeType: nodeData.nodeType,
-            label: nodeData.label,
-            category: nodeData.category,
-            position: { x: finalPosition.x, y: finalPosition.y },
-            dimensions: { width: 320, height: 400 },
-            inputs: apiInputs,      // ← Typed ports now persisted!
-            outputs: apiOutputs,    // ← Typed ports now persisted!
-            parameters: nodeData.parameters || {}, // ← Parameters now persisted!
-          });
+          // === UNIFIED NODE SYSTEM v4.0 ===
+          // Check if this is a unified node drop (from CreativePaletteV4)
+          if (reactFlowType === 'unifiedNode') {
+            const unifiedData = JSON.parse(nodeDataStr) as UnifiedNodeData & { id?: string };
 
-          if (!nodeResponse.success || !nodeResponse.node) {
-            const errMsg = typeof nodeResponse.error === 'string' ? nodeResponse.error : 'Failed to create node';
-            throw new Error(errMsg);
+            // Create node via unified node API
+            const apiNode = await unifiedNodeService.createNode(currentBoard.id, {
+              nodeType: unifiedData.nodeType,
+              category: unifiedData.category,
+              label: unifiedData.label,
+              displayMode: unifiedData.displayMode || 'standard',
+              position: { x: finalPosition.x, y: finalPosition.y },
+              dimensions: { width: 280, height: 320 },
+              inputs: unifiedData.inputs || [],
+              outputs: unifiedData.outputs || [],
+              parameters: unifiedData.parameters || {},
+              aiModel: unifiedData.aiModel,
+            });
+
+            // Create React Flow node with unified node type
+            newNode = {
+              id: apiNode.id,
+              type: 'unifiedNode',
+              position: (apiNode as any).position || finalPosition,
+              data: {
+                ...apiNode,
+                status: 'idle',
+              },
+            };
+          } else {
+            // === LEGACY NODE SYSTEM v3.1 ===
+            // Handle legacy canvasNode drops
+            const nodeData = JSON.parse(nodeDataStr) as CanvasNodeData;
+
+            // Convert local Port[] to NodePort[] for API
+            const apiInputs: NodePort[] = (nodeData.inputs || []).map(p => ({
+              id: p.id,
+              name: p.name,
+              type: p.type,
+              required: p.required ?? false,
+              multi: false,
+            }));
+            const apiOutputs: NodePort[] = (nodeData.outputs || []).map(p => ({
+              id: p.id,
+              name: p.name,
+              type: p.type,
+              required: p.required ?? false,
+              multi: false,
+            }));
+
+            const nodeResponse = await nodeService.create(currentBoard.id, {
+              nodeType: nodeData.nodeType,
+              label: nodeData.label,
+              category: nodeData.category,
+              position: { x: finalPosition.x, y: finalPosition.y },
+              dimensions: { width: 320, height: 400 },
+              inputs: apiInputs,
+              outputs: apiOutputs,
+              parameters: nodeData.parameters || {},
+            });
+
+            if (!nodeResponse.success || !nodeResponse.node) {
+              const errMsg = typeof nodeResponse.error === 'string' ? nodeResponse.error : 'Failed to create node';
+              throw new Error(errMsg);
+            }
+
+            const apiNode = nodeResponse.node;
+
+            // Use specialized node component if registered, otherwise fallback to canvasNode
+            const registeredNodeType = apiNode.nodeType in nodeTypes ? apiNode.nodeType : 'canvasNode';
+
+            // Convert API NodePort[] back to local Port[] format
+            const localInputs: Port[] = (apiNode.inputs || []).map(p => ({
+              id: p.id,
+              name: p.name,
+              type: p.type as PortType,
+              required: p.required,
+            }));
+            const localOutputs: Port[] = (apiNode.outputs || []).map(p => ({
+              id: p.id,
+              name: p.name,
+              type: p.type as PortType,
+              required: p.required,
+            }));
+
+            newNode = {
+              id: apiNode.id,
+              type: registeredNodeType,
+              position: apiNode.position,
+              data: {
+                nodeType: apiNode.nodeType as NodeType,
+                category: apiNode.category as CanvasNodeData['category'],
+                label: apiNode.label,
+                inputs: localInputs,
+                outputs: localOutputs,
+                parameters: apiNode.parameters || {},
+                status: apiNode.status || 'idle',
+              },
+              width: apiNode.dimensions?.width,
+              height: apiNode.dimensions?.height,
+            };
           }
 
-          const apiNode = nodeResponse.node;
-
-          // Convert backend node to React Flow node
-          // Use specialized node component if registered, otherwise fallback to canvasNode
-          const registeredNodeType = apiNode.nodeType in nodeTypes ? apiNode.nodeType : 'canvasNode';
-
-          // Convert API NodePort[] back to local Port[] format
-          const localInputs: Port[] = (apiNode.inputs || []).map(p => ({
-            id: p.id,
-            name: p.name,
-            type: p.type as PortType,
-            required: p.required,
-          }));
-          const localOutputs: Port[] = (apiNode.outputs || []).map(p => ({
-            id: p.id,
-            name: p.name,
-            type: p.type as PortType,
-            required: p.required,
-          }));
-
-          const newNode: Node<CanvasNodeData> = {
-            id: apiNode.id, // Use backend-generated ID
-            type: registeredNodeType,
-            position: apiNode.position,
-            data: {
-              nodeType: apiNode.nodeType as NodeType,
-              category: apiNode.category as CanvasNodeData['category'],
-              label: apiNode.label,
-              inputs: localInputs,
-              outputs: localOutputs,
-              parameters: apiNode.parameters || {},
-              status: apiNode.status || 'idle',
-            },
-            width: apiNode.dimensions?.width,
-            height: apiNode.dimensions?.height,
-          };
+          // Get label from the newNode for messages
+          const nodeLabel = (newNode.data as { label?: string })?.label || 'Node';
 
           // If we have a target node, try to create an auto-connect edge
           if (targetNode) {
@@ -1513,16 +1812,16 @@ const CreativeCanvasInner: React.FC = () => {
           // Add auto-connect edge if applicable
           if (autoConnectEdge) {
             setEdges((eds) => [...eds, autoConnectEdge!]);
-            setSuccessMessage(`Added ${nodeData.label} and connected to ${(targetNode?.data as CanvasNodeData)?.label || 'node'}`);
+            setSuccessMessage(`Added ${nodeLabel} and connected to ${(targetNode?.data as CanvasNodeData)?.label || 'node'}`);
           } else {
-            setSuccessMessage(`Added ${nodeData.label} node`);
+            setSuccessMessage(`Added ${nodeLabel} node`);
           }
 
           // Note: No need to update board.cards - nodes are now separate entities
 
         } catch (err) {
-          console.error('Failed to create card:', err);
-          setError(`Failed to add ${nodeData.label} node`);
+          console.error('Failed to create node:', err);
+          setError(`Failed to add node`);
         }
       }
 
@@ -2276,16 +2575,44 @@ const CreativeCanvasInner: React.FC = () => {
       } else if (nodeType === 'characterCreator') {
         // Character Creator - Generate full character
         console.log('[handleNodeExecute] Processing Character Creator');
-        const concept = (inputData.concept as string) || (nodeData?.parameters?.concept as string);
+
+        // Get character parameters from the node
+        const characterName = (nodeData?.parameters?.characterName as string) || '';
+        const role = (nodeData?.parameters?.role as string) || 'protagonist';
+        const archetype = (nodeData?.parameters?.archetype as CharacterArchetype) || 'hero';
+        const age = (nodeData?.parameters?.age as string) || '';
+        const gender = (nodeData?.parameters?.gender as string) || '';
+        const occupation = (nodeData?.parameters?.occupation as string) || '';
+        const briefDescription = (nodeData?.parameters?.briefDescription as string) || '';
+        const traits = (nodeData?.parameters?.traits as string) || '';
+        const flaws = (nodeData?.parameters?.flaws as string) || '';
+        const motivation = (nodeData?.parameters?.motivation as string) || '';
+
+        // Build a concept from the character details
+        const concept = (inputData.concept as string) ||
+          (nodeData?.parameters?.concept as string) ||
+          [
+            characterName && `Name: ${characterName}`,
+            age && `Age: ${age}`,
+            gender && `Gender: ${gender}`,
+            occupation && `Occupation: ${occupation}`,
+            briefDescription,
+            traits && `Traits: ${traits}`,
+            flaws && `Flaws: ${flaws}`,
+            motivation && `Motivation: ${motivation}`,
+          ].filter(Boolean).join('. ') ||
+          characterName;
 
         if (!concept) {
-          throw new Error('Character Creator requires a character concept.');
+          throw new Error('Character Creator requires at least a character name or description.');
         }
+
+        console.log('[handleNodeExecute] Character concept:', concept);
 
         const characterResponse = await storyGenerationService.generateCharacter({
           concept,
-          archetype: nodeData?.parameters?.archetype as CharacterArchetype,
-          role: nodeData?.parameters?.role as CharacterRole,
+          archetype,
+          role: role as CharacterRole,
           depth: (nodeData?.parameters?.depth as 'basic' | 'standard' | 'deep' | 'comprehensive') || 'standard',
           generatePortrait: (nodeData?.parameters?.generatePortrait as boolean) ?? false,
         });
@@ -2298,7 +2625,8 @@ const CreativeCanvasInner: React.FC = () => {
             character: characterResponse.character,
             backstory: characterResponse.backstory,
             arc: characterResponse.arc,
-            text: `${characterResponse.character?.name}: ${characterResponse.character?.role} - ${characterResponse.character?.archetype}`,
+            voiceProfile: characterResponse.voiceProfile,
+            text: `${characterResponse.character?.name || characterName}: ${characterResponse.character?.role || role} - ${characterResponse.character?.archetype || archetype}`,
             imageUrl: characterResponse.portraitUrl,
             outputType: characterResponse.portraitUrl ? 'image' : 'text',
           },
@@ -2776,6 +3104,180 @@ const CreativeCanvasInner: React.FC = () => {
     [nodes, setNodes]
   );
 
+  // ============================================================================
+  // AUTO-CREATE CONNECTED INPUT NODE (v4.1)
+  // ============================================================================
+
+  /**
+   * Get compatible input node types for a given port type.
+   * Returns nodes that have an output matching the requested input type.
+   */
+  const getCompatibleInputNodes = useCallback((portType: string) => {
+    // Map of port types to recommended input node types
+    const inputNodeMap: Record<string, Array<{ type: string; label: string; icon: string; outputPortId: string }>> = {
+      text: [
+        { type: 'textInput', label: 'Text Input', icon: 'TextFields', outputPortId: 'text' },
+      ],
+      image: [
+        { type: 'imageUpload', label: 'Image Upload', icon: 'Image', outputPortId: 'image' },
+        { type: 'referenceImage', label: 'Style Reference', icon: 'Collections', outputPortId: 'images' },
+        { type: 'flux2Pro', label: 'FLUX.2 Pro', icon: 'AutoAwesome', outputPortId: 'image' },
+        { type: 'flux2Dev', label: 'FLUX.2 Dev', icon: 'Science', outputPortId: 'image' },
+      ],
+      video: [
+        { type: 'videoUpload', label: 'Video Upload', icon: 'VideoFile', outputPortId: 'video' },
+        { type: 'kling26T2V', label: 'Text to Video', icon: 'Videocam', outputPortId: 'video' },
+        { type: 'kling26I2V', label: 'Animate Image', icon: 'Animation', outputPortId: 'video' },
+      ],
+      audio: [
+        { type: 'audioUpload', label: 'Audio Upload', icon: 'AudioFile', outputPortId: 'audio' },
+      ],
+      character: [
+        { type: 'characterReference', label: 'Character Photos', icon: 'Person', outputPortId: 'character' },
+        { type: 'characterCreator', label: 'Character Creator', icon: 'PersonAdd', outputPortId: 'character' },
+      ],
+      style: [
+        { type: 'styleDNA', label: 'Style DNA', icon: 'Palette', outputPortId: 'style' },
+        { type: 'referenceImage', label: 'Style Reference', icon: 'Collections', outputPortId: 'images' },
+      ],
+      garment: [
+        { type: 'imageUpload', label: 'Garment Photo', icon: 'Image', outputPortId: 'image' },
+      ],
+      model: [
+        { type: 'imageUpload', label: 'Model Photo', icon: 'Person', outputPortId: 'image' },
+        { type: 'characterReference', label: 'Character Photos', icon: 'Person', outputPortId: 'character' },
+      ],
+      story: [
+        { type: 'storyGenesis', label: 'Story Genesis', icon: 'AutoStories', outputPortId: 'story' },
+      ],
+      scene: [
+        { type: 'sceneGenerator', label: 'Scene Generator', icon: 'Movie', outputPortId: 'scene' },
+      ],
+      any: [
+        { type: 'textInput', label: 'Text Input', icon: 'TextFields', outputPortId: 'text' },
+        { type: 'imageUpload', label: 'Image Upload', icon: 'Image', outputPortId: 'image' },
+        { type: 'videoUpload', label: 'Video Upload', icon: 'VideoFile', outputPortId: 'video' },
+      ],
+    };
+
+    return inputNodeMap[portType] || inputNodeMap['any'];
+  }, []);
+
+  /**
+   * Create a new input node and connect it to the specified target port.
+   * The new node is positioned to the left of the target node.
+   */
+  const handleCreateConnectedInputNode = useCallback(
+    async (
+      targetNodeId: string,
+      targetPortId: string,
+      targetPortType: string,
+      sourceNodeType: string
+    ) => {
+      if (!currentBoard) {
+        setError('No board selected');
+        return;
+      }
+
+      const targetNode = nodes.find(n => n.id === targetNodeId);
+      if (!targetNode) {
+        setError('Target node not found');
+        return;
+      }
+
+      // Get node definition for the source node type
+      const nodeDef = nodeDefinitions.find(def => def.type === sourceNodeType);
+      if (!nodeDef) {
+        setError(`Unknown node type: ${sourceNodeType}`);
+        return;
+      }
+
+      // Find the output port that matches the target port type
+      const compatibleNodes = getCompatibleInputNodes(targetPortType);
+      const sourceNodeInfo = compatibleNodes.find(n => n.type === sourceNodeType);
+      const outputPortId = sourceNodeInfo?.outputPortId || nodeDef.outputs?.[0]?.id || 'output';
+
+      // Position the new node to the left of the target node
+      const newPosition = {
+        x: targetNode.position.x - 320, // Node width + spacing
+        y: targetNode.position.y,
+      };
+
+      try {
+        // Create the node via API
+        const apiNode = await unifiedNodeService.createNode(currentBoard.id, {
+          nodeType: sourceNodeType as NodeType,
+          category: nodeDef.category,
+          label: nodeDef.displayName || nodeDef.label,
+          displayMode: nodeDef.defaultDisplayMode || 'standard',
+          position: newPosition,
+          dimensions: { width: 280, height: 320 },
+          inputs: (nodeDef.inputs || []).map(p => ({
+            id: p.id,
+            name: p.name,
+            type: p.type,
+            required: p.required ?? false,
+            multi: p.multiple ?? false,
+          })),
+          outputs: (nodeDef.outputs || []).map(p => ({
+            id: p.id,
+            name: p.name,
+            type: p.type,
+            required: p.required ?? false,
+            multi: p.multiple ?? false,
+          })),
+          parameters: {},
+          aiModel: nodeDef.aiModel,
+        });
+
+        // Create React Flow node
+        const newNode: Node = {
+          id: apiNode.id,
+          type: 'unifiedNode',
+          position: newPosition,
+          data: {
+            ...apiNode,
+            status: 'idle',
+          },
+        };
+
+        // Create the edge connecting the new node to the target
+        const newEdgeId = `edge-${apiNode.id}-${targetNodeId}-${Date.now()}`;
+        const newEdge: Edge = {
+          id: newEdgeId,
+          source: apiNode.id,
+          sourceHandle: outputPortId,
+          target: targetNodeId,
+          targetHandle: targetPortId,
+          type: 'smoothstep',
+          animated: false,
+        };
+
+        // Persist edge to backend
+        try {
+          await edgeService.create(currentBoard.id, {
+            sourceNodeId: apiNode.id,
+            sourcePortId: outputPortId,
+            targetNodeId: targetNodeId,
+            targetPortId: targetPortId,
+          });
+        } catch (edgeErr) {
+          console.warn('Failed to persist edge to backend:', edgeErr);
+        }
+
+        // Add node and edge to state
+        setNodes(nds => [...nds, newNode]);
+        setEdges(eds => [...eds, newEdge]);
+
+        setSuccessMessage(`Created ${nodeDef.displayName || nodeDef.label} and connected to ${targetPortId}`);
+      } catch (err) {
+        console.error('Failed to create connected node:', err);
+        setError('Failed to create node');
+      }
+    },
+    [currentBoard, nodes, setNodes, setEdges, getCompatibleInputNodes]
+  );
+
   // Handle style selection from CreativePalette (Phase 3)
   const handleStyleSelect = useCallback(
     (styleId: string, keywords: string[]) => {
@@ -3031,37 +3533,88 @@ const CreativeCanvasInner: React.FC = () => {
 
   // Render canvas view
   const renderCanvasView = () => (
-    <Box sx={{ width: '100%', height: '100%', display: 'flex', position: 'relative' }}>
-      {/* Left Sidebar - Creative Palette v3 */}
-      {nodePaletteOpen && (
-        <CreativePalette
-          onStyleSelect={handleStyleSelect}
-          onColorPaletteSelect={handleColorPaletteSelect}
-          onAssetSelect={handleAssetSelect}
-          width={280}
-        />
-      )}
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      {/* v4.0 Top Menu Bar - File, Edit, View menus */}
+      <TopMenuBar
+        boardName={currentBoard?.name}
+        boardCategory={currentBoard?.category}
+        onSave={handleSaveBoard}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onFitView={handleFitView}
+        onToggleGrid={handleToggleGrid}
+        onToggleMinimap={handleToggleMinimap}
+        onExecuteAll={handleExecuteAll}
+        onStopAll={handleStopAll}
+        isExecuting={isExecutingAll}
+        showGrid={gridEnabled}
+        showMinimap={showMinimap}
+        zoomLevel={zoomLevel}
+      />
 
-      {/* Main Canvas Area - Brand styled with dot-grid */}
-      <Box
-        ref={canvasContainerRef}
-        sx={{
-          flex: 1,
-          height: '100%',
-          position: 'relative',
-          bgcolor: canvasTokens.background.dark,
-          // React Flow will add its own background via the Background component
-        }}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-      >
-        {renderToolbar()}
+      {/* v4.0 Context Toolbar - Category-aware quick actions */}
+      <ContextToolbar
+        boardCategory={currentBoard?.category}
+        onActionClick={handleToolbarAction}
+      />
 
+      {/* Main content area */}
+      <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Left Sidebar - Creative Palette v4 or Legacy */}
+        {nodePaletteOpen && (
+          useUnifiedPalette ? (
+            <CreativePaletteV4
+              boardCategory={currentBoard?.category}
+              onClose={() => setNodePaletteOpen(false)}
+              width={280}
+              onToolbarAction={handleToolbarAction}
+            />
+          ) : (
+            <CreativePalette
+              onStyleSelect={handleStyleSelect}
+              onColorPaletteSelect={handleColorPaletteSelect}
+              onAssetSelect={handleAssetSelect}
+              width={280}
+            />
+          )
+        )}
+
+        {/* Main Canvas Area - Brand styled with dot-grid */}
+        <Box
+          ref={canvasContainerRef}
+          sx={{
+            flex: 1,
+            height: '100%',
+            position: 'relative',
+            bgcolor: canvasTokens.background.dark,
+          }}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        >
+          {renderToolbar()}
+
+          {/* v4.0 Floating Toolbar - Selection actions */}
+          <FloatingToolbar
+            selectedCount={selectedNodes.length}
+            onDelete={handleDeleteSelectedCards}
+            onDuplicate={() => {/* TODO: implement duplicate */}}
+            onExecuteSelected={() => selectedNodes.forEach(id => handleNodeExecute(id))}
+          />
+
+        <CanvasActionsContext.Provider value={{
+          onExecute: handleNodeExecute,
+          onDelete: handleNodeDelete,
+          onParameterChange: handleParameterChange,
+          onCreateConnectedInputNode: handleCreateConnectedInputNode,
+          getCompatibleInputNodes,
+        }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onNodesDelete={onNodesDelete}
+          onEdgesDelete={onEdgesDelete}
           onConnect={onConnect}
           onNodeDragStop={onNodeDragStop}
           onSelectionChange={onSelectionChange}
@@ -3078,6 +3631,7 @@ const CreativeCanvasInner: React.FC = () => {
           fitView
           proOptions={{ hideAttribution: true }}
           connectOnClick={false}
+          deleteKeyCode={['Backspace', 'Delete']}
         >
           {gridEnabled && (
             <Background
@@ -3088,9 +3642,10 @@ const CreativeCanvasInner: React.FC = () => {
             />
           )}
           <Controls position="bottom-left" showInteractive={false} />
-          <MiniMap
-            position="bottom-right"
-            nodeColor={(node) => {
+          {showMinimap && (
+            <MiniMap
+              position="bottom-right"
+              nodeColor={(node) => {
               // Handle both canvasCard and flow nodes
               if (node.data && 'card' in node.data) {
                 const card = (node.data as { card: CanvasCard }).card;
@@ -3115,24 +3670,35 @@ const CreativeCanvasInner: React.FC = () => {
               return darkNeutrals.textTertiary;
             }}
             maskColor={`${darkNeutrals.ink}E6`}
-          />
+            />
+          )}
         </ReactFlow>
+        </CanvasActionsContext.Provider>
 
         {renderSpeedDial()}
       </Box>
 
-      {/* Right Sidebar - Node Inspector */}
-      {nodeInspectorOpen && (
-        <NodeInspector
-          node={selectedFlowNode}
-          onParameterChange={handleParameterChange}
-          onExecute={handleNodeExecute}
-          onDelete={handleNodeDelete}
-          onDuplicate={handleNodeDuplicate}
-          onClose={() => setNodeInspectorOpen(false)}
-          width={320}
-        />
-      )}
+        {/* Right Sidebar - Node Inspector */}
+        {nodeInspectorOpen && (
+          <NodeInspector
+            node={selectedFlowNode}
+            onParameterChange={handleParameterChange}
+            onExecute={handleNodeExecute}
+            onDelete={handleNodeDelete}
+            onDuplicate={handleNodeDuplicate}
+            onClose={() => setNodeInspectorOpen(false)}
+            width={320}
+          />
+        )}
+      </Box>
+
+      {/* v4.0 Status Bar */}
+      <StatusBar
+        nodeCount={nodes.length}
+        edgeCount={edges.length}
+        selectedCount={selectedNodes.length}
+        isExecuting={isExecutingAll}
+      />
 
       {/* Connection Action Menu - "Moments of Delight" */}
       {connectionMenuState && currentBoard && (() => {

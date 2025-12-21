@@ -1,10 +1,116 @@
 # Architecture Design - Creative Canvas Studio
 
-**Last Updated:** December 17, 2025
+**Last Updated:** December 20, 2025
 
 ## Overview
 
 Creative Canvas Studio is a standalone React application providing an infinity-board, node-based interface for composing AI-powered creative workflows. It's been extracted from the parent `ssgp-v2-agents-ui-react` project to operate as an independent creative orchestration platform.
+
+---
+
+## Unified Node Architecture (v4.0) - December 2025
+
+> **Status:** ✅ IMPLEMENTATION COMPLETE - Testing Phase
+> **Strategy:** `docs/UNIFIED_NODE_ARCHITECTURE_STRATEGY.md`
+> **API Requirements:** `docs/UNIFIED_NODE_API_REQUIREMENTS.md`
+
+### Implemented Components (Dec 20, 2025)
+
+**Core UnifiedNode:**
+- `src/models/unifiedNode.ts` - Type definitions, port compatibility, slot configs
+- `src/components/nodes/UnifiedNode.tsx` - Main component with slots
+- `src/components/nodes/slots/PreviewSlot.tsx` - Image/video/text/3D preview
+- `src/components/nodes/slots/ParameterSlot.tsx` - Inline parameter controls
+- `src/components/nodes/slots/ActionSlot.tsx` - Execute/download/duplicate actions
+
+**API Services:**
+- `src/services/unifiedNodeService.ts` - CRUD for unified nodes
+- `src/services/graphValidationService.ts` - Graph validation, port compatibility
+- `src/services/toolbarService.ts` - Category-aware toolbar fetching
+
+**Toolbar System:**
+- `src/components/toolbars/TopMenuBar.tsx` - Global file/view menu
+- `src/components/toolbars/ContextToolbar.tsx` - Category-aware quick actions
+- `src/components/toolbars/FloatingToolbar.tsx` - Selection actions, speed dial
+- `src/components/toolbars/StatusBar.tsx` - Canvas stats, validation, sync
+
+**Redesigned Palette:**
+- `src/components/panels/CreativePalette.tsx` - Vertical-first, category filter, favorites/recent
+
+### The Problem Solved
+
+Three incompatible node systems caused architectural chaos:
+- `CanvasNode` (legacy) - Generic handles, CanvasCard data model
+- `FlowNode` (modern) - Typed ports, CanvasNodeData model
+- `CreativeCard` (v3.0) - Three display modes, unclear usage
+
+**Result:** Buggy code generation, inconsistent behavior, 50+ duplicate node files.
+
+### The Solution
+
+**One UnifiedNode component** with slot-based composition:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ [Icon] Label                              [Status] [Menu]   │  HEADER
+├─────────────────────────────────────────────────────────────┤
+│ ○ input    ┌─────────────────────────┐       output ○       │
+│ ○ input    │     PREVIEW SLOT        │       output ○       │  CONTENT
+│            │     (image/video/3D)    │                      │
+│            └─────────────────────────┘                      │
+├─────────────────────────────────────────────────────────────┤
+│ [Progress Bar]                           [Execute] [More]   │  FOOTER
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Three Display Modes:** `compact` (80px) | `standard` (280px) | `expanded` (500px+)
+
+### Key Changes
+
+| Before | After |
+|--------|-------|
+| 53 node component files | 1 UnifiedNode + slot system |
+| 3 data models | 1 UnifiedNodeData model |
+| Generic port handles | Typed ports with validation |
+| Hardcoded node definitions | Backend-served templates |
+| No display mode control | User-switchable modes |
+
+### New API Endpoints (v4)
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /toolbars` | List all category toolbars |
+| `GET /toolbars/{category}` | Get toolbar for category |
+| `GET /boards/{id}/full-graph` | Board + nodes + edges + toolbar |
+| `POST /boards/{id}/validate` | Graph validation (cycles, missing inputs) |
+| `POST /boards/{id}/check-compatibility` | Port type compatibility |
+| `GET /boards/{id}/execution-order` | Topological sort + parallel groups |
+| `PUT /nodes/{id}/display-mode` | Switch compact/standard/expanded |
+
+### UI Layout
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  TOP MENU BAR: File | Edit | View | Canvas | Help                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│  CONTEXT TOOLBAR (Category-Aware): [👗Try-On][🔄Swap][🎬Runway]...      │
+├──────────┬──────────────────────────────────────────────────┬───────────┤
+│ CREATIVE │                                                  │   NODE    │
+│ PALETTE  │              INFINITE CANVAS                     │ INSPECTOR │
+│ (left)   │    [Floating Toolbar: Zoom|Grid|Undo|Redo]      │  (right)  │
+├──────────┴──────────────────────────────────────────────────┴───────────┤
+│  STATUS BAR: Board name | Node count | [▶ Run All]                      │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Implementation Approach
+
+**Decision:** Adapt existing project (not greenfield)
+- Core canvas, API services, routing already working
+- Problem isolated to `src/components/nodes/` (50+ files to replace)
+- Feature flags enable board-by-board migration
+
+---
 
 ## High-Level Architecture
 

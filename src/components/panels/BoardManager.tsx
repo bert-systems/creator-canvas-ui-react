@@ -46,6 +46,7 @@ import {
   Photo as StockIcon,
   MenuBook as StoryIcon,
   FolderOpen as EmptyIcon,
+  ColorLens as MoodboardIcon,
 } from '@mui/icons-material';
 import type { CanvasBoard, CardCategory } from '../../models/creativeCanvas';
 import { CATEGORY_INFO } from '../../models/creativeCanvas';
@@ -69,6 +70,12 @@ const getCategoryIcon = (category: CardCategory) => {
       return <StockIcon />;
     case 'story':
       return <StoryIcon />;
+    case 'moodboard':
+      return <MoodboardIcon />;
+    case 'social':
+      return <ShareIcon />;
+    default:
+      return <FashionIcon />;
   }
 };
 

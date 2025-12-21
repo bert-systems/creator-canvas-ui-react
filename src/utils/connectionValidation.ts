@@ -18,7 +18,14 @@ const PORT_COMPATIBILITY: Record<PortType, PortType[]> = {
   style: ['style', 'any'],
   character: ['character', 'any'],
   mesh3d: ['mesh3d', 'any'],
-  any: ['image', 'video', 'audio', 'text', 'style', 'character', 'mesh3d', 'story', 'scene', 'plotPoint', 'location', 'dialogue', 'treatment', 'outline', 'lore', 'timeline', 'garment', 'fabric', 'pattern', 'model', 'outfit', 'collection', 'techPack', 'lookbook', 'any'],
+  any: [
+    'image', 'video', 'audio', 'text', 'style', 'character', 'mesh3d',
+    'story', 'scene', 'plotPoint', 'location', 'dialogue', 'treatment', 'outline', 'lore', 'timeline',
+    'garment', 'fabric', 'pattern', 'model', 'outfit', 'collection', 'techPack', 'lookbook',
+    'room', 'floorPlan', 'material', 'furniture', 'designStyle', 'roomLayout',
+    'moodboard', 'colorPalette', 'brandKit', 'typography', 'texture', 'aesthetic',
+    'post', 'carousel', 'caption', 'template', 'platform', 'any',
+  ],
   // Storytelling port types
   story: ['story', 'text', 'any'],
   scene: ['scene', 'text', 'any'],
@@ -38,6 +45,26 @@ const PORT_COMPATIBILITY: Record<PortType, PortType[]> = {
   collection: ['collection', 'outfit', 'lookbook', 'any'],
   techPack: ['techPack', 'garment', 'text', 'any'],
   lookbook: ['lookbook', 'collection', 'image', 'any'],
+  // Interior Design port types
+  room: ['room', 'image', 'any'],
+  floorPlan: ['floorPlan', 'image', 'any'],
+  material: ['material', 'image', 'any'],
+  furniture: ['furniture', 'image', 'any'],
+  designStyle: ['designStyle', 'text', 'any'],
+  roomLayout: ['roomLayout', 'floorPlan', 'any'],
+  // Moodboard port types
+  moodboard: ['moodboard', 'image', 'any'],
+  colorPalette: ['colorPalette', 'any'],
+  brandKit: ['brandKit', 'any'],
+  typography: ['typography', 'text', 'any'],
+  texture: ['texture', 'image', 'any'],
+  aesthetic: ['aesthetic', 'text', 'any'],
+  // Social Media port types
+  post: ['post', 'image', 'any'],
+  carousel: ['carousel', 'image', 'any'],
+  caption: ['caption', 'text', 'any'],
+  template: ['template', 'image', 'any'],
+  platform: ['platform', 'any'],
 };
 
 // ===== Interfaces =====
@@ -242,6 +269,26 @@ export const getEdgeStyle = (
     collection: '#8b5cf6',
     techPack: '#6366f1',
     lookbook: '#7c3aed',
+    // Interior Design port types
+    room: '#8B5CF6',
+    floorPlan: '#64748B',
+    material: '#A78BFA',
+    furniture: '#C084FC',
+    designStyle: '#818CF8',
+    roomLayout: '#7DD3FC',
+    // Moodboard port types
+    moodboard: '#F472B6',
+    colorPalette: '#FB7185',
+    brandKit: '#38BDF8',
+    typography: '#A5B4FC',
+    texture: '#FCD34D',
+    aesthetic: '#D946EF',
+    // Social Media port types
+    post: '#4ADE80',
+    carousel: '#22D3EE',
+    caption: '#94A3B8',
+    template: '#F97316',
+    platform: '#6366F1',
   };
 
   return {

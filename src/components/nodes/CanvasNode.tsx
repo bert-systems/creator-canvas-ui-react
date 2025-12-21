@@ -1,6 +1,16 @@
 /**
  * Canvas Node - Renders a card on the infinite canvas
  * Supports workflow execution, image display, and drag/drop functionality
+ *
+ * @deprecated v4.0 - Use UnifiedNode instead
+ * This component is part of the legacy node system (v3.1).
+ * New boards should use UnifiedNode which provides:
+ * - Three display modes (compact/standard/expanded)
+ * - Slot-based composition (preview, parameters, actions)
+ * - Unified API integration via unifiedNodeService
+ * - Better performance with React.memo and virtualization
+ *
+ * Migration: Enable useUnifiedPalette flag in CreativeCanvasStudio
  */
 
 import { memo, useState, useCallback } from 'react';

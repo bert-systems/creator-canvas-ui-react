@@ -2,6 +2,16 @@
  * FlowNode - Base node component for workflow nodes
  * Supports multiple states: idle, running, completed, error
  * Handles typed ports with visual feedback
+ *
+ * @deprecated v4.0 - Use UnifiedNode instead
+ * This component is part of the legacy node system (v3.1).
+ * New boards should use UnifiedNode which provides:
+ * - Three display modes (compact/standard/expanded)
+ * - Slot-based composition (preview, parameters, actions)
+ * - Unified API integration via unifiedNodeService
+ * - Better performance with React.memo and virtualization
+ *
+ * Migration: Enable useUnifiedPalette flag in CreativeCanvasStudio
  */
 
 import { memo, useMemo } from 'react';
@@ -48,6 +58,26 @@ import {
   Collections as CollectionIcon,
   Assignment as TechPackIcon,
   PhotoAlbum as LookbookIcon,
+  // Interior Design icons
+  Home as RoomIcon,
+  Dashboard as FloorPlanIcon,
+  Layers as MaterialIcon,
+  Weekend as FurnitureIcon,
+  Brush as DesignStyleIcon,
+  GridView as RoomLayoutIcon,
+  // Moodboard icons
+  ColorLens as MoodboardIcon,
+  Palette as ColorPaletteIcon,
+  Business as BrandKitIcon,
+  FontDownload as TypographyIcon,
+  Wallpaper as TextureIcon,
+  AutoAwesome as AestheticIcon,
+  // Social Media icons
+  Article as PostIcon,
+  ViewCarousel as CarouselIcon,
+  Notes as CaptionIcon,
+  CropPortrait as TemplateIcon,
+  Share as PlatformIcon,
 } from '@mui/icons-material';
 import type { CanvasNodeData, Port, PortType } from '@/models/canvas';
 import { PORT_COLORS } from './portColors';
@@ -91,6 +121,26 @@ const PORT_ICONS: Record<PortType, React.ReactNode> = {
   collection: <CollectionIcon sx={{ fontSize: 12 }} />,
   techPack: <TechPackIcon sx={{ fontSize: 12 }} />,
   lookbook: <LookbookIcon sx={{ fontSize: 12 }} />,
+  // Interior Design port types
+  room: <RoomIcon sx={{ fontSize: 12 }} />,
+  floorPlan: <FloorPlanIcon sx={{ fontSize: 12 }} />,
+  material: <MaterialIcon sx={{ fontSize: 12 }} />,
+  furniture: <FurnitureIcon sx={{ fontSize: 12 }} />,
+  designStyle: <DesignStyleIcon sx={{ fontSize: 12 }} />,
+  roomLayout: <RoomLayoutIcon sx={{ fontSize: 12 }} />,
+  // Moodboard port types
+  moodboard: <MoodboardIcon sx={{ fontSize: 12 }} />,
+  colorPalette: <ColorPaletteIcon sx={{ fontSize: 12 }} />,
+  brandKit: <BrandKitIcon sx={{ fontSize: 12 }} />,
+  typography: <TypographyIcon sx={{ fontSize: 12 }} />,
+  texture: <TextureIcon sx={{ fontSize: 12 }} />,
+  aesthetic: <AestheticIcon sx={{ fontSize: 12 }} />,
+  // Social Media port types
+  post: <PostIcon sx={{ fontSize: 12 }} />,
+  carousel: <CarouselIcon sx={{ fontSize: 12 }} />,
+  caption: <CaptionIcon sx={{ fontSize: 12 }} />,
+  template: <TemplateIcon sx={{ fontSize: 12 }} />,
+  platform: <PlatformIcon sx={{ fontSize: 12 }} />,
 };
 
 // ===== Helper Functions =====

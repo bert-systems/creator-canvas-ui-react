@@ -199,9 +199,22 @@ export const edgeService = {
 import type { Edge as FlowEdge } from '@xyflow/react';
 
 /**
- * Convert backend CanvasEdge to React Flow Edge format
+ * Additional data that can be attached to edges for visual effects
  */
-export function apiEdgeToFlowEdge(apiEdge: CanvasEdge): FlowEdge {
+export interface EdgeAdditionalData {
+  isHighlighted?: boolean;
+  isFlowing?: boolean;
+  isMomentOfDelight?: boolean;
+  dataType?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Convert backend CanvasEdge to React Flow Edge format
+ * @param apiEdge - The edge from the backend API
+ * @param additionalData - Optional additional data for visual effects (e.g., isHighlighted)
+ */
+export function apiEdgeToFlowEdge(apiEdge: CanvasEdge, additionalData?: EdgeAdditionalData): FlowEdge {
   return {
     id: apiEdge.id,
     source: apiEdge.sourceNodeId,
@@ -215,6 +228,7 @@ export function apiEdgeToFlowEdge(apiEdge: CanvasEdge): FlowEdge {
       strokeWidth: apiEdge.style.strokeWidth,
     } : undefined,
     animated: apiEdge.style?.animated || false,
+    data: additionalData,
   };
 }
 

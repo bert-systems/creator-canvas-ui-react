@@ -10,13 +10,59 @@ export const api = axios.create({
   },
 });
 
-// Request interceptor for auth tokens
+/**
+ * Get user ID from various localStorage sources
+ * Required by creative-canvas-api for all requests
+ */
+function getUserId(): string {
+  // Try auth user first
+  const authUser = localStorage.getItem('authUser');
+  if (authUser) {
+    try {
+      const parsed = JSON.parse(authUser);
+      if (parsed.userId || parsed.id) {
+        return parsed.userId || parsed.id;
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
+  // Try direct userId
+  const userId = localStorage.getItem('userId');
+  if (userId) {
+    return userId;
+  }
+
+  // Try user object
+  const user = localStorage.getItem('user');
+  if (user) {
+    try {
+      const parsed = JSON.parse(user);
+      if (parsed.userId || parsed.id) {
+        return parsed.userId || parsed.id;
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
+  // Fallback to anonymous
+  return 'anonymous';
+}
+
+// Request interceptor for auth tokens and user ID
 api.interceptors.request.use(
   (config) => {
+    // Add auth token if available
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add X-User-Id header (required by creative-canvas-api)
+    config.headers['X-User-Id'] = getUserId();
+
     return config;
   },
   (error) => Promise.reject(error)

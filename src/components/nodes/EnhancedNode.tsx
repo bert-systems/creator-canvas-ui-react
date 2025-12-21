@@ -1,6 +1,16 @@
 /**
  * EnhancedNode - Production-ready node component with resize, metadata, and responsive design
  * Follows the strategy document's Node Card Design v2 specification
+ *
+ * @deprecated v4.0 - Use UnifiedNode instead
+ * This component is part of the legacy node system (v3.1).
+ * New boards should use UnifiedNode which provides:
+ * - Three display modes (compact/standard/expanded)
+ * - Slot-based composition (preview, parameters, actions)
+ * - Unified API integration via unifiedNodeService
+ * - Better performance with React.memo and virtualization
+ *
+ * Migration: Enable useUnifiedPalette flag in CreativeCanvasStudio
  */
 
 import { memo, useState, useCallback, useRef } from 'react';

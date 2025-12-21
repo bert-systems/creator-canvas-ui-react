@@ -7,8 +7,9 @@
  * - Voice and speech patterns
  */
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useContext } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { CanvasActionsContext } from '../canvas/CreativeCanvasStudio';
 import {
   Box,
   Typography,
@@ -116,11 +117,13 @@ const getRoleColor = (role: string): string => {
 // ===== Component =====
 
 export const CharacterCreatorNode = memo(function CharacterCreatorNode({
+  id,
   data,
   selected,
   isConnectable = true,
 }: CharacterCreatorNodeProps) {
   const [activeTab, setActiveTab] = useState(0);
+  const { onExecute } = useContext(CanvasActionsContext);
 
   // Get current parameter values with defaults
   const characterName = (data.parameters?.characterName as string) ?? '';
@@ -515,6 +518,7 @@ export const CharacterCreatorNode = memo(function CharacterCreatorNode({
           <IconButton
             size="small"
             disabled={data.status === 'running' || !characterName}
+            onClick={() => onExecute?.(id)}
             sx={{
               bgcolor: CHARACTER_COLOR,
               color: 'white',

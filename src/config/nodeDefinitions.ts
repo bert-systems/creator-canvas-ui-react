@@ -18,6 +18,11 @@ export const nodeDefinitions: NodeDefinition[] = [
     parameters: [
       { id: 'text', name: 'Text', type: 'text', default: '' },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'preview' },
+    },
   },
   {
     type: 'imageUpload',
@@ -31,8 +36,14 @@ export const nodeDefinitions: NodeDefinition[] = [
     inputs: [],
     outputs: [{ id: 'image', name: 'Image', type: 'image' }],
     parameters: [
-      { id: 'file', name: 'File', type: 'file' },
+      { id: 'file', name: 'File', type: 'image' },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: 'auto', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['expanded'] },
+      actions: { primary: 'preview' },
+    },
   },
   {
     type: 'videoUpload',
@@ -46,8 +57,14 @@ export const nodeDefinitions: NodeDefinition[] = [
     inputs: [],
     outputs: [{ id: 'video', name: 'Video', type: 'video' }],
     parameters: [
-      { id: 'file', name: 'File', type: 'file' },
+      { id: 'file', name: 'File', type: 'video' },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['expanded'] },
+      actions: { primary: 'preview' },
+    },
   },
   {
     type: 'referenceImage',
@@ -61,8 +78,14 @@ export const nodeDefinitions: NodeDefinition[] = [
     inputs: [],
     outputs: [{ id: 'images', name: 'Images', type: 'image', multiple: true }],
     parameters: [
-      { id: 'images', name: 'Images', type: 'file' },
+      { id: 'images', name: 'Images', type: 'image' },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: 'auto', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['expanded'] },
+      actions: { primary: 'preview' },
+    },
   },
   {
     type: 'characterReference',
@@ -76,9 +99,15 @@ export const nodeDefinitions: NodeDefinition[] = [
     inputs: [],
     outputs: [{ id: 'character', name: 'Character', type: 'character' }],
     parameters: [
-      { id: 'files', name: 'Files', type: 'file' },
+      { id: 'files', name: 'Files', type: 'image' },
       { id: 'characterName', name: 'Character Name', type: 'text', default: '' },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '3:4', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['characterName'] },
+      actions: { primary: 'preview' },
+    },
   },
 
   // ============================================================================
@@ -93,7 +122,8 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Connect a text prompt → Generate beautiful images',
     useCase: 'Product photos, fashion designs, concept art',
     icon: 'AutoAwesome',
-    aiModel: 'flux-2-pro',  // Maps to image-gen template on backend
+    aiModel: 'flux-2-pro',
+    tier: 'production',
     inputs: [
       { id: 'prompt', name: 'Prompt (Text Input)', type: 'text', required: true },
       { id: 'reference', name: 'Reference (Image Upload)', type: 'image' },
@@ -105,6 +135,12 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'guidance', name: 'Guidance Scale', type: 'slider', default: 3.5, min: 1, max: 20, step: 0.1 },
       { id: 'numImages', name: 'Num Images', type: 'number', default: 1, min: 1, max: 4 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true, showVariations: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['width', 'height', 'guidance'] },
+      actions: { primary: 'execute', secondary: ['download', 'duplicate'], showProgress: true },
+    },
   },
   {
     type: 'flux2Dev',
@@ -115,7 +151,8 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Text prompt + optional style → Custom-styled images',
     useCase: 'Personal art styles, trained aesthetics, experimental looks',
     icon: 'Science',
-    aiModel: 'flux-2-dev',  // Maps to image-gen template on backend
+    aiModel: 'flux-2-dev',
+    tier: 'creative',
     inputs: [
       { id: 'prompt', name: 'Prompt (Text Input)', type: 'text', required: true },
       { id: 'style', name: 'Style (LoRA Training)', type: 'style' },
@@ -127,6 +164,12 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'steps', name: 'Steps', type: 'number', default: 28, min: 1, max: 50 },
       { id: 'guidance', name: 'Guidance Scale', type: 'slider', default: 3.5, min: 1, max: 20, step: 0.1 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true, showVariations: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['width', 'height', 'steps'] },
+      actions: { primary: 'execute', secondary: ['download', 'duplicate'], showProgress: true },
+    },
   },
   {
     type: 'nanoBananaPro',
@@ -137,7 +180,9 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'References + Prompt → Scene with those people',
     useCase: 'Group photos, family portraits, multi-character stories',
     icon: 'GroupAdd',
-    aiModel: 'nano-banana-pro',  // Maps to image-gen template on backend
+    aiModel: 'nano-banana-pro',
+    tier: 'production',
+    bestFor: 'faces',
     inputs: [
       { id: 'prompt', name: 'Prompt (Text Input)', type: 'text', required: true },
       { id: 'references', name: 'Face Photos (Image Upload)', type: 'image', multiple: true },
@@ -150,6 +195,12 @@ export const nodeDefinitions: NodeDefinition[] = [
       { id: 'faceWeight', name: 'Face Weight', type: 'slider', default: 0.8, min: 0, max: 1, step: 0.1 },
       { id: 'styleWeight', name: 'Style Weight', type: 'slider', default: 0.6, min: 0, max: 1, step: 0.1 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true, showVariations: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['faceWeight', 'styleWeight'] },
+      actions: { primary: 'execute', secondary: ['download', 'duplicate'], showProgress: true },
+    },
   },
   {
     type: 'fluxKontext',
@@ -160,7 +211,8 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Image + "Change X to Y" → Edited image',
     useCase: 'Outfit changes, background swaps, detail modifications',
     icon: 'Transform',
-    aiModel: 'flux-kontext',  // Maps to image-gen template on backend
+    aiModel: 'flux-kontext',
+    tier: 'production',
     inputs: [
       { id: 'image', name: 'Source Image (Image Upload)', type: 'image', required: true },
       { id: 'prompt', name: 'Edit Prompt (Text Input)', type: 'text', required: true },
@@ -169,6 +221,12 @@ export const nodeDefinitions: NodeDefinition[] = [
     parameters: [
       { id: 'strength', name: 'Edit Strength', type: 'slider', default: 0.8, min: 0, max: 1, step: 0.05 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: 'auto', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['strength'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   // === NEW DECEMBER 2025 IMAGE MODELS ===
   {
@@ -283,7 +341,9 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Describe a scene → Watch it come to life',
     useCase: 'Social media clips, concept videos, story sequences',
     icon: 'Videocam',
-    aiModel: 'kling',  // Kling video model
+    aiModel: 'kling',
+    tier: 'production',
+    hasAudio: true,
     inputs: [
       { id: 'prompt', name: 'Scene Description (Text Input)', type: 'text', required: true },
     ],
@@ -303,6 +363,12 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'enableAudio', name: 'Generate Audio', type: 'boolean', default: true },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['duration', 'aspectRatio'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'kling26I2V',
@@ -313,7 +379,8 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Static image → Animated video',
     useCase: 'Fashion runway videos, product animations, photo animations',
     icon: 'Animation',
-    aiModel: 'kling',  // Kling i2v model
+    aiModel: 'kling',
+    tier: 'production',
     inputs: [
       { id: 'image', name: 'Source Image (Image Upload)', type: 'image', required: true },
       { id: 'prompt', name: 'Motion Prompt (Text Input)', type: 'text' },
@@ -326,6 +393,12 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'motionIntensity', name: 'Motion Intensity', type: 'slider', default: 0.5, min: 0, max: 1, step: 0.1 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['duration', 'motionIntensity'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'klingO1Ref2V',
@@ -336,7 +409,9 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Person photos + Scene → Video with that person',
     useCase: 'Personalized content, character-driven stories, product demos',
     icon: 'PersonVideo',
-    aiModel: 'kling',  // Kling elements model
+    aiModel: 'kling',
+    tier: 'production',
+    bestFor: 'faces',
     inputs: [
       { id: 'references', name: 'Person Photos (Image Upload)', type: 'image', multiple: true, required: true },
       { id: 'prompt', name: 'Scene Description (Text Input)', type: 'text', required: true },
@@ -349,6 +424,12 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'characterWeight', name: 'Character Weight', type: 'slider', default: 0.8, min: 0, max: 1, step: 0.1 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['duration', 'characterWeight'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'veo31',
@@ -359,7 +440,9 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Prompt → Hollywood-quality video clip',
     useCase: 'Film teasers, high-end ads, cinematic storytelling',
     icon: 'Movie',
-    aiModel: 'veo',  // VEO video model
+    aiModel: 'veo',
+    tier: 'flagship',
+    hasAudio: true,
     inputs: [
       { id: 'prompt', name: 'Scene Description (Text Input)', type: 'text', required: true },
       { id: 'image', name: 'First Frame (Image Upload)', type: 'image' },
@@ -378,6 +461,12 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Standard ($0.40/s)', value: 'standard' },
       ]},
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['aspectRatio', 'mode'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true, showCost: true },
+    },
   },
   {
     type: 'klingAvatar',
@@ -388,7 +477,9 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Face photo + Audio → Talking video',
     useCase: 'Social media content, presentations, virtual spokespersons',
     icon: 'RecordVoiceOver',
-    aiModel: 'kling',  // Kling avatar model
+    aiModel: 'kling',
+    tier: 'production',
+    bestFor: 'faces',
     inputs: [
       { id: 'image', name: 'Portrait', type: 'image', required: true },
       { id: 'audio', name: 'Audio', type: 'audio', required: true },
@@ -397,6 +488,12 @@ export const nodeDefinitions: NodeDefinition[] = [
     parameters: [
       { id: 'lipSyncStrength', name: 'Lip Sync Strength', type: 'slider', default: 0.8, min: 0, max: 1, step: 0.1 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '1:1', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['lipSyncStrength'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   // === NEW DECEMBER 2025 VIDEO MODELS ===
   {
@@ -786,6 +883,7 @@ export const nodeDefinitions: NodeDefinition[] = [
     useCase: 'Fashion lookbooks, e-commerce product visualization',
     icon: 'Checkroom',
     aiModel: 'multi-provider',
+    tier: 'production',
     inputs: [
       { id: 'model', name: 'Model Photo (Image Upload)', type: 'image', required: true },
       { id: 'garment', name: 'Garment (Image Upload)', type: 'image', required: true },
@@ -815,6 +913,12 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Model', value: 'model' },
       ]},
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '3:4', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['provider', 'category'] },
+      actions: { primary: 'execute', secondary: ['download', 'duplicate'], showProgress: true },
+    },
   },
   {
     type: 'clothesSwap',
@@ -825,7 +929,8 @@ export const nodeDefinitions: NodeDefinition[] = [
     quickHelp: 'Person + Garment photo → Swapped outfit',
     useCase: 'Fashion variations, outfit exploration, lookbook creation',
     icon: 'SwapHoriz',
-    aiModel: 'fashn',  // Uses fashion try-on backend (Swagger v3 aligned)
+    aiModel: 'fashn',
+    tier: 'production',
     inputs: [
       { id: 'person', name: 'Person Photo (Image Upload)', type: 'image', required: true },
       { id: 'garment', name: 'Garment Photo (Image Upload)', type: 'image', required: true },
@@ -840,6 +945,12 @@ export const nodeDefinitions: NodeDefinition[] = [
         { label: 'Outerwear', value: 'outerwear' },
       ]},
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '3:4', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['category'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'runwayAnimation',
@@ -943,6 +1054,11 @@ export const nodeDefinitions: NodeDefinition[] = [
     ],
     outputs: [],
     parameters: [],
+    defaultDisplayMode: 'expanded',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: 'auto', showZoom: true, showFullscreen: true },
+      actions: { primary: 'preview', secondary: ['download'] },
+    },
   },
   {
     type: 'export',
@@ -967,6 +1083,12 @@ export const nodeDefinitions: NodeDefinition[] = [
       ]},
       { id: 'quality', name: 'Quality', type: 'slider', default: 90, min: 1, max: 100, step: 1 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: 'auto', showDownload: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['format', 'quality'] },
+      actions: { primary: 'download' },
+    },
   },
 
   // ============================================================================
@@ -2441,6 +2563,849 @@ export const nodeDefinitions: NodeDefinition[] = [
     ],
     aiModel: 'gemini-2.5-flash',
   },
+
+  // ============================================================================
+  // INTERIOR DESIGN NODES
+  // ============================================================================
+
+  // Room Redesign - AI-powered room transformation
+  {
+    type: 'roomRedesign',
+    category: 'interiorDesign',
+    label: 'Room Redesign',
+    displayName: 'AI Room Redesign',
+    description: 'Transform any room photo into a redesigned space with new style, furniture, and decor while preserving the room structure.',
+    quickHelp: 'Upload room photo → Select style → Get redesigned room',
+    useCase: 'Home staging, renovation planning, interior design concepts',
+    icon: 'Home',
+    aiModel: 'flux-2-pro',
+    tier: 'production',
+    inputs: [
+      { id: 'roomImage', name: 'Room Photo', type: 'image', required: true },
+      { id: 'styleReference', name: 'Style Reference', type: 'image' },
+      { id: 'designStyle', name: 'Design Style', type: 'designStyle' },
+    ],
+    outputs: [
+      { id: 'redesignedRoom', name: 'Redesigned Room', type: 'room' },
+      { id: 'beforeAfter', name: 'Before/After', type: 'image' },
+    ],
+    parameters: [
+      { id: 'roomType', name: 'Room Type', type: 'select', default: 'livingRoom', options: [
+        { label: 'Living Room', value: 'livingRoom' },
+        { label: 'Bedroom', value: 'bedroom' },
+        { label: 'Kitchen', value: 'kitchen' },
+        { label: 'Bathroom', value: 'bathroom' },
+        { label: 'Dining Room', value: 'diningRoom' },
+        { label: 'Home Office', value: 'homeOffice' },
+        { label: 'Outdoor/Patio', value: 'outdoor' },
+      ]},
+      { id: 'style', name: 'Design Style', type: 'select', default: 'modern', options: [
+        { label: 'Modern Minimalist', value: 'modern' },
+        { label: 'Scandinavian', value: 'scandinavian' },
+        { label: 'Industrial', value: 'industrial' },
+        { label: 'Mid-Century Modern', value: 'midCentury' },
+        { label: 'Bohemian', value: 'bohemian' },
+        { label: 'Traditional', value: 'traditional' },
+        { label: 'Coastal', value: 'coastal' },
+        { label: 'Farmhouse', value: 'farmhouse' },
+        { label: 'Japanese Zen', value: 'japandi' },
+        { label: 'Art Deco', value: 'artDeco' },
+      ]},
+      { id: 'preserveStructure', name: 'Preserve Structure', type: 'boolean', default: true },
+      { id: 'intensity', name: 'Redesign Intensity', type: 'slider', default: 0.7, min: 0.1, max: 1, step: 0.1 },
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'comparison', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['roomType', 'style'] },
+      actions: { primary: 'execute', secondary: ['download', 'duplicate'], showProgress: true },
+    },
+  },
+
+  // Virtual Staging - Add furniture to empty rooms
+  {
+    type: 'virtualStaging',
+    category: 'interiorDesign',
+    label: 'Virtual Staging',
+    displayName: 'Virtual Staging',
+    description: 'Add furniture and decor to empty rooms for real estate listings or design visualization.',
+    quickHelp: 'Empty room → Fully staged space',
+    useCase: 'Real estate staging, rental listings, property marketing',
+    icon: 'Weekend',
+    aiModel: 'flux-2-pro',
+    tier: 'production',
+    inputs: [
+      { id: 'emptyRoom', name: 'Empty Room Photo', type: 'image', required: true },
+      { id: 'furnitureStyle', name: 'Furniture Style', type: 'style' },
+    ],
+    outputs: [
+      { id: 'stagedRoom', name: 'Staged Room', type: 'room' },
+    ],
+    parameters: [
+      { id: 'roomType', name: 'Room Type', type: 'select', default: 'livingRoom', options: [
+        { label: 'Living Room', value: 'livingRoom' },
+        { label: 'Bedroom', value: 'bedroom' },
+        { label: 'Kitchen', value: 'kitchen' },
+        { label: 'Dining Room', value: 'diningRoom' },
+        { label: 'Home Office', value: 'homeOffice' },
+      ]},
+      { id: 'style', name: 'Staging Style', type: 'select', default: 'modern', options: [
+        { label: 'Modern', value: 'modern' },
+        { label: 'Contemporary', value: 'contemporary' },
+        { label: 'Traditional', value: 'traditional' },
+        { label: 'Scandinavian', value: 'scandinavian' },
+        { label: 'Luxury', value: 'luxury' },
+      ]},
+      { id: 'furnishingLevel', name: 'Furnishing Level', type: 'select', default: 'full', options: [
+        { label: 'Minimal', value: 'minimal' },
+        { label: 'Standard', value: 'standard' },
+        { label: 'Full', value: 'full' },
+        { label: 'Luxury', value: 'luxury' },
+      ]},
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
+  },
+
+  // Floor Plan Generator
+  {
+    type: 'floorPlanGenerator',
+    category: 'spacePlanning',
+    label: 'Floor Plan Generator',
+    displayName: 'AI Floor Plan',
+    description: 'Generate floor plans from room dimensions or photos, with furniture layout suggestions.',
+    quickHelp: 'Input dimensions or photo → Get floor plan with layouts',
+    useCase: 'Space planning, architecture, furniture arrangement',
+    icon: 'Dashboard',
+    aiModel: 'gemini-2.5-flash',
+    inputs: [
+      { id: 'roomPhoto', name: 'Room Photo (Optional)', type: 'image' },
+      { id: 'dimensions', name: 'Room Dimensions', type: 'text' },
+    ],
+    outputs: [
+      { id: 'floorPlan', name: 'Floor Plan', type: 'floorPlan' },
+      { id: 'layoutSuggestions', name: 'Layout Options', type: 'roomLayout', multiple: true },
+    ],
+    parameters: [
+      { id: 'length', name: 'Length (ft)', type: 'number', default: 15, min: 5, max: 100 },
+      { id: 'width', name: 'Width (ft)', type: 'number', default: 12, min: 5, max: 100 },
+      { id: 'roomType', name: 'Room Type', type: 'select', default: 'livingRoom', options: [
+        { label: 'Living Room', value: 'livingRoom' },
+        { label: 'Bedroom', value: 'bedroom' },
+        { label: 'Open Plan', value: 'openPlan' },
+        { label: 'Studio', value: 'studio' },
+      ]},
+      { id: 'includeLayout', name: 'Include Furniture Layout', type: 'boolean', default: true },
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'grid', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
+  },
+
+  // Furniture Suggestion
+  {
+    type: 'furnitureSuggestion',
+    category: 'interiorDesign',
+    label: 'Furniture Finder',
+    displayName: 'AI Furniture Suggestions',
+    description: 'Get furniture recommendations that match your room style, dimensions, and budget.',
+    quickHelp: 'Room photo or style → Matching furniture suggestions',
+    useCase: 'Interior shopping, design curation, style matching',
+    icon: 'Weekend',
+    aiModel: 'gemini-2.5-flash',
+    inputs: [
+      { id: 'roomImage', name: 'Room Photo', type: 'image' },
+      { id: 'style', name: 'Style Reference', type: 'style' },
+    ],
+    outputs: [
+      { id: 'suggestions', name: 'Furniture Suggestions', type: 'furniture', multiple: true },
+      { id: 'moodboard', name: 'Furniture Moodboard', type: 'moodboard' },
+    ],
+    parameters: [
+      { id: 'furnitureType', name: 'Furniture Type', type: 'select', default: 'sofa', options: [
+        { label: 'Sofa/Seating', value: 'sofa' },
+        { label: 'Tables', value: 'tables' },
+        { label: 'Chairs', value: 'chairs' },
+        { label: 'Storage', value: 'storage' },
+        { label: 'Lighting', value: 'lighting' },
+        { label: 'Decor', value: 'decor' },
+        { label: 'All Categories', value: 'all' },
+      ]},
+      { id: 'style', name: 'Style', type: 'select', default: 'modern', options: [
+        { label: 'Modern', value: 'modern' },
+        { label: 'Scandinavian', value: 'scandinavian' },
+        { label: 'Mid-Century', value: 'midCentury' },
+        { label: 'Industrial', value: 'industrial' },
+        { label: 'Traditional', value: 'traditional' },
+        { label: 'Bohemian', value: 'bohemian' },
+      ]},
+      { id: 'budget', name: 'Budget Level', type: 'select', default: 'mid', options: [
+        { label: 'Budget', value: 'budget' },
+        { label: 'Mid-Range', value: 'mid' },
+        { label: 'Premium', value: 'premium' },
+        { label: 'Luxury', value: 'luxury' },
+      ]},
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
+  },
+
+  // Material Palette
+  {
+    type: 'materialPalette',
+    category: 'interiorDesign',
+    label: 'Material Palette',
+    displayName: 'Material & Finish Palette',
+    description: 'Generate cohesive material palettes for floors, walls, countertops, and finishes.',
+    quickHelp: 'Style input → Curated material palette',
+    useCase: 'Renovation planning, design specifications, material selection',
+    icon: 'Layers',
+    aiModel: 'gemini-2.5-flash',
+    inputs: [
+      { id: 'roomImage', name: 'Room Reference', type: 'image' },
+      { id: 'styleReference', name: 'Style Reference', type: 'style' },
+    ],
+    outputs: [
+      { id: 'palette', name: 'Material Palette', type: 'material', multiple: true },
+      { id: 'visualization', name: 'Palette Visualization', type: 'image' },
+    ],
+    parameters: [
+      { id: 'style', name: 'Design Style', type: 'select', default: 'modern', options: [
+        { label: 'Modern', value: 'modern' },
+        { label: 'Rustic', value: 'rustic' },
+        { label: 'Industrial', value: 'industrial' },
+        { label: 'Scandinavian', value: 'scandinavian' },
+        { label: 'Mediterranean', value: 'mediterranean' },
+        { label: 'Transitional', value: 'transitional' },
+      ]},
+      { id: 'includeFlooring', name: 'Include Flooring', type: 'boolean', default: true },
+      { id: 'includeWalls', name: 'Include Wall Finishes', type: 'boolean', default: true },
+      { id: 'includeCountertops', name: 'Include Countertops', type: 'boolean', default: true },
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
+  },
+
+  // Room 3D Visualizer
+  {
+    type: 'room3DVisualizer',
+    category: 'spacePlanning',
+    label: '3D Room Visualizer',
+    displayName: '3D Room Preview',
+    description: 'Convert 2D floor plans or photos into interactive 3D room visualizations.',
+    quickHelp: 'Floor plan or photo → 3D walkthrough preview',
+    useCase: '3D visualization, client presentations, design review',
+    icon: 'ViewInAr',
+    aiModel: 'meshy-6',
+    tier: 'production',
+    inputs: [
+      { id: 'floorPlan', name: 'Floor Plan', type: 'floorPlan', required: true },
+      { id: 'materials', name: 'Materials', type: 'material', multiple: true },
+    ],
+    outputs: [
+      { id: 'model3d', name: '3D Model', type: 'mesh3d' },
+      { id: 'renders', name: 'Rendered Views', type: 'image', multiple: true },
+    ],
+    parameters: [
+      { id: 'ceilingHeight', name: 'Ceiling Height (ft)', type: 'number', default: 9, min: 7, max: 20 },
+      { id: 'includeFurniture', name: 'Include Furniture', type: 'boolean', default: true },
+      { id: 'lighting', name: 'Lighting', type: 'select', default: 'natural', options: [
+        { label: 'Natural Daylight', value: 'natural' },
+        { label: 'Evening Warm', value: 'evening' },
+        { label: 'Studio Bright', value: 'studio' },
+      ]},
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: '3d', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['expanded'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
+  },
+
+  // ============================================================================
+  // MOODBOARD & CREATIVE DIRECTION NODES
+  // ============================================================================
+
+  // Moodboard Generator
+  {
+    type: 'moodboardGenerator',
+    category: 'moodboard',
+    label: 'Moodboard Generator',
+    displayName: 'AI Moodboard',
+    description: 'Generate cohesive moodboards from themes, keywords, or reference images.',
+    quickHelp: 'Theme or images → Beautiful curated moodboard',
+    useCase: 'Creative direction, brand development, project kickoff',
+    icon: 'ColorLens',
+    aiModel: 'flux-2-pro',
+    tier: 'creative',
+    inputs: [
+      { id: 'theme', name: 'Theme Description', type: 'text', required: true },
+      { id: 'references', name: 'Reference Images', type: 'image', multiple: true },
+    ],
+    outputs: [
+      { id: 'moodboard', name: 'Moodboard', type: 'moodboard' },
+      { id: 'colorPalette', name: 'Extracted Colors', type: 'colorPalette' },
+    ],
+    parameters: [
+      { id: 'style', name: 'Moodboard Style', type: 'select', default: 'collage', options: [
+        { label: 'Collage Grid', value: 'collage' },
+        { label: 'Pinterest Style', value: 'pinterest' },
+        { label: 'Minimal Layout', value: 'minimal' },
+        { label: 'Magazine Spread', value: 'magazine' },
+        { label: 'Scattered/Organic', value: 'scattered' },
+      ]},
+      { id: 'mood', name: 'Mood/Tone', type: 'select', default: 'balanced', options: [
+        { label: 'Light & Airy', value: 'light' },
+        { label: 'Dark & Moody', value: 'dark' },
+        { label: 'Warm & Cozy', value: 'warm' },
+        { label: 'Cool & Minimal', value: 'cool' },
+        { label: 'Vibrant & Bold', value: 'vibrant' },
+        { label: 'Balanced/Neutral', value: 'balanced' },
+      ]},
+      { id: 'imageCount', name: 'Number of Images', type: 'slider', default: 6, min: 3, max: 12, step: 1 },
+      { id: 'includeText', name: 'Include Typography', type: 'boolean', default: false },
+    ],
+    defaultDisplayMode: 'expanded',
+    slots: {
+      preview: { type: 'image', aspectRatio: '4:3', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', secondary: ['download', 'duplicate'], showProgress: true },
+    },
+  },
+
+  // Color Palette Extractor
+  {
+    type: 'colorPaletteExtractor',
+    category: 'moodboard',
+    label: 'Color Extractor',
+    displayName: 'Color Palette Extractor',
+    description: 'Extract and generate color palettes from images, with harmonious variations.',
+    quickHelp: 'Image → Extracted color palette with HEX/RGB values',
+    useCase: 'Brand colors, design systems, color matching',
+    icon: 'Palette',
+    aiModel: 'gemini-2.5-flash',
+    inputs: [
+      { id: 'sourceImage', name: 'Source Image', type: 'image', required: true },
+    ],
+    outputs: [
+      { id: 'palette', name: 'Color Palette', type: 'colorPalette' },
+      { id: 'variations', name: 'Color Variations', type: 'colorPalette', multiple: true },
+    ],
+    parameters: [
+      { id: 'colorCount', name: 'Number of Colors', type: 'slider', default: 5, min: 3, max: 10, step: 1 },
+      { id: 'paletteType', name: 'Palette Type', type: 'select', default: 'dominant', options: [
+        { label: 'Dominant Colors', value: 'dominant' },
+        { label: 'Harmonious', value: 'harmonious' },
+        { label: 'Complementary', value: 'complementary' },
+        { label: 'Analogous', value: 'analogous' },
+        { label: 'Triadic', value: 'triadic' },
+      ]},
+      { id: 'includeNeutrals', name: 'Include Neutrals', type: 'boolean', default: true },
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'colorSwatches', aspectRatio: 'auto' },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
+  },
+
+  // Brand Kit Generator
+  {
+    type: 'brandKitGenerator',
+    category: 'brandIdentity',
+    label: 'Brand Kit Generator',
+    displayName: 'AI Brand Kit',
+    description: 'Generate complete brand identity kits including colors, typography, and visual elements.',
+    quickHelp: 'Brand concept → Complete visual identity system',
+    useCase: 'Brand creation, startup branding, rebrand projects',
+    icon: 'Business',
+    aiModel: 'gemini-2.5-flash',
+    tier: 'production',
+    inputs: [
+      { id: 'brandDescription', name: 'Brand Description', type: 'text', required: true },
+      { id: 'inspirationImages', name: 'Inspiration', type: 'image', multiple: true },
+    ],
+    outputs: [
+      { id: 'brandKit', name: 'Brand Kit', type: 'brandKit' },
+      { id: 'colorPalette', name: 'Brand Colors', type: 'colorPalette' },
+      { id: 'moodboard', name: 'Brand Moodboard', type: 'moodboard' },
+    ],
+    parameters: [
+      { id: 'industry', name: 'Industry', type: 'select', default: 'tech', options: [
+        { label: 'Technology', value: 'tech' },
+        { label: 'Fashion', value: 'fashion' },
+        { label: 'Food & Beverage', value: 'food' },
+        { label: 'Health & Wellness', value: 'health' },
+        { label: 'Finance', value: 'finance' },
+        { label: 'Creative/Agency', value: 'creative' },
+        { label: 'E-commerce', value: 'ecommerce' },
+        { label: 'Non-Profit', value: 'nonprofit' },
+      ]},
+      { id: 'personality', name: 'Brand Personality', type: 'select', default: 'professional', options: [
+        { label: 'Professional & Trustworthy', value: 'professional' },
+        { label: 'Playful & Fun', value: 'playful' },
+        { label: 'Luxury & Premium', value: 'luxury' },
+        { label: 'Modern & Innovative', value: 'modern' },
+        { label: 'Earthy & Organic', value: 'organic' },
+        { label: 'Bold & Edgy', value: 'bold' },
+      ]},
+      { id: 'includeTypography', name: 'Include Typography Suggestions', type: 'boolean', default: true },
+      { id: 'includePatterns', name: 'Include Brand Patterns', type: 'boolean', default: true },
+    ],
+    defaultDisplayMode: 'expanded',
+    slots: {
+      preview: { type: 'image', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
+  },
+
+  // Typography Suggester
+  {
+    type: 'typographySuggester',
+    category: 'brandIdentity',
+    label: 'Typography Suggester',
+    displayName: 'AI Font Pairing',
+    description: 'Get font pairing suggestions that match your brand style and use case.',
+    quickHelp: 'Brand style → Perfect font combinations',
+    useCase: 'Brand typography, web design, print materials',
+    icon: 'FontDownload',
+    aiModel: 'gemini-2.5-flash',
+    inputs: [
+      { id: 'brandStyle', name: 'Brand Style Reference', type: 'image' },
+      { id: 'colorPalette', name: 'Color Palette', type: 'colorPalette' },
+    ],
+    outputs: [
+      { id: 'typography', name: 'Typography Suggestions', type: 'typography' },
+      { id: 'samples', name: 'Font Samples', type: 'image', multiple: true },
+    ],
+    parameters: [
+      { id: 'style', name: 'Typography Style', type: 'select', default: 'modern', options: [
+        { label: 'Modern Sans-Serif', value: 'modern' },
+        { label: 'Classic Serif', value: 'classic' },
+        { label: 'Playful Display', value: 'playful' },
+        { label: 'Elegant Script', value: 'elegant' },
+        { label: 'Bold Geometric', value: 'geometric' },
+        { label: 'Minimal Clean', value: 'minimal' },
+      ]},
+      { id: 'useCase', name: 'Primary Use', type: 'select', default: 'web', options: [
+        { label: 'Web/Digital', value: 'web' },
+        { label: 'Print/Editorial', value: 'print' },
+        { label: 'Social Media', value: 'social' },
+        { label: 'Branding/Logo', value: 'branding' },
+      ]},
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '16:9' },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
+  },
+
+  // Aesthetic Analyzer
+  {
+    type: 'aestheticAnalyzer',
+    category: 'moodboard',
+    label: 'Aesthetic Analyzer',
+    displayName: 'Visual Style Analyzer',
+    description: 'Analyze images to extract aesthetic qualities, style tags, and visual characteristics.',
+    quickHelp: 'Image → Detailed aesthetic analysis',
+    useCase: 'Style identification, trend research, creative direction',
+    icon: 'AutoAwesome',
+    aiModel: 'gemini-2.5-flash',
+    inputs: [
+      { id: 'images', name: 'Images to Analyze', type: 'image', required: true, multiple: true },
+    ],
+    outputs: [
+      { id: 'analysis', name: 'Aesthetic Analysis', type: 'aesthetic' },
+      { id: 'styleTags', name: 'Style Tags', type: 'text' },
+      { id: 'colorPalette', name: 'Detected Colors', type: 'colorPalette' },
+    ],
+    parameters: [
+      { id: 'analysisDepth', name: 'Analysis Depth', type: 'select', default: 'standard', options: [
+        { label: 'Quick Overview', value: 'quick' },
+        { label: 'Standard Analysis', value: 'standard' },
+        { label: 'Deep Analysis', value: 'deep' },
+      ]},
+      { id: 'includeComparison', name: 'Compare to Trends', type: 'boolean', default: false },
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
+  },
+
+  // Texture Generator
+  {
+    type: 'textureGenerator',
+    category: 'moodboard',
+    label: 'Texture Generator',
+    displayName: 'Seamless Texture Generator',
+    description: 'Generate seamless textures and patterns for backgrounds, materials, and designs.',
+    quickHelp: 'Description → Seamless tileable texture',
+    useCase: '3D textures, backgrounds, material design',
+    icon: 'Wallpaper',
+    aiModel: 'flux-2-pro',
+    inputs: [
+      { id: 'description', name: 'Texture Description', type: 'text', required: true },
+      { id: 'reference', name: 'Reference Image', type: 'image' },
+    ],
+    outputs: [
+      { id: 'texture', name: 'Seamless Texture', type: 'texture' },
+      { id: 'variations', name: 'Variations', type: 'texture', multiple: true },
+    ],
+    parameters: [
+      { id: 'textureType', name: 'Texture Type', type: 'select', default: 'fabric', options: [
+        { label: 'Fabric/Textile', value: 'fabric' },
+        { label: 'Wood Grain', value: 'wood' },
+        { label: 'Stone/Marble', value: 'stone' },
+        { label: 'Metal', value: 'metal' },
+        { label: 'Paper/Organic', value: 'paper' },
+        { label: 'Abstract Pattern', value: 'abstract' },
+      ]},
+      { id: 'scale', name: 'Pattern Scale', type: 'select', default: 'medium', options: [
+        { label: 'Fine/Small', value: 'small' },
+        { label: 'Medium', value: 'medium' },
+        { label: 'Large/Bold', value: 'large' },
+      ]},
+      { id: 'seamless', name: 'Make Seamless', type: 'boolean', default: true },
+      { id: 'resolution', name: 'Resolution', type: 'select', default: '1024', options: [
+        { label: '512x512', value: '512' },
+        { label: '1024x1024', value: '1024' },
+        { label: '2048x2048', value: '2048' },
+      ]},
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true, showTiled: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
+  },
+
+  // ============================================================================
+  // SOCIAL MEDIA CONTENT NODES
+  // ============================================================================
+
+  // Social Post Generator
+  {
+    type: 'socialPostGenerator',
+    category: 'socialMedia',
+    label: 'Post Generator',
+    displayName: 'Social Post Generator',
+    description: 'Generate platform-optimized social media posts with images and captions.',
+    quickHelp: 'Topic → Ready-to-post content with visuals',
+    useCase: 'Social media marketing, content creation, brand presence',
+    icon: 'Article',
+    aiModel: 'flux-2-pro',
+    tier: 'creative',
+    inputs: [
+      { id: 'topic', name: 'Post Topic', type: 'text', required: true },
+      { id: 'brandKit', name: 'Brand Kit', type: 'brandKit' },
+      { id: 'productImage', name: 'Product/Subject Image', type: 'image' },
+    ],
+    outputs: [
+      { id: 'post', name: 'Post Image', type: 'post' },
+      { id: 'caption', name: 'Caption', type: 'caption' },
+      { id: 'hashtags', name: 'Hashtags', type: 'text' },
+    ],
+    parameters: [
+      { id: 'platform', name: 'Platform', type: 'select', default: 'instagram', options: [
+        { label: 'Instagram Feed', value: 'instagram' },
+        { label: 'Instagram Story', value: 'instagramStory' },
+        { label: 'TikTok', value: 'tiktok' },
+        { label: 'Facebook', value: 'facebook' },
+        { label: 'Twitter/X', value: 'twitter' },
+        { label: 'LinkedIn', value: 'linkedin' },
+        { label: 'Pinterest', value: 'pinterest' },
+      ]},
+      { id: 'contentType', name: 'Content Type', type: 'select', default: 'promotional', options: [
+        { label: 'Promotional', value: 'promotional' },
+        { label: 'Educational', value: 'educational' },
+        { label: 'Behind the Scenes', value: 'bts' },
+        { label: 'User Generated Content', value: 'ugc' },
+        { label: 'Announcement', value: 'announcement' },
+        { label: 'Inspirational', value: 'inspirational' },
+      ]},
+      { id: 'tone', name: 'Tone', type: 'select', default: 'professional', options: [
+        { label: 'Professional', value: 'professional' },
+        { label: 'Casual/Friendly', value: 'casual' },
+        { label: 'Fun/Playful', value: 'playful' },
+        { label: 'Luxurious', value: 'luxury' },
+        { label: 'Edgy/Bold', value: 'edgy' },
+      ]},
+      { id: 'includeCaption', name: 'Generate Caption', type: 'boolean', default: true },
+      { id: 'includeHashtags', name: 'Generate Hashtags', type: 'boolean', default: true },
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', secondary: ['download', 'duplicate'], showProgress: true },
+    },
+  },
+
+  // Carousel Generator
+  {
+    type: 'carouselGenerator',
+    category: 'socialMedia',
+    label: 'Carousel Generator',
+    displayName: 'Carousel Creator',
+    description: 'Create multi-slide carousel posts for Instagram, LinkedIn, and other platforms.',
+    quickHelp: 'Topic → Swipeable carousel slides',
+    useCase: 'Educational content, product showcases, storytelling',
+    icon: 'ViewCarousel',
+    aiModel: 'flux-2-pro',
+    tier: 'creative',
+    inputs: [
+      { id: 'topic', name: 'Carousel Topic', type: 'text', required: true },
+      { id: 'brandKit', name: 'Brand Kit', type: 'brandKit' },
+      { id: 'images', name: 'Source Images', type: 'image', multiple: true },
+    ],
+    outputs: [
+      { id: 'slides', name: 'Carousel Slides', type: 'carousel' },
+      { id: 'caption', name: 'Caption', type: 'caption' },
+    ],
+    parameters: [
+      { id: 'platform', name: 'Platform', type: 'select', default: 'instagram', options: [
+        { label: 'Instagram', value: 'instagram' },
+        { label: 'LinkedIn', value: 'linkedin' },
+        { label: 'Facebook', value: 'facebook' },
+      ]},
+      { id: 'slideCount', name: 'Number of Slides', type: 'slider', default: 5, min: 2, max: 10, step: 1 },
+      { id: 'carouselType', name: 'Carousel Type', type: 'select', default: 'educational', options: [
+        { label: 'Educational/Tips', value: 'educational' },
+        { label: 'Product Showcase', value: 'product' },
+        { label: 'Before/After', value: 'beforeAfter' },
+        { label: 'Step-by-Step', value: 'steps' },
+        { label: 'Listicle', value: 'listicle' },
+        { label: 'Story/Narrative', value: 'story' },
+      ]},
+      { id: 'style', name: 'Visual Style', type: 'select', default: 'modern', options: [
+        { label: 'Modern Minimal', value: 'modern' },
+        { label: 'Bold & Colorful', value: 'bold' },
+        { label: 'Clean Professional', value: 'professional' },
+        { label: 'Playful', value: 'playful' },
+      ]},
+    ],
+    defaultDisplayMode: 'expanded',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
+  },
+
+  // Caption Generator
+  {
+    type: 'captionGenerator',
+    category: 'contentCreation',
+    label: 'Caption Generator',
+    displayName: 'AI Caption Writer',
+    description: 'Generate engaging captions, hashtags, and CTAs for social media posts.',
+    quickHelp: 'Post context → Platform-optimized caption',
+    useCase: 'Social copywriting, engagement optimization, content scheduling',
+    icon: 'Notes',
+    aiModel: 'gemini-2.5-flash',
+    inputs: [
+      { id: 'postImage', name: 'Post Image', type: 'image' },
+      { id: 'context', name: 'Post Context', type: 'text', required: true },
+      { id: 'brandKit', name: 'Brand Voice', type: 'brandKit' },
+    ],
+    outputs: [
+      { id: 'caption', name: 'Caption', type: 'caption' },
+      { id: 'hashtags', name: 'Hashtags', type: 'text' },
+      { id: 'alternatives', name: 'Alternative Captions', type: 'caption', multiple: true },
+    ],
+    parameters: [
+      { id: 'platform', name: 'Platform', type: 'select', default: 'instagram', options: [
+        { label: 'Instagram', value: 'instagram' },
+        { label: 'TikTok', value: 'tiktok' },
+        { label: 'Twitter/X', value: 'twitter' },
+        { label: 'LinkedIn', value: 'linkedin' },
+        { label: 'Facebook', value: 'facebook' },
+      ]},
+      { id: 'tone', name: 'Tone', type: 'select', default: 'engaging', options: [
+        { label: 'Professional', value: 'professional' },
+        { label: 'Engaging/Fun', value: 'engaging' },
+        { label: 'Inspirational', value: 'inspirational' },
+        { label: 'Educational', value: 'educational' },
+        { label: 'Promotional', value: 'promotional' },
+      ]},
+      { id: 'length', name: 'Caption Length', type: 'select', default: 'medium', options: [
+        { label: 'Short (1-2 sentences)', value: 'short' },
+        { label: 'Medium (3-4 sentences)', value: 'medium' },
+        { label: 'Long (Micro-blog)', value: 'long' },
+      ]},
+      { id: 'includeEmojis', name: 'Include Emojis', type: 'boolean', default: true },
+      { id: 'includeCTA', name: 'Include Call-to-Action', type: 'boolean', default: true },
+      { id: 'hashtagCount', name: 'Hashtag Count', type: 'slider', default: 10, min: 0, max: 30, step: 1 },
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
+  },
+
+  // Content Scheduler (Planner)
+  {
+    type: 'contentScheduler',
+    category: 'socialMedia',
+    label: 'Content Planner',
+    displayName: 'Content Calendar',
+    description: 'Plan and organize social media content with AI-suggested posting schedules.',
+    quickHelp: 'Goals → Optimized content calendar',
+    useCase: 'Social media planning, content strategy, posting schedules',
+    icon: 'CalendarMonth',
+    aiModel: 'gemini-2.5-flash',
+    inputs: [
+      { id: 'posts', name: 'Content Queue', type: 'post', multiple: true },
+      { id: 'brandKit', name: 'Brand Kit', type: 'brandKit' },
+    ],
+    outputs: [
+      { id: 'schedule', name: 'Content Schedule', type: 'text' },
+      { id: 'suggestions', name: 'Content Suggestions', type: 'text' },
+    ],
+    parameters: [
+      { id: 'platforms', name: 'Platforms', type: 'select', default: 'instagram', options: [
+        { label: 'Instagram', value: 'instagram' },
+        { label: 'TikTok', value: 'tiktok' },
+        { label: 'LinkedIn', value: 'linkedin' },
+        { label: 'Twitter/X', value: 'twitter' },
+        { label: 'All Platforms', value: 'all' },
+      ]},
+      { id: 'frequency', name: 'Posting Frequency', type: 'select', default: 'daily', options: [
+        { label: 'Multiple per Day', value: 'multiple' },
+        { label: 'Daily', value: 'daily' },
+        { label: '3-4x per Week', value: 'frequent' },
+        { label: '1-2x per Week', value: 'weekly' },
+      ]},
+      { id: 'planDuration', name: 'Plan Duration', type: 'select', default: 'week', options: [
+        { label: '1 Week', value: 'week' },
+        { label: '2 Weeks', value: 'twoWeeks' },
+        { label: '1 Month', value: 'month' },
+      ]},
+      { id: 'optimizeTimings', name: 'Optimize Post Times', type: 'boolean', default: true },
+    ],
+    defaultDisplayMode: 'expanded',
+    slots: {
+      preview: { type: 'calendar', aspectRatio: '16:9' },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
+  },
+
+  // Story Creator
+  {
+    type: 'storyCreator',
+    category: 'socialMedia',
+    label: 'Story Creator',
+    displayName: 'Stories/Reels Creator',
+    description: 'Create vertical video content for Instagram Stories, TikTok, and Reels.',
+    quickHelp: 'Content → Short-form vertical video',
+    useCase: 'Stories, Reels, TikToks, YouTube Shorts',
+    icon: 'Slideshow',
+    aiModel: 'kling-2.6-pro',
+    tier: 'production',
+    inputs: [
+      { id: 'concept', name: 'Story Concept', type: 'text', required: true },
+      { id: 'images', name: 'Source Images', type: 'image', multiple: true },
+      { id: 'brandKit', name: 'Brand Kit', type: 'brandKit' },
+    ],
+    outputs: [
+      { id: 'video', name: 'Story Video', type: 'video' },
+      { id: 'frames', name: 'Story Frames', type: 'image', multiple: true },
+    ],
+    parameters: [
+      { id: 'platform', name: 'Platform', type: 'select', default: 'instagram', options: [
+        { label: 'Instagram Stories/Reels', value: 'instagram' },
+        { label: 'TikTok', value: 'tiktok' },
+        { label: 'YouTube Shorts', value: 'youtube' },
+      ]},
+      { id: 'duration', name: 'Duration', type: 'select', default: '15s', options: [
+        { label: '15 seconds', value: '15s' },
+        { label: '30 seconds', value: '30s' },
+        { label: '60 seconds', value: '60s' },
+      ]},
+      { id: 'storyType', name: 'Story Type', type: 'select', default: 'showcase', options: [
+        { label: 'Product Showcase', value: 'showcase' },
+        { label: 'Behind the Scenes', value: 'bts' },
+        { label: 'Tutorial/How-to', value: 'tutorial' },
+        { label: 'Announcement', value: 'announcement' },
+        { label: 'Testimonial', value: 'testimonial' },
+      ]},
+      { id: 'includeMusic', name: 'Add Music', type: 'boolean', default: true },
+      { id: 'includeText', name: 'Add Text Overlays', type: 'boolean', default: true },
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '9:16', showFullscreen: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
+  },
+
+  // Template Customizer
+  {
+    type: 'templateCustomizer',
+    category: 'contentCreation',
+    label: 'Template Customizer',
+    displayName: 'Template Editor',
+    description: 'Customize social media templates with your brand colors, fonts, and content.',
+    quickHelp: 'Template + Content → Branded post',
+    useCase: 'Consistent branding, quick content creation, template variations',
+    icon: 'CropPortrait',
+    aiModel: 'flux-2-pro',
+    inputs: [
+      { id: 'template', name: 'Template', type: 'template', required: true },
+      { id: 'brandKit', name: 'Brand Kit', type: 'brandKit' },
+      { id: 'content', name: 'Content', type: 'text' },
+      { id: 'image', name: 'Feature Image', type: 'image' },
+    ],
+    outputs: [
+      { id: 'post', name: 'Customized Post', type: 'post' },
+      { id: 'variations', name: 'Color Variations', type: 'post', multiple: true },
+    ],
+    parameters: [
+      { id: 'platform', name: 'Platform Size', type: 'select', default: 'instagramSquare', options: [
+        { label: 'Instagram Square (1:1)', value: 'instagramSquare' },
+        { label: 'Instagram Portrait (4:5)', value: 'instagramPortrait' },
+        { label: 'Instagram Story (9:16)', value: 'instagramStory' },
+        { label: 'Facebook Cover', value: 'facebookCover' },
+        { label: 'LinkedIn Post', value: 'linkedin' },
+        { label: 'Twitter Header', value: 'twitterHeader' },
+      ]},
+      { id: 'generateVariations', name: 'Generate Color Variations', type: 'boolean', default: false },
+    ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
+  },
 ];
 
 export const getNodesByCategory = (category: string): NodeDefinition[] => {
@@ -2466,4 +3431,13 @@ export const nodeCategories = [
   { id: 'worldBuilding', label: 'World Building', icon: 'Public', color: '#84cc16' },
   { id: 'dialogue', label: 'Dialogue', icon: 'Forum', color: '#f472b6' },
   { id: 'branching', label: 'Branching', icon: 'AccountTree', color: '#a78bfa' },
+  // Interior Design categories
+  { id: 'interiorDesign', label: 'Interior Design', icon: 'Home', color: '#8b5cf6' },
+  { id: 'spacePlanning', label: 'Space Planning', icon: 'Dashboard', color: '#7dd3fc' },
+  // Moodboard & Brand Identity categories
+  { id: 'moodboard', label: 'Moodboard', icon: 'ColorLens', color: '#f472b6' },
+  { id: 'brandIdentity', label: 'Brand Identity', icon: 'Business', color: '#38bdf8' },
+  // Social Media categories
+  { id: 'socialMedia', label: 'Social Media', icon: 'Share', color: '#4ade80' },
+  { id: 'contentCreation', label: 'Content', icon: 'Article', color: '#22d3ee' },
 ];

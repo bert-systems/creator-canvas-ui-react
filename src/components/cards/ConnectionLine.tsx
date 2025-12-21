@@ -39,6 +39,50 @@ const dataFlow = keyframes`
   }
 `;
 
+// Highlight pulse animation for newly connected edges
+const highlightPulse = keyframes`
+  0% {
+    stroke-opacity: 1;
+    filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor);
+  }
+  25% {
+    stroke-opacity: 0.6;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+  50% {
+    stroke-opacity: 1;
+    filter: drop-shadow(0 0 12px currentColor) drop-shadow(0 0 24px currentColor);
+  }
+  75% {
+    stroke-opacity: 0.7;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+  100% {
+    stroke-opacity: 1;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+`;
+
+// Glow burst animation for the background layer
+const glowBurst = keyframes`
+  0% {
+    stroke-width: 6;
+    stroke-opacity: 0.4;
+  }
+  30% {
+    stroke-width: 20;
+    stroke-opacity: 0.6;
+  }
+  60% {
+    stroke-width: 12;
+    stroke-opacity: 0.3;
+  }
+  100% {
+    stroke-width: 8;
+    stroke-opacity: 0.15;
+  }
+`;
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -56,6 +100,8 @@ export interface ConnectionLineData {
   isStyleConnection?: boolean;
   /** Whether this is a character lock connection */
   isCharacterConnection?: boolean;
+  /** Whether this edge is newly connected (triggers highlight animation) */
+  isHighlighted?: boolean;
   /** Custom label to display */
   label?: string;
 }
@@ -133,6 +179,7 @@ export const ConnectionLine = memo(function ConnectionLine({
     isMomentOfDelight = false,
     isStyleConnection = false,
     isCharacterConnection = false,
+    isHighlighted = false,
     label,
   } = data || {};
 
@@ -191,24 +238,48 @@ export const ConnectionLine = memo(function ConnectionLine({
 
   // Glow effect for active connections
   const glowStyles = useMemo(() => {
-    if (!isFlowing && !isMomentOfDelight) return {};
+    if (!isFlowing && !isMomentOfDelight && !isHighlighted) return {};
+
+    // Highlight animation takes precedence
+    if (isHighlighted) {
+      return {
+        color: edgeColor,
+        animation: `${highlightPulse} 1.5s ease-out`,
+        filter: `drop-shadow(0 0 8px ${edgeColor}) drop-shadow(0 0 16px ${edgeColor})`,
+      };
+    }
 
     return {
       filter: `drop-shadow(0 0 4px ${alpha(edgeColor, 0.6)})`,
     };
-  }, [edgeColor, isFlowing, isMomentOfDelight]);
+  }, [edgeColor, isFlowing, isMomentOfDelight, isHighlighted]);
 
   return (
     <>
+      {/* Highlight burst glow layer for newly connected edges */}
+      {isHighlighted && (
+        <BaseEdge
+          id={`${id}-highlight-burst`}
+          path={edgePath}
+          style={{
+            stroke: edgeColor,
+            strokeWidth: thickness + 12,
+            strokeOpacity: 0.4,
+            fill: 'none',
+            animation: `${glowBurst} 1.5s ease-out forwards`,
+          }}
+        />
+      )}
+
       {/* Background glow layer for active connections */}
-      {(isFlowing || isMomentOfDelight) && (
+      {(isFlowing || isMomentOfDelight || isHighlighted) && (
         <BaseEdge
           id={`${id}-glow`}
           path={edgePath}
           style={{
             stroke: edgeColor,
-            strokeWidth: thickness + 4,
-            strokeOpacity: 0.15,
+            strokeWidth: isHighlighted ? thickness + 8 : thickness + 4,
+            strokeOpacity: isHighlighted ? 0.3 : 0.15,
             fill: 'none',
           }}
         />

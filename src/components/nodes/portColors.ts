@@ -53,6 +53,29 @@ export const PORT_COLORS: Record<PortType, string> = {
   collection: themePortColors.collection, // Deep Ocean
   techPack: '#6366F1',                  // Indigo for technical
   lookbook: '#7C3AED',                  // Purple for lookbooks
+
+  // Interior Design types
+  room: '#8B5CF6',                      // Purple for room data
+  floorPlan: '#64748B',                 // Slate for floor plans
+  material: '#A78BFA',                  // Light violet for materials
+  furniture: '#C084FC',                 // Light purple for furniture
+  designStyle: '#818CF8',               // Indigo for design styles
+  roomLayout: '#7DD3FC',                // Sky blue for layouts
+
+  // Moodboard types
+  moodboard: '#F472B6',                 // Pink for moodboards
+  colorPalette: '#FB7185',              // Rose for color palettes
+  brandKit: '#38BDF8',                  // Sky blue for brand kits
+  typography: '#A5B4FC',                // Periwinkle for typography
+  texture: '#FCD34D',                   // Amber for textures
+  aesthetic: '#D946EF',                 // Fuchsia for aesthetics
+
+  // Social Media types
+  post: '#4ADE80',                      // Green for posts
+  carousel: '#22D3EE',                  // Cyan for carousels
+  caption: '#94A3B8',                   // Gray for captions
+  template: '#F97316',                  // Orange for templates
+  platform: '#6366F1',                  // Indigo for platforms
 };
 
 export default PORT_COLORS;

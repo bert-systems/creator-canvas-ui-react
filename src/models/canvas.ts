@@ -4,7 +4,13 @@ import type { Node, Edge } from '@xyflow/react';
 // BOARD TYPES
 // ============================================================================
 
-export type BoardCategory = 'fashion' | 'story' | 'interior' | 'stock';
+export type BoardCategory =
+  | 'fashion'
+  | 'story'
+  | 'interior'    // Interior Design boards
+  | 'moodboard'   // Moodboard & Creative Direction boards
+  | 'social'      // Social Media Content boards
+  | 'stock';      // General stock/media boards
 
 export interface Board {
   id: string;
@@ -43,7 +49,16 @@ export type NodeCategory =
   // Fashion categories
   | 'fashion'        // Fashion design and production
   | 'fashionPhoto'   // Fashion photography
-  | 'fashionVideo';  // Fashion video/runway
+  | 'fashionVideo'   // Fashion video/runway
+  // Interior Design categories
+  | 'interiorDesign' // Room redesign, staging, materials
+  | 'spacePlanning'  // Floor plans, furniture layout
+  // Moodboard categories
+  | 'moodboard'      // Visual inspiration & creative direction
+  | 'brandIdentity'  // Brand kits, color palettes, typography
+  // Social Media categories
+  | 'socialMedia'    // Posts, carousels, stories
+  | 'contentCreation'; // Captions, hashtags, hooks
 
 export type NodeType =
   // Input nodes
@@ -195,7 +210,95 @@ export type NodeType =
   | 'layeringStylist'        // Outfit layering
   | 'ghostMannequin'         // Invisible mannequin shots
   | 'turnaroundVideo'        // 360-degree rotation video
-  | 'lineSheetGenerator';    // Wholesale line sheets
+  | 'lineSheetGenerator'     // Wholesale line sheets
+  // ========================================
+  // INTERIOR DESIGN NODES (NEW)
+  // ========================================
+  // Room Input & Analysis
+  | 'roomPhotoUpload'        // Upload room photo for redesign
+  | 'roomAnalyzer'           // Analyze room dimensions & features
+  | 'roomTypeSelector'       // Select room type (living, bedroom, kitchen, etc.)
+  | 'designStyleSelector'    // Select design style (modern, scandinavian, etc.)
+  // Room Redesign & Visualization
+  | 'roomRedesign'           // AI room style transformation
+  | 'virtualStaging'         // Add furniture to empty rooms
+  | 'roomRestyle'            // Change room style (before/after)
+  | 'materialVisualizer'     // Change walls, floors, finishes
+  | 'lightingSimulator'      // Simulate different lighting conditions
+  // Furniture & Layout
+  | 'furnitureSuggestion'    // AI furniture recommendations
+  | 'furniturePlacer'        // Optimal furniture placement
+  | 'shoppableFurniture'     // Match real purchasable items
+  // Floor Plans & 3D
+  | 'floorPlanGenerator'     // Generate 2D/3D floor plans
+  | 'roomDimensionEditor'    // Edit room dimensions
+  | 'walkthrough3D'          // Create 3D walkthrough video
+  // Comparison & Export
+  | 'beforeAfterCompare'     // Side-by-side comparison
+  | 'designMoodExtractor'    // Extract mood from reference
+  | 'materialPalette'        // Material & finish palette generator
+  | 'room3DVisualizer'       // 3D room visualization from floor plan
+  // ========================================
+  // MOODBOARD NODES (NEW)
+  // ========================================
+  // Moodboard Creation
+  | 'moodboardGenerator'     // AI-generated moodboards from prompts
+  | 'moodboardLayout'        // Arrange images in moodboard templates
+  | 'visualThemeGenerator'   // Generate cohesive visual themes
+  | 'inspirationCurator'     // Curate inspiration from multiple sources
+  // Color & Palette
+  | 'colorPaletteExtractor'  // Extract colors from image
+  | 'colorPaletteGenerator'  // Generate palettes from concepts
+  | 'colorHarmony'           // Create color harmonies
+  | 'pantoneMatchFinder'     // Find matching Pantone colors
+  // Brand Identity
+  | 'brandKitInput'          // Upload brand assets (logo, colors, fonts)
+  | 'brandStyleGuide'        // Generate brand style guidelines
+  | 'logoVariations'         // Generate logo variations
+  // Typography & Texture
+  | 'typographySuggester'    // Suggest font pairings
+  | 'textureLibrary'         // Browse and add textures
+  | 'patternGenerator'       // Generate seamless patterns
+  // Aesthetic & Style
+  | 'aestheticSelector'      // Choose aesthetic (minimalist, bold, vintage)
+  | 'styleReference'         // Add style reference images
+  | 'trendAnalyzer'          // Analyze current design trends
+  | 'aestheticAnalyzer'      // Analyze visual aesthetic of images
+  | 'textureGenerator'       // Generate seamless textures
+  | 'brandKitGenerator'      // Generate complete brand identity kits
+  // Export & Presentation
+  | 'moodboardExport'        // Export moodboard as PDF/image
+  | 'presentationBuilder'    // Build presentation slides
+  // ========================================
+  // SOCIAL MEDIA NODES (NEW)
+  // ========================================
+  // Content Creation
+  | 'postGenerator'          // Generate single post (image + caption)
+  | 'carouselGenerator'      // Generate multi-slide carousel
+  | 'storyTemplate'          // Create Stories content
+  | 'reelGenerator'          // Generate short-form video
+  | 'thumbnailGenerator'     // Create video thumbnails
+  // Text & Copy
+  | 'captionGenerator'       // Generate captions with hashtags
+  | 'hookGenerator'          // Create engaging opening lines
+  | 'ctaGenerator'           // Create calls-to-action
+  | 'hashtagOptimizer'       // Optimize hashtag strategy
+  // Platform Optimization
+  | 'platformOptimizer'      // Resize for different platforms
+  | 'contentRepurposer'      // Adapt content for multiple platforms
+  | 'formatConverter'        // Convert between formats
+  // Brand & Templates
+  | 'brandKitApplicator'     // Apply brand colors/fonts
+  | 'templateApplicator'     // Apply post templates
+  | 'batchContentCreator'    // Create multiple posts at once
+  // Analytics & Planning
+  | 'contentCalendar'        // Plan content schedule
+  | 'trendSpotter'           // Identify trending topics
+  | 'engagementPredictor'    // Predict post engagement
+  | 'socialPostGenerator'    // Generate social post with image and caption
+  | 'contentScheduler'       // Schedule content across platforms
+  | 'storyCreator'           // Create Stories/Reels content
+  | 'templateCustomizer';    // Customize social media templates
 
 export type PortType =
   // Media types
@@ -225,7 +328,27 @@ export type PortType =
   | 'outfit'       // Complete styled outfit
   | 'collection'   // Fashion collection
   | 'techPack'     // Technical specifications
-  | 'lookbook';    // Lookbook page/spread
+  | 'lookbook'     // Lookbook page/spread
+  // Interior Design types
+  | 'room'         // Room photo/data
+  | 'floorPlan'    // Floor plan layout
+  | 'material'     // Material/finish data
+  | 'furniture'    // Furniture item/suggestion
+  | 'designStyle'  // Interior design style
+  | 'roomLayout'   // Furniture layout/arrangement
+  // Moodboard types
+  | 'moodboard'    // Complete moodboard
+  | 'colorPalette' // Color palette data
+  | 'brandKit'     // Brand identity assets
+  | 'typography'   // Font/typography data
+  | 'texture'      // Texture/pattern data
+  | 'aesthetic'    // Aesthetic/visual theme
+  // Social Media types
+  | 'post'         // Social media post
+  | 'carousel'     // Multi-slide carousel
+  | 'caption'      // Caption with hashtags
+  | 'template'     // Post/story template
+  | 'platform';    // Platform specifications
 
 export interface Port {
   id: string;
@@ -234,6 +357,59 @@ export interface Port {
   required?: boolean;
   multiple?: boolean;
 }
+
+// ============================================================================
+// DISPLAY MODES & SLOT CONFIGURATION
+// ============================================================================
+
+/** Node display modes for different levels of detail */
+export type DisplayMode = 'compact' | 'standard' | 'expanded';
+
+/** Preview slot configuration */
+export interface PreviewSlotConfig {
+  type: 'image' | 'video' | 'audio' | 'text' | 'mesh3d' | 'gallery' | '3d' | 'colorSwatches' | 'calendar' | 'comparison';
+  aspectRatio?: '1:1' | '4:3' | '3:4' | '16:9' | '9:16' | 'auto';
+  showZoom?: boolean;
+  showDownload?: boolean;
+  showVariations?: boolean;
+  showFullscreen?: boolean;
+  showTiled?: boolean;           // Show pattern tiled for textures
+}
+
+/** Parameter slot configuration */
+export interface ParameterSlotConfig {
+  layout: 'inline' | 'grid' | 'accordion' | 'stack';
+  visibleInModes: DisplayMode[];
+  priorityParams?: string[];       // Which params show in compact view
+  groupBy?: string;                // Group parameters by category
+}
+
+/** Action slot configuration */
+export interface ActionSlotConfig {
+  primary: 'execute' | 'download' | 'preview';
+  secondary?: ('execute' | 'download' | 'duplicate' | 'delete' | 'expand')[];
+  showProgress?: boolean;
+  showCost?: boolean;
+}
+
+/** Metadata slot configuration */
+export interface MetadataSlotConfig {
+  show: ('model' | 'cost' | 'duration' | 'timestamp')[];
+  position: 'footer' | 'header';
+}
+
+/** Complete slot configuration for a node */
+export interface NodeSlotConfig {
+  preview?: PreviewSlotConfig;
+  parameters?: ParameterSlotConfig;
+  actions?: ActionSlotConfig;
+  metadata?: MetadataSlotConfig;
+  customContent?: string;          // Component name for escape hatch
+}
+
+// ============================================================================
+// NODE DEFINITIONS
+// ============================================================================
 
 export interface NodeDefinition {
   type: NodeType;
@@ -261,6 +437,10 @@ export interface NodeDefinition {
   hasAudio?: boolean;
   /** Best use case indicator: 'text', 'faces', etc. */
   bestFor?: string;
+  /** Slot configuration for UnifiedNode rendering */
+  slots?: NodeSlotConfig;
+  /** Default display mode when creating the node */
+  defaultDisplayMode?: DisplayMode;
 }
 
 export interface NodeParameter {

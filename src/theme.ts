@@ -289,6 +289,42 @@ export const categoryColors = {
     dark: '#5ED498'
   },
 
+  // Interior Design categories
+  interiorDesign: {
+    main: '#8B5CF6',    // Purple for interior design
+    light: '#A78BFA',
+    dark: '#7C3AED'
+  },
+  spacePlanning: {
+    main: '#7DD3FC',    // Sky blue for space planning
+    light: '#BAE6FD',
+    dark: '#38BDF8'
+  },
+
+  // Moodboard categories
+  moodboard: {
+    main: '#F472B6',    // Pink for moodboards
+    light: '#F9A8D4',
+    dark: '#EC4899'
+  },
+  brandIdentity: {
+    main: '#38BDF8',    // Sky blue for brand identity
+    light: '#7DD3FC',
+    dark: '#0EA5E9'
+  },
+
+  // Social Media categories
+  socialMedia: {
+    main: '#4ADE80',    // Green for social media
+    light: '#86EFAC',
+    dark: '#22C55E'
+  },
+  contentCreation: {
+    main: '#22D3EE',    // Cyan for content creation
+    light: '#67E8F9',
+    dark: '#06B6D4'
+  },
+
   // Fashion-specific sub-categories
   fashionDesign: {
     main: brandColors.coralSpark,
