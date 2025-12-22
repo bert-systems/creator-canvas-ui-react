@@ -29,6 +29,7 @@ export {
   interiorDesignNodes,
   moodboardNodes,
   socialMediaNodes,
+  audioNodes,
 } from './nodes';
 
 // Main aggregated node definitions array
@@ -48,7 +49,8 @@ export const nodeCategories = [
   { id: 'input', label: 'Input', icon: 'Input', color: '#22c55e' },
   { id: 'imageGen', label: 'Image Gen', icon: 'Image', color: '#3b82f6' },
   { id: 'videoGen', label: 'Video Gen', icon: 'Videocam', color: '#8b5cf6' },
-  { id: 'threeD', label: '3D', icon: 'ViewInAr', color: '#f97316' },
+  { id: 'audio', label: 'Audio', icon: 'VolumeUp', color: '#f97316' },
+  { id: 'threeD', label: '3D', icon: 'ViewInAr', color: '#fb923c' },
   { id: 'multiFrame', label: 'Multi-Frame', icon: 'GridView', color: '#14b8a6' },
   { id: 'character', label: 'Character', icon: 'Person', color: '#ec4899' },
   { id: 'style', label: 'Style', icon: 'Palette', color: '#06b6d4' },
@@ -99,8 +101,8 @@ export const nodeCategoryGroups: NodeCategoryGroup[] = [
     label: 'AI Generation',
     icon: 'AutoAwesome',
     color: '#3b82f6',
-    categories: ['imageGen', 'videoGen', 'threeD', 'multiFrame'],
-    description: 'Image, video, 3D model, and multi-frame generation',
+    categories: ['imageGen', 'videoGen', 'audio', 'threeD', 'multiFrame'],
+    description: 'Image, video, audio, 3D model, and multi-frame generation',
   },
   {
     id: 'characterStyle',

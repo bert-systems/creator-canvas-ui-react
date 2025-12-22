@@ -83,7 +83,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Days', value: 'days' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-stack',
+      endpoint: '/api/MultiFrame/stacks/time',
+      config: {},
+    },
   },
   {
     type: 'stackMultiverse',
@@ -102,7 +107,12 @@ export const outputNodes: NodeDefinition[] = [
       { id: 'frameCount', name: 'Style Count', type: 'slider', default: 4, min: 2, max: 6, step: 1 },
       { id: 'styles', name: 'Art Styles', type: 'text', default: 'photorealistic, anime, oil painting, noir' },
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-stack',
+      endpoint: '/api/MultiFrame/stacks/multiverse',
+      config: {},
+    },
   },
   {
     type: 'stackChrono',
@@ -126,7 +136,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Golden Hour', value: 'golden-hour' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-stack',
+      endpoint: '/api/MultiFrame/stacks/time',
+      config: { subtype: 'chrono' },
+    },
   },
   {
     type: 'stackSubconscious',
@@ -150,7 +165,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Extreme', value: 'extreme' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-stack',
+      endpoint: '/api/MultiFrame/stacks/concept',
+      config: { subtype: 'subconscious' },
+    },
   },
   {
     type: 'stackZAxis',
@@ -173,7 +193,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Medium (10m)', value: 'medium' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-stack',
+      endpoint: '/api/MultiFrame/stacks/perspective',
+      config: {},
+    },
   },
   {
     type: 'stackCauseEffect',
@@ -200,7 +225,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Reveal', value: 'reveal' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-stack',
+      endpoint: '/api/MultiFrame/stacks/transformation',
+      config: {},
+    },
   },
 
   // MULTI-FRAME NODES - QUEUES (Horizontal 16:9+)
@@ -226,7 +256,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Abstract', value: 'abstract' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-queue',
+      endpoint: '/api/MultiFrame/queues/comparison',
+      config: { subtype: 'panorama' },
+    },
   },
   {
     type: 'queueWalkCycle',
@@ -251,7 +286,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Custom', value: 'custom' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-queue',
+      endpoint: '/api/MultiFrame/queues/process',
+      config: { subtype: 'walkcycle' },
+    },
   },
   {
     type: 'queueDialogueBeat',
@@ -272,7 +312,12 @@ export const outputNodes: NodeDefinition[] = [
       { id: 'reactionPrompt', name: 'Reaction', type: 'text', default: '' },
       { id: 'beatCount', name: 'Beats', type: 'slider', default: 3, min: 3, max: 4, step: 1 },
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-queue',
+      endpoint: '/api/MultiFrame/queues/storyboard',
+      config: {},
+    },
   },
   {
     type: 'queueMotionTrail',
@@ -296,7 +341,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Custom', value: 'custom' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-queue',
+      endpoint: '/api/MultiFrame/queues/process',
+      config: { subtype: 'motiontrail' },
+    },
   },
   {
     type: 'queueMirror',
@@ -320,7 +370,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Metaphorical', value: 'metaphorical' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-queue',
+      endpoint: '/api/MultiFrame/queues/comparison',
+      config: { subtype: 'mirror' },
+    },
   },
 
   // MULTI-FRAME NODES - GRIDS (Matrix 1:1)
@@ -352,7 +407,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Custom', value: 'custom' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-grid',
+      endpoint: '/api/MultiFrame/grids/contact',
+      config: {},
+    },
   },
   {
     type: 'gridTurnaround',
@@ -382,7 +442,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Natural', value: 'natural' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-grid',
+      endpoint: '/api/MultiFrame/grids/turnaround',
+      config: {},
+    },
   },
   {
     type: 'gridLighting',
@@ -405,7 +470,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Mood', value: 'mood' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-grid',
+      endpoint: '/api/MultiFrame/grids/lighting',
+      config: {},
+    },
   },
   {
     type: 'gridExpression',
@@ -433,7 +503,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Custom', value: 'custom' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-grid',
+      endpoint: '/api/MultiFrame/grids/expression',
+      config: {},
+    },
   },
   {
     type: 'gridStylePrism',
@@ -457,7 +532,12 @@ export const outputNodes: NodeDefinition[] = [
       ]},
       { id: 'customStyles', name: 'Custom Styles', type: 'text', default: '' },
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-grid',
+      endpoint: '/api/MultiFrame/grids/moodboard',
+      config: { subtype: 'styleprism' },
+    },
   },
   {
     type: 'gridEntropy',
@@ -484,7 +564,12 @@ export const outputNodes: NodeDefinition[] = [
         { label: 'Eons (1000→1M)', value: 'eons' },
       ]},
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
+    agentBinding: {
+      agentType: 'multiframe-grid',
+      endpoint: '/api/MultiFrame/grids/material',
+      config: { subtype: 'entropy' },
+    },
   },
 
   // ENHANCEMENT NODES
@@ -512,7 +597,7 @@ export const outputNodes: NodeDefinition[] = [
       { id: 'enhanceDetail', name: 'Enhance Details', type: 'boolean', default: true },
       { id: 'denoise', name: 'Denoise Level', type: 'slider', default: 0.3, min: 0, max: 1, step: 0.1 },
     ],
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
   },
   {
     type: 'enhancePrompt',

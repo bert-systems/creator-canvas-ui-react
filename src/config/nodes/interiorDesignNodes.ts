@@ -14,7 +14,7 @@ export const interiorDesignNodes: NodeDefinition[] = [
     quickHelp: 'Upload room photo → Select style → Get redesigned room',
     useCase: 'Home staging, renovation planning, interior design concepts',
     icon: 'Home',
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
     tier: 'production',
     inputs: [
       { id: 'roomImage', name: 'Room Photo', type: 'image', required: true },
@@ -68,7 +68,7 @@ export const interiorDesignNodes: NodeDefinition[] = [
     quickHelp: 'Empty room → Fully staged space',
     useCase: 'Real estate staging, rental listings, property marketing',
     icon: 'Weekend',
-    aiModel: 'flux-2-pro',
+    aiModel: 'flux-2-pro-edit',
     tier: 'production',
     inputs: [
       { id: 'emptyRoom', name: 'Empty Room Photo', type: 'image', required: true },

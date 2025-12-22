@@ -113,6 +113,12 @@ export type NodeType =
   | 'voiceClone'
   | 'lipSync'
   | 'musicGen'
+  | 'voiceoverGen'          // Text-to-speech voiceover
+  | 'dialogueGen'           // Multi-character dialogue
+  | 'sceneMusic'            // Scene-type based music
+  | 'sfxGen'                // Sound effect generator
+  | 'ambientSound'          // Ambient soundscape generator
+  | 'audioMixer'            // Audio track mixer
   // Output nodes
   | 'preview'
   | 'export'
@@ -442,6 +448,8 @@ export interface NodeDefinition {
   slots?: NodeSlotConfig;
   /** Default display mode when creating the node */
   defaultDisplayMode?: DisplayMode;
+  /** Agent binding for API execution */
+  agentBinding?: AgentBinding;
 }
 
 export interface NodeParameter {
@@ -453,6 +461,14 @@ export interface NodeParameter {
   min?: number;
   max?: number;
   step?: number;
+  placeholder?: string;
+}
+
+/** Agent binding configuration for node execution */
+export interface AgentBinding {
+  agentType: string;
+  endpoint: string;
+  config?: Record<string, unknown>;
 }
 
 // ============================================================================

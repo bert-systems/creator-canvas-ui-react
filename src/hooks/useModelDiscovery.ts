@@ -8,7 +8,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { imageGenerationService } from '@/services/imageGenerationService';
 import { videoGenerationService } from '@/services/videoGenerationService';
-import { promptService } from '@/services/promptService';
 
 // Import local providers data as fallback
 import imageProvidersData from '@/data/providers-image.json';
@@ -174,10 +173,11 @@ export function useModelDiscovery() {
 
     try {
       // Fetch all model types in parallel
-      const [imageResponse, videoResponse, promptAgentsResponse] = await Promise.allSettled([
+      // Note: We no longer fetch promptService.getAgents() here since those are prompt
+      // enhancement agents, not LLM models. Prompt agents are used separately.
+      const [imageResponse, videoResponse] = await Promise.allSettled([
         imageGenerationService.getProviders(),
         videoGenerationService.getProviders(),
-        promptService.getAgents(),
       ]);
 
       // Process image models from API response
@@ -248,24 +248,14 @@ export function useModelDiscovery() {
         }
       }
 
-      // Process LLM/prompt agents
-      const llmModels: DiscoveredModel[] = [];
-      if (promptAgentsResponse.status === 'fulfilled') {
-        const agents = promptAgentsResponse.value.agents || [];
-        for (const agent of agents) {
-          llmModels.push({
-            id: agent.id || agent.name,
-            name: agent.name,
-            description: agent.description,
-            tier: agent.tier as DiscoveredModel['tier'],
-          });
-        }
-      }
+      // LLM models - use static list since /api/prompt/agents returns prompt ENHANCEMENT agents,
+      // not actual LLM models. The prompt agents are for enhancing prompts, not for model selection.
+      // TODO: Add a proper /api/llm/models endpoint if dynamic LLM model discovery is needed.
+      const llmModels: DiscoveredModel[] = [...DEFAULT_LLM_MODELS];
 
-      // Fallback LLM models if API doesn't return any
-      if (llmModels.length === 0) {
-        llmModels.push(...DEFAULT_LLM_MODELS);
-      }
+      // Note: promptAgentsResponse contains prompt enhancement agents (e.g., "Creative Expander")
+      // These are NOT LLM models and should not be shown in the AI Model dropdown.
+      // Prompt agents are used separately in the prompt enhancement feature.
 
       // 3D models (static for now - can be fetched from API when available)
       const threeDModels: DiscoveredModel[] = [...DEFAULT_3D_MODELS];

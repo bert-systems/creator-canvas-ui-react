@@ -174,11 +174,18 @@ export const PreviewSlot = memo<PreviewSlotProps>(({
         if (typeof firstImage === 'string') return firstImage;
         if (firstImage && typeof firstImage.url === 'string') return firstImage.url;
       }
+      // Handle multiframe { frames: [{ imageUrl: '...' }] } format
+      if (cachedOutput.frames && Array.isArray(cachedOutput.frames) && cachedOutput.frames.length > 0) {
+        const firstFrame = cachedOutput.frames[0] as Record<string, unknown>;
+        if (firstFrame && typeof firstFrame.imageUrl === 'string') return firstFrame.imageUrl;
+      }
       // Handle direct imageUrl
       if (typeof cachedOutput.imageUrl === 'string') return cachedOutput.imageUrl;
       // Handle { video: '...' } or { videoUrl: '...' } format
       if (typeof cachedOutput.video === 'string') return cachedOutput.video;
       if (typeof cachedOutput.videoUrl === 'string') return cachedOutput.videoUrl;
+      // Handle compositeImageUrl from multiframe responses
+      if (typeof cachedOutput.compositeImageUrl === 'string') return cachedOutput.compositeImageUrl;
     }
 
     return undefined;

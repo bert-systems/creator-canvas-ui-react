@@ -773,10 +773,61 @@ const CreativeCanvasInner: React.FC = () => {
     [connectionValidator]
   );
 
-  // Load boards on mount
+  // Load boards on mount and check for board ID in URL
   useEffect(() => {
-    loadBoards();
+    const initializeFromUrl = async () => {
+      // Check for board ID in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const boardIdFromUrl = urlParams.get('board');
+
+      // Load boards list first
+      await loadBoards();
+
+      // If there's a board ID in the URL, load that board
+      if (boardIdFromUrl) {
+        console.log('[CreativeCanvasStudio] Loading board from URL:', boardIdFromUrl);
+        try {
+          const response = await creativeCanvasService.boards.get(boardIdFromUrl);
+          if (response.success && response.data) {
+            setCurrentBoard(response.data);
+            setActiveView('canvas');
+          } else {
+            console.warn('[CreativeCanvasStudio] Board not found:', boardIdFromUrl);
+            // Clear invalid board ID from URL
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+        } catch (err) {
+          console.error('[CreativeCanvasStudio] Failed to load board from URL:', err);
+          // Clear invalid board ID from URL
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
+    };
+
+    initializeFromUrl();
   }, []);
+
+  // Update URL when board changes
+  useEffect(() => {
+    if (currentBoard) {
+      // Update URL with board ID
+      const url = new URL(window.location.href);
+      url.searchParams.set('board', currentBoard.id);
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [currentBoard]);
+
+  // Clear URL when navigating away from canvas view or when no board is selected
+  useEffect(() => {
+    if (activeView === 'boards' || !currentBoard) {
+      // Clear board ID from URL
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('board')) {
+        url.searchParams.delete('board');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, [activeView, currentBoard]);
 
   // Load initial workflow template if provided (from onboarding)
   useEffect(() => {
@@ -3188,14 +3239,19 @@ const CreativeCanvasInner: React.FC = () => {
       // PROCESS IMMEDIATE EXECUTION RESULT
       // ========================================
       // If the response includes output data, process it immediately (synchronous execution)
-      const execOutput = executeResponse.output;
-      const execStatus = executeResponse.status || 'running';
+      // Note: Some endpoints (like multiframe) return data in { node: { cachedOutput } } format
+      // instead of { output } format - handle both cases
+      const responseNode = (executeResponse as unknown as { node?: { status?: string; cachedOutput?: Record<string, unknown> } }).node;
+      const execOutput = executeResponse.output || responseNode?.cachedOutput;
+      const execStatus = executeResponse.status || responseNode?.status || 'running';
 
       console.log('[handleNodeExecute] Execution response:', {
         success: executeResponse.success,
         status: execStatus,
         output: execOutput,
         execution: executeResponse.execution,
+        hasNodeResponse: !!responseNode,
+        nodeStatus: responseNode?.status,
       });
 
       if (execStatus === 'completed' && execOutput) {
@@ -3216,18 +3272,23 @@ const CreativeCanvasInner: React.FC = () => {
             },
           };
         }
-        // Handle image outputs
-        else if (execOutput.imageUrl || execOutput.images || execOutput.outputType === 'image') {
+        // Handle image outputs (including multiframe frames[] format)
+        else if (execOutput.imageUrl || execOutput.images || execOutput.frames || execOutput.outputType === 'image') {
           // Extract URLs - images can be an array of objects with url property or array of strings
+          // Multiframe returns frames[].imageUrl format
           let imageUrls: string[] = [];
 
           console.log('[handleNodeExecute] Processing image output:', {
             hasImages: !!execOutput.images,
+            hasFrames: !!execOutput.frames,
             imagesIsArray: Array.isArray(execOutput.images),
+            framesIsArray: Array.isArray(execOutput.frames),
             imagesLength: Array.isArray(execOutput.images) ? execOutput.images.length : 0,
+            framesLength: Array.isArray(execOutput.frames) ? execOutput.frames.length : 0,
             imageUrl: execOutput.imageUrl,
             outputType: execOutput.outputType,
             rawImages: execOutput.images,
+            rawFrames: execOutput.frames,
           });
 
           if (execOutput.images && Array.isArray(execOutput.images)) {
@@ -3242,8 +3303,21 @@ const CreativeCanvasInner: React.FC = () => {
               }
               return '';
             }).filter((url): url is string => typeof url === 'string' && url.length > 0);
-          } else if (execOutput.imageUrl) {
+          }
+          // Handle multiframe frames[] format (stacks, queues, grids)
+          else if (execOutput.frames && Array.isArray(execOutput.frames)) {
+            imageUrls = execOutput.frames.map((frame: unknown) => {
+              if (frame && typeof frame === 'object' && 'imageUrl' in frame) {
+                return (frame as { imageUrl: string }).imageUrl || '';
+              }
+              return '';
+            }).filter((url): url is string => typeof url === 'string' && url.length > 0);
+          } else if (typeof execOutput.imageUrl === 'string') {
             imageUrls = [execOutput.imageUrl];
+          }
+          // Handle compositeImageUrl from multiframe responses
+          if (imageUrls.length === 0 && execOutput.compositeImageUrl) {
+            imageUrls = [execOutput.compositeImageUrl as string];
           }
 
           console.log('[handleNodeExecute] Extracted image URLs:', imageUrls);
@@ -3258,9 +3332,11 @@ const CreativeCanvasInner: React.FC = () => {
         }
         // Handle video outputs
         else if (execOutput.videoUrl || execOutput.video || execOutput.outputType === 'video') {
+          const videoUrl = typeof execOutput.videoUrl === 'string' ? execOutput.videoUrl
+            : typeof execOutput.video === 'string' ? execOutput.video : undefined;
           nodeResult = {
             type: 'video',
-            url: execOutput.videoUrl || execOutput.video,
+            url: videoUrl,
           };
         }
         // Handle generic output
@@ -3365,9 +3441,9 @@ const CreativeCanvasInner: React.FC = () => {
             : `🖼️ ${nodeResult.urls.length} images generated!`;
         } else if (nodeResult?.type === 'video' && nodeResult.url) {
           outputPreview = '🎬 Video generated successfully!';
-        } else if (execOutput.enhancedPrompt) {
+        } else if (typeof execOutput.enhancedPrompt === 'string') {
           outputPreview = `"${execOutput.enhancedPrompt.substring(0, 50)}..."`;
-        } else if (execOutput.text) {
+        } else if (typeof execOutput.text === 'string') {
           outputPreview = `"${execOutput.text.substring(0, 50)}..."`;
         }
         setSuccessMessage(`✨ ${nodeData?.label || 'Node'} completed! ${outputPreview}`);

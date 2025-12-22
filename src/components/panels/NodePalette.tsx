@@ -59,6 +59,7 @@ import {
   ViewList as FlatViewIcon,
   AccountTreeOutlined as GroupViewIcon,
   AutoFixHigh as EnhancementIcon,
+  VolumeUp as AudioIcon,
 } from '@mui/icons-material';
 import { nodeDefinitions, nodeCategories, nodeCategoryGroups, type NodeCategoryGroup } from '@/config/nodeDefinitions';
 import type { BoardCategory, NodeDefinition, NodeParameter } from '@/models/canvas';
@@ -91,6 +92,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   input: <InputIcon />,
   imageGen: <ImageIcon />,
   videoGen: <VideoIcon />,
+  audio: <AudioIcon />,
   threeD: <ThreeDIcon />,
   multiFrame: <GridViewIcon />,
   character: <CharacterIcon />,

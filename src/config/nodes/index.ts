@@ -10,6 +10,7 @@ export { storytellingNodes } from './storytellingNodes';
 export { interiorDesignNodes } from './interiorDesignNodes';
 export { moodboardNodes } from './moodboardNodes';
 export { socialMediaNodes } from './socialMediaNodes';
+export { audioNodes } from './audioNodes';
 
 // Re-export aggregated array for convenience
 import { inputNodes } from './inputNodes';
@@ -21,6 +22,7 @@ import { storytellingNodes } from './storytellingNodes';
 import { interiorDesignNodes } from './interiorDesignNodes';
 import { moodboardNodes } from './moodboardNodes';
 import { socialMediaNodes } from './socialMediaNodes';
+import { audioNodes } from './audioNodes';
 
 export const allNodeDefinitions = [
   ...inputNodes,
@@ -32,4 +34,5 @@ export const allNodeDefinitions = [
   ...interiorDesignNodes,
   ...moodboardNodes,
   ...socialMediaNodes,
+  ...audioNodes,
 ];

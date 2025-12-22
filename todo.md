@@ -1,6 +1,168 @@
 # TODO - Creative Canvas Studio
 
-**Last Updated:** December 21, 2025
+**Last Updated:** December 22, 2025
+
+---
+
+## Audio Category Registration Fix - Dec 22, 2025 ✅ COMPLETED
+
+### Issue
+Audio nodes were created but the `audio` category was missing from the category system, preventing them from appearing in the NodePalette.
+
+### Fixes Applied
+1. **nodeDefinitions.ts**: Added `{ id: 'audio', label: 'Audio', icon: 'VolumeUp', color: '#f97316' }` to `nodeCategories`
+2. **nodeDefinitions.ts**: Added `'audio'` to `aiGeneration` group in `nodeCategoryGroups`
+3. **NodePalette.tsx**: Added `VolumeUp as AudioIcon` import and `audio: <AudioIcon />` to `categoryIcons`
+
+### Build Status
+✅ Build successful (42.69s)
+
+---
+
+## Multi-Frame & Audio API Integration - Dec 22, 2025 ✅ COMPLETED
+
+### Summary
+Implemented complete Multi-Frame (Stacks, Queues, Grids) and Audio (Voiceover, Dialogue, Music, SFX) API services and node definitions based on Swagger v9/v10 API schema.
+
+### New Services Created
+
+#### `src/services/multiframeService.ts`
+Complete API integration for multi-frame generation:
+- **Stack Service**: 10 stack types (multiverse, time, style, character, environment, emotion, perspective, transformation, dialogue, concept)
+- **Queue Service**: 8 queue types (timeline, parallel, comparison, process, storyboard, progression, reaction, transformation)
+- **Grid Service**: 13 grid types (contact, turnaround, lighting, expression, pose, color, material, scale, moodboard, composition, technical, fashion, interior)
+- **Frame Extraction**: Extract individual frames from composites
+
+| API Endpoint | Purpose |
+|--------------|---------|
+| `POST /api/MultiFrame/stacks` | Generate stack (vertical sequence) |
+| `POST /api/MultiFrame/stacks/{type}` | Generate specific stack type |
+| `GET /api/MultiFrame/stacks/types` | Get available stack types |
+| `POST /api/MultiFrame/queues` | Generate queue (horizontal sequence) |
+| `POST /api/MultiFrame/queues/{type}` | Generate specific queue type |
+| `POST /api/MultiFrame/grids` | Generate grid (matrix layout) |
+| `POST /api/MultiFrame/grids/{type}` | Generate specific grid type |
+| `POST /api/MultiFrame/extract` | Extract frames from composite |
+
+#### `src/services/audioService.ts`
+Complete API integration for audio generation:
+- **Voiceover Service**: Text-to-speech with multiple voices and languages
+- **Dialogue Service**: Multi-character dialogue with emotions
+- **Music Service**: Background music, scene presets, lo-fi beats
+- **SFX Service**: Sound effects and ambient soundscapes
+- **Voice Catalog**: Available voice listing
+
+| API Endpoint | Purpose |
+|--------------|---------|
+| `POST /api/audio/voiceover` | Generate voiceover from text |
+| `POST /api/audio/dialogue` | Generate multi-character dialogue |
+| `POST /api/audio/music` | Generate music track |
+| `POST /api/audio/sfx` | Generate sound effect |
+| `GET /api/audio/voices` | Get available voices |
+
+### New Audio Nodes
+Created `src/config/nodes/audioNodes.ts` with 9 audio nodes:
+
+| Node Type | Description | API Endpoint |
+|-----------|-------------|--------------|
+| `voiceoverGen` | Text-to-Speech | `/api/audio/voiceover` |
+| `dialogueGen` | Multi-Character Dialogue | `/api/audio/dialogue` |
+| `musicGen` | Music Generator | `/api/audio/music` |
+| `sceneMusic` | Scene Soundtrack | `/api/audio/music` |
+| `sfxGen` | Sound Effect Generator | `/api/audio/sfx` |
+| `ambientSound` | Ambient Soundscape | `/api/audio/sfx` |
+| `audioMixer` | Mix Audio Tracks | `/api/audio/mix` |
+| `lipSync` | Audio to Lip Sync | `/api/video-generation/kling-avatar/generate` |
+
+### Multi-Frame Node Agent Bindings
+Added `agentBinding` to all 17 existing multi-frame nodes:
+
+**Stacks (6 nodes):**
+- `stackTime` → `/api/MultiFrame/stacks/time`
+- `stackMultiverse` → `/api/MultiFrame/stacks/multiverse`
+- `stackChrono` → `/api/MultiFrame/stacks/time` (chrono subtype)
+- `stackSubconscious` → `/api/MultiFrame/stacks/concept`
+- `stackZAxis` → `/api/MultiFrame/stacks/perspective`
+- `stackCauseEffect` → `/api/MultiFrame/stacks/transformation`
+
+**Queues (5 nodes):**
+- `queuePanorama` → `/api/MultiFrame/queues/comparison`
+- `queueWalkCycle` → `/api/MultiFrame/queues/process`
+- `queueDialogueBeat` → `/api/MultiFrame/queues/storyboard`
+- `queueMotionTrail` → `/api/MultiFrame/queues/process`
+- `queueMirror` → `/api/MultiFrame/queues/comparison`
+
+**Grids (6 nodes):**
+- `gridContact` → `/api/MultiFrame/grids/contact`
+- `gridTurnaround` → `/api/MultiFrame/grids/turnaround`
+- `gridLighting` → `/api/MultiFrame/grids/lighting`
+- `gridExpression` → `/api/MultiFrame/grids/expression`
+- `gridStylePrism` → `/api/MultiFrame/grids/moodboard`
+- `gridEntropy` → `/api/MultiFrame/grids/material`
+
+### Type System Updates
+
+#### `src/models/canvas.ts`
+- Added `AgentBinding` interface for API execution configuration
+- Added `agentBinding` property to `NodeDefinition`
+- Added `placeholder` property to `NodeParameter`
+- Added 6 new audio node types to `NodeType` union
+
+### Files Modified
+- `src/services/multiframeService.ts` - NEW (550+ lines)
+- `src/services/audioService.ts` - NEW (450+ lines)
+- `src/config/nodes/audioNodes.ts` - NEW (395 lines)
+- `src/config/nodes/outputNodes.ts` - Added agentBinding to 17 multiframe nodes
+- `src/config/nodes/index.ts` - Export audioNodes
+- `src/config/nodeDefinitions.ts` - Export audioNodes
+- `src/models/canvas.ts` - AgentBinding interface, audio node types
+
+### Build Status
+✅ Build successful (1m 7s)
+
+### API Team Test Results - Dec 22, 2025 ✅ 16/17 PASSING
+
+**Audio APIs:**
+| Endpoint | Status |
+|----------|--------|
+| `GET /api/audio/voices` | ✅ Pass |
+| `POST /api/audio/voiceover` | ✅ Pass |
+| `POST /api/audio/music` | ⚠️ 422 (ElevenLabs tier limitation) |
+| `POST /api/audio/sfx` | ✅ Pass |
+
+**Composite Studio APIs:**
+| Endpoint | Status |
+|----------|--------|
+| `GET /api/composite-studio/blend-modes` | ✅ Pass |
+| `GET /api/composite-studio/estimate-cost` | ✅ Pass |
+| `POST /api/composite-studio/validate-weights` | ✅ Pass |
+| `POST /api/composite-studio/generate` | ✅ Pass |
+
+**Prompts APIs:**
+| Endpoint | Status |
+|----------|--------|
+| `GET /api/prompts/workflows` | ✅ Pass |
+| `GET /api/prompts/variation-types` | ✅ Pass |
+| `GET /api/prompts/polish/options` | ✅ Pass |
+| `POST /api/prompts/compose` | ✅ Pass |
+| `POST /api/prompts/polish/quick` | ✅ Pass |
+| `POST /api/prompts/polish` | ✅ Pass |
+| `POST /api/prompts/variations` | ✅ Pass |
+
+**Multi-Frame APIs:**
+| Endpoint | Status |
+|----------|--------|
+| `GET /api/multiframe/stacks/types` | ✅ Pass |
+| `GET /api/multiframe/queues/types` | ✅ Pass |
+| `GET /api/multiframe/grids/types` | ✅ Pass |
+
+**Bug Fixes Applied by API Team:**
+1. **ElevenLabsProvider** - Changed to graceful API key check (doesn't throw on construction)
+2. **FalAIImageProvider** - Fixed Seed type from `int?` to `long?` for large seed values
+3. **CompositeStudioService** - Fixed model from `fal-ai/flux-pro` to `flux-pro-redux`
+4. **appsettings.json** - Added ElevenLabs API key configuration
+
+> **Note:** Music generation (422) is an ElevenLabs tier/subscription limitation, not a code issue.
 
 ---
 
