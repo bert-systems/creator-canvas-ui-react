@@ -69,7 +69,9 @@ src/
 - **Output**: Preview, Export
 
 ### Backend Integration
-- API Base URL: `https://localhost:7688` (configurable via VITE_API_BASE_URL)
+- API Project: `creator-canvas-api` (standalone ASP.NET Core API)
+- API Base URL: `https://localhost:7003` (configurable via VITE_API_BASE_URL)
+- HTTP alternative: `http://localhost:5003`
 - Proxy configured in vite.config.ts
 - All API calls go through `src/services/api.ts`
 
@@ -79,6 +81,32 @@ src/
 2. **State Management**: Use Zustand store (`useCanvasStore`) for global state
 3. **Node Types**: Define in `src/config/nodeDefinitions.ts`
 4. **Models**: Define in `src/models/canvas.ts`
+
+## ⚠️ CRITICAL: API Integration Rules
+
+### NEVER Work Around Missing API Endpoints
+
+When an API endpoint returns 404 or doesn't exist, **DO NOT**:
+- Route calls through different/generic endpoints
+- Mock responses or implement client-side alternatives
+- Use fallback endpoints that weren't designed for the use case
+
+**Instead:**
+1. Document the missing endpoint in `docs/FASHION_API_REQUIREMENTS.md` or relevant requirements doc
+2. Add to the tracker in `architectureDesign.md` under "Missing API Endpoints - Request Tracker"
+3. Communicate with the API team (`creator-canvas-api` project)
+4. Let the feature fail gracefully or show "Coming Soon" until the endpoint exists
+
+**Why:** Workarounds create hidden technical debt, bypass designed architecture, cause inconsistent behavior, and make the codebase harder to maintain. This project has a dedicated API team - use proper channels.
+
+### Currently Missing Endpoints (Request from API Team)
+
+| Endpoint | Purpose | Status |
+|----------|---------|--------|
+| `POST /api/fashion/clothes-swap` | Swap garments between images | ⏳ Pending |
+| `POST /api/fashion/runway-animation` | Generate fashion runway videos | ⏳ Pending |
+
+See `architectureDesign.md` for full anti-pattern documentation and examples.
 
 ## Related Documentation
 

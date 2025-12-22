@@ -4,7 +4,7 @@
  */
 
 // ===== Card Types =====
-export type CardCategory = 'fashion' | 'interior' | 'stock' | 'story';
+export type CardCategory = 'fashion' | 'interior' | 'stock' | 'story' | 'moodboard' | 'social';
 
 export type CardType =
   | 'fashion-concept'
@@ -858,8 +858,8 @@ export const CATEGORY_INFO: Record<CardCategory, { name: string; icon: string; c
   interior: {
     name: 'Interior Design',
     icon: 'Weekend',
-    color: '#4CAF50',
-    description: 'Design rooms, mood boards, and interior layouts',
+    color: '#8B5CF6',
+    description: 'Design rooms, staging, and interior layouts',
   },
   stock: {
     name: 'Stock Images',
@@ -872,6 +872,18 @@ export const CATEGORY_INFO: Record<CardCategory, { name: string; icon: string; c
     icon: 'MenuBook',
     color: '#FF9800',
     description: 'Write and illustrate stories with AI assistance',
+  },
+  moodboard: {
+    name: 'Moodboards',
+    icon: 'ColorLens',
+    color: '#F472B6',
+    description: 'Create visual moodboards, brand kits, and creative direction',
+  },
+  social: {
+    name: 'Social Media',
+    icon: 'Share',
+    color: '#4ADE80',
+    description: 'Generate social posts, carousels, and content for all platforms',
   },
 };
 
@@ -934,7 +946,12 @@ export type ConnectionActionType =
   | 'style-transplant'
   | 'element-transfer'
   | 'variation-bridge'
-  | 'character-inject';
+  | 'character-inject'
+  // Storytelling connection actions
+  | 'character-meet'
+  | 'plot-weave'
+  | 'location-portal'
+  | 'scene-to-storyboard';
 
 export type TransferableElement =
   | 'colors'
@@ -1050,5 +1067,45 @@ export const CONNECTION_ACTIONS: ConnectionActionDefinition[] = [
     preferredModel: 'nano-banana-pro',
     requiresSourceType: ['story-character', 'fashion-concept'],
     requiresTargetType: ['story-scene', 'story-chapter'],
+  },
+  // Storytelling Connection Actions
+  {
+    type: 'character-meet',
+    name: 'Character Meeting',
+    description: 'Generate a scene where two characters meet for the first time',
+    icon: 'Group',
+    supportedCategories: ['story'],
+    preferredModel: 'nano-banana-pro',
+    requiresSourceType: ['story-character'],
+    requiresTargetType: ['story-character'],
+    defaultOptions: { resolution: '2K' },
+  },
+  {
+    type: 'plot-weave',
+    name: 'Plot Weave',
+    description: 'Connect two plot points with cause-effect or parallel narratives',
+    icon: 'Timeline',
+    supportedCategories: ['story'],
+    preferredModel: 'nano-banana-pro',
+    defaultOptions: { resolution: '2K' },
+  },
+  {
+    type: 'location-portal',
+    name: 'Location Portal',
+    description: 'Create a travel or transition scene between two locations',
+    icon: 'Explore',
+    supportedCategories: ['story'],
+    preferredModel: 'nano-banana-pro',
+    defaultOptions: { resolution: '2K' },
+  },
+  {
+    type: 'scene-to-storyboard',
+    name: 'Scene to Storyboard',
+    description: 'Convert scene content into visual storyboard frames',
+    icon: 'PhotoLibrary',
+    supportedCategories: ['story'],
+    preferredModel: 'flux-redux',
+    requiresSourceType: ['story-scene'],
+    defaultOptions: { numVariations: 4, resolution: '2K' },
   },
 ];

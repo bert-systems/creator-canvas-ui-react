@@ -14,7 +14,8 @@ export default defineConfig({
     port: 3001,
     proxy: {
       '/api': {
-        target: 'https://localhost:7688',
+        // New standalone API: creator-canvas-api
+        target: 'https://localhost:7003',
         changeOrigin: true,
         secure: false,
       },

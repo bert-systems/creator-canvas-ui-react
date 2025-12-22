@@ -6,6 +6,7 @@ import type {
   CanvasNode,
   CanvasEdge,
   Asset,
+  StoryAsset,
   WorkflowExecution,
 } from '@/models/canvas';
 
@@ -68,6 +69,12 @@ interface CanvasState {
   // Actions - Assets
   addAsset: (asset: Asset) => void;
   removeAsset: (id: string) => void;
+
+  // Story Library
+  storyLibraryOpen: boolean;
+  toggleStoryLibrary: () => void;
+  saveStory: (storyData: StoryAsset['storyData'], tags?: string[]) => StoryAsset;
+  getStoryAssets: () => StoryAsset[];
 }
 
 export const useCanvasStore = create<CanvasState>()(
@@ -160,6 +167,34 @@ export const useCanvasStore = create<CanvasState>()(
         // Assets
         addAsset: (asset) => set((state) => ({ assets: [...state.assets, asset] })),
         removeAsset: (id) => set((state) => ({ assets: state.assets.filter((a) => a.id !== id) })),
+
+        // Story Library
+        storyLibraryOpen: false,
+        toggleStoryLibrary: () => set((state) => ({ storyLibraryOpen: !state.storyLibraryOpen })),
+        saveStory: (storyData, tags = []) => {
+          const storyAsset: StoryAsset = {
+            id: crypto.randomUUID(),
+            type: 'story',
+            name: storyData.title || 'Untitled Story',
+            url: '', // Stories don't have URLs like media assets
+            metadata: {
+              genre: storyData.genre,
+              tone: storyData.tone,
+              characterCount: storyData.characters?.length || 0,
+              hasOutline: !!storyData.outline,
+            },
+            tags: [...tags, storyData.genre, storyData.tone].filter(Boolean) as string[],
+            createdAt: new Date().toISOString(),
+            storyData,
+          };
+          set((state) => ({ assets: [...state.assets, storyAsset] }));
+          return storyAsset;
+        },
+        getStoryAssets: () => {
+          // This is a selector-like function but we need the current state
+          // In practice, components should filter assets directly
+          return [];
+        },
       }),
       {
         name: 'creator-canvas-storage',

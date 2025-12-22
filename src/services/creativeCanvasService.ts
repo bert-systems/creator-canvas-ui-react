@@ -45,17 +45,45 @@ import type {
 const API_BASE = '/api/creative-canvas';
 
 // Helper to get user ID from auth context or localStorage
+// IMPORTANT: Must return same fallback as nodeService.ts and edgeService.ts
 const getUserId = (): string => {
+  // Check multiple possible auth storage locations
   const authData = localStorage.getItem('authData');
+  const userId = localStorage.getItem('userId');
+  const userSession = localStorage.getItem('userSession');
+
+  // Try authData first
   if (authData) {
     try {
       const parsed = JSON.parse(authData);
-      return parsed.userId || parsed.id || 'anonymous';
+      if (parsed.userId || parsed.id) {
+        return parsed.userId || parsed.id;
+      }
     } catch {
-      return 'anonymous';
+      // Continue to fallbacks
     }
   }
-  return 'anonymous';
+
+  // Try direct userId
+  if (userId) {
+    return userId;
+  }
+
+  // Try userSession
+  if (userSession) {
+    try {
+      const parsed = JSON.parse(userSession);
+      if (parsed.userId || parsed.id) {
+        return parsed.userId || parsed.id;
+      }
+    } catch {
+      // Continue to fallback
+    }
+  }
+
+  // Development fallback - must match nodeService.ts and edgeService.ts
+  console.warn('[creativeCanvasService] No user ID found, using development fallback');
+  return 'dev-user-1';
 };
 
 // Helper to create headers with X-User-Id
@@ -138,6 +166,10 @@ export const boardService = {
         description: request.description,
         isPublic: request.isPublic,
         settings: request.settings,
+        viewportState: request.viewportState,
+        thumbnail: request.thumbnail,
+        sharedWith: request.sharedWith,
+        tags: request.tags,
       },
       getAuthHeaders()
     );

@@ -1,6 +1,16 @@
 /**
  * Canvas Node - Renders a card on the infinite canvas
  * Supports workflow execution, image display, and drag/drop functionality
+ *
+ * @deprecated v4.0 - Use UnifiedNode instead
+ * This component is part of the legacy node system (v3.1).
+ * New boards should use UnifiedNode which provides:
+ * - Three display modes (compact/standard/expanded)
+ * - Slot-based composition (preview, parameters, actions)
+ * - Unified API integration via unifiedNodeService
+ * - Better performance with React.memo and virtualization
+ *
+ * Migration: Enable useUnifiedPalette flag in CreativeCanvasStudio
  */
 
 import { memo, useState, useCallback } from 'react';
@@ -35,6 +45,8 @@ import {
   ZoomOut as CollapseIcon,
   Download as DownloadIcon,
   OpenInNew as OpenIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import type { CanvasCard } from '../../models/creativeCanvas';
 import { CATEGORY_INFO, getTemplateById } from '../../models/creativeCanvas';
@@ -228,6 +240,7 @@ export const CanvasNode = memo(function CanvasNode({
     <Paper
       elevation={selected ? 8 : 2}
       sx={{
+        position: 'relative',
         width: card.dimensions.width,
         minHeight: card.isExpanded ? card.dimensions.height * 2 : card.dimensions.height,
         borderRadius: 2,
@@ -263,11 +276,38 @@ export const CanvasNode = memo(function CanvasNode({
         }}
       />
 
+      {/* Category Badge - positioned at top-left corner */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 6,
+          left: 6,
+          zIndex: 1,
+        }}
+      >
+        <Tooltip title={`${categoryInfo.name} • ${template?.name || card.type}`}>
+          <Chip
+            label={categoryInfo.name.split(' ')[0]}
+            size="small"
+            sx={{
+              height: 18,
+              fontSize: '0.6rem',
+              fontWeight: 600,
+              bgcolor: 'rgba(255,255,255,0.9)',
+              color: cardColor,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              '& .MuiChip-label': { px: 0.75 },
+            }}
+          />
+        </Tooltip>
+      </Box>
+
       {/* Header */}
       <Box
         sx={{
           px: 1.5,
           py: 1,
+          pt: 3.5, // Extra padding for category badge
           backgroundColor: cardColor,
           display: 'flex',
           alignItems: 'center',
@@ -517,6 +557,38 @@ export const CanvasNode = memo(function CanvasNode({
           ))}
         </Box>
       )}
+
+      {/* Expand/Collapse Caret - Always visible at bottom */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          py: 0.5,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          bgcolor: alpha(cardColor, 0.02),
+          '&:hover': {
+            bgcolor: alpha(cardColor, 0.08),
+          },
+        }}
+        onClick={handleToggleExpanded}
+      >
+        <Tooltip title={card.isExpanded ? 'Collapse card' : 'Expand card to show more details'}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {card.isExpanded ? (
+              <ExpandLessIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+            ) : (
+              <ExpandMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+            )}
+            <Typography variant="caption" color="text.secondary">
+              {card.isExpanded ? 'Less' : 'More'}
+            </Typography>
+          </Box>
+        </Tooltip>
+      </Box>
     </Paper>
   );
 });

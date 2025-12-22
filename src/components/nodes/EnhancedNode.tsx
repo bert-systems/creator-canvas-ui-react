@@ -1,6 +1,16 @@
 /**
  * EnhancedNode - Production-ready node component with resize, metadata, and responsive design
  * Follows the strategy document's Node Card Design v2 specification
+ *
+ * @deprecated v4.0 - Use UnifiedNode instead
+ * This component is part of the legacy node system (v3.1).
+ * New boards should use UnifiedNode which provides:
+ * - Three display modes (compact/standard/expanded)
+ * - Slot-based composition (preview, parameters, actions)
+ * - Unified API integration via unifiedNodeService
+ * - Better performance with React.memo and virtualization
+ *
+ * Migration: Enable useUnifiedPalette flag in CreativeCanvasStudio
  */
 
 import { memo, useState, useCallback, useRef } from 'react';
@@ -30,7 +40,8 @@ import {
   Lock as LockIcon,
   ZoomOutMap as ResizeIcon,
 } from '@mui/icons-material';
-import type { Port, PortType, NodeCategory, NodeType } from '@/models/canvas';
+import type { Port, NodeCategory, NodeType } from '@/models/canvas';
+import { PORT_COLORS } from './portColors';
 
 // ===== Constants =====
 
@@ -42,16 +53,6 @@ const MAX_WIDTH = 600;
 const MAX_HEIGHT = 800;
 
 // Port colors by type
-const PORT_COLORS: Record<PortType, string> = {
-  image: '#3b82f6',
-  video: '#22c55e',
-  audio: '#a855f7',
-  text: '#f59e0b',
-  style: '#e80ade',
-  character: '#8b5cf6',
-  mesh3d: '#ec4899',
-  any: '#9ca3af',
-};
 
 // Category colors
 const CATEGORY_COLORS: Record<string, string> = {

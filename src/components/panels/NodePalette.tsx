@@ -44,8 +44,23 @@ import {
   Style as StyleIcon,
   FormatColorFill as ColorIcon,
   Close as CloseIcon,
+  SwapHoriz as SwapHorizIcon,
+  Face as FaceIcon,
+  AutoStories as AutoStoriesIcon,
+  Home as HomeIcon,
+  ColorLens as ColorLensIcon,
+  Share as ShareIcon,
+  Public as PublicIcon,
+  Forum as ForumIcon,
+  AccountTree as AccountTreeIcon,
+  Dashboard as DashboardIcon,
+  Business as BusinessIcon,
+  Article as ArticleIcon,
+  ViewList as FlatViewIcon,
+  AccountTreeOutlined as GroupViewIcon,
+  AutoFixHigh as EnhancementIcon,
 } from '@mui/icons-material';
-import { nodeDefinitions, nodeCategories } from '@/config/nodeDefinitions';
+import { nodeDefinitions, nodeCategories, nodeCategoryGroups, type NodeCategoryGroup } from '@/config/nodeDefinitions';
 import type { BoardCategory, NodeDefinition, NodeParameter } from '@/models/canvas';
 import {
   getToolbarConfig,
@@ -56,6 +71,8 @@ import {
   type AdinkraSymbol,
   type AfricanGarment,
 } from '@/services/canvasToolbarService';
+import { focusRing, timing, easing } from '@/styles/microInteractions';
+import { brandColors, darkNeutrals } from '@/theme';
 
 // ===== Types =====
 
@@ -66,6 +83,7 @@ interface NodePaletteProps {
 }
 
 type PaletteTab = 'nodes' | 'tools';
+type NodeViewMode = 'flat' | 'grouped';
 
 // ===== Category Icons =====
 
@@ -74,10 +92,37 @@ const categoryIcons: Record<string, React.ReactNode> = {
   imageGen: <ImageIcon />,
   videoGen: <VideoIcon />,
   threeD: <ThreeDIcon />,
+  multiFrame: <GridViewIcon />,
   character: <CharacterIcon />,
   style: <PaletteIcon />,
   composite: <CompositeIcon />,
   output: <OutputIcon />,
+  enhancement: <EnhancementIcon />,
+  // Storytelling
+  narrative: <AutoStoriesIcon />,
+  worldBuilding: <PublicIcon />,
+  dialogue: <ForumIcon />,
+  branching: <AccountTreeIcon />,
+  // Interior
+  interiorDesign: <HomeIcon />,
+  spacePlanning: <DashboardIcon />,
+  // Moodboard & Brand
+  moodboard: <ColorLensIcon />,
+  brandIdentity: <BusinessIcon />,
+  // Social Media
+  socialMedia: <ShareIcon />,
+  contentCreation: <ArticleIcon />,
+};
+
+// ===== Group Icons =====
+
+const groupIcons: Record<string, React.ReactNode> = {
+  sourcesOutputs: <SwapHorizIcon />,
+  aiGeneration: <CompositeIcon />,
+  characterStyle: <FaceIcon />,
+  storytelling: <AutoStoriesIcon />,
+  designStudios: <PaletteIcon />,
+  socialContent: <ShareIcon />,
 };
 
 const toolIcons: Record<string, React.ReactNode> = {
@@ -97,7 +142,9 @@ const toolIcons: Record<string, React.ReactNode> = {
 export function NodePalette({ boardCategory, onClose, width = 300 }: NodePaletteProps) {
   // State
   const [activeTab, setActiveTab] = useState<PaletteTab>('nodes');
+  const [nodeViewMode, setNodeViewMode] = useState<NodeViewMode>('grouped');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(['sourcesOutputs', 'aiGeneration']); // Start with common groups expanded
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['input', 'imageGen']);
   const [expandedTools, setExpandedTools] = useState<string[]>([]);
   const [tools, setTools] = useState<ToolDefinition[]>([]);
@@ -120,6 +167,15 @@ export function NodePalette({ boardCategory, onClose, width = 300 }: NodePalette
       setTools([]);
     }
   }, [boardCategory]);
+
+  // Toggle group expansion
+  const toggleGroup = useCallback((groupId: string) => {
+    setExpandedGroups(prev =>
+      prev.includes(groupId)
+        ? prev.filter(g => g !== groupId)
+        : [...prev, groupId]
+    );
+  }, []);
 
   // Toggle category expansion
   const toggleCategory = useCallback((categoryId: string) => {
@@ -470,44 +526,70 @@ export function NodePalette({ boardCategory, onClose, width = 300 }: NodePalette
     );
   };
 
-  // Render nodes tab
-  const renderNodesTab = () => (
+  // Get total node count for a group
+  const getGroupNodeCount = useCallback((group: NodeCategoryGroup) => {
+    return group.categories.reduce((total, catId) => {
+      return total + filteredNodes.filter(node => node.category === catId).length;
+    }, 0);
+  }, [filteredNodes]);
+
+  // Check if a group has any matching nodes (for search filtering)
+  const groupHasNodes = useCallback((group: NodeCategoryGroup) => {
+    return group.categories.some(catId =>
+      filteredNodes.some(node => node.category === catId)
+    );
+  }, [filteredNodes]);
+
+  // Get unique categories that have nodes
+  const categoriesWithNodes = useMemo(() => {
+    return nodeCategories.filter(cat =>
+      filteredNodes.some(node => node.category === cat.id)
+    );
+  }, [filteredNodes]);
+
+  // Render flat view - categories only, no groups
+  const renderFlatNodesView = () => (
     <Box sx={{ flex: 1, overflow: 'auto' }}>
       <List disablePadding>
-        {nodeCategories.map(category => {
+        {categoriesWithNodes.map(category => {
           const categoryNodes = filteredNodes.filter(node => node.category === category.id);
-          if (searchQuery && categoryNodes.length === 0) return null;
+          if (categoryNodes.length === 0) return null;
+
+          const isCategoryExpanded = expandedCategories.includes(category.id) || !!searchQuery;
 
           return (
             <Box key={category.id}>
+              {/* Category Header */}
               <ListItemButton
                 onClick={() => toggleCategory(category.id)}
                 sx={{
+                  bgcolor: alpha(category.color, 0.08),
                   borderBottom: '1px solid',
                   borderColor: 'divider',
                   '&:hover': {
-                    backgroundColor: alpha(category.color, 0.1),
+                    backgroundColor: alpha(category.color, 0.15),
                   },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 36, color: category.color }}>
+                <ListItemIcon sx={{ minWidth: 32, color: category.color }}>
                   {categoryIcons[category.id]}
                 </ListItemIcon>
                 <ListItemText
                   primary={category.label}
-                  primaryTypographyProps={{ fontWeight: 500, fontSize: '0.875rem' }}
+                  primaryTypographyProps={{ fontWeight: 600, fontSize: '0.8125rem' }}
                 />
                 <Badge
                   badgeContent={categoryNodes.length}
-                  color="default"
-                  sx={{ mr: 1, '& .MuiBadge-badge': { fontSize: '0.7rem' } }}
+                  color="primary"
+                  sx={{ mr: 1, '& .MuiBadge-badge': { fontSize: '0.65rem', bgcolor: category.color } }}
                 />
-                {expandedCategories.includes(category.id) ? <ExpandLess /> : <ExpandMore />}
+                {isCategoryExpanded ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
 
-              <Collapse in={expandedCategories.includes(category.id) || !!searchQuery} timeout="auto" unmountOnExit>
+              {/* Nodes within Category */}
+              <Collapse in={isCategoryExpanded} timeout="auto" unmountOnExit>
                 <List disablePadding>
-                  {categoryNodes.map(node => (
+                  {categoryNodes.map((node, index) => (
                     <ListItem
                       key={node.type}
                       disablePadding
@@ -516,44 +598,67 @@ export function NodePalette({ boardCategory, onClose, width = 300 }: NodePalette
                       sx={{
                         cursor: 'grab',
                         '&:active': { cursor: 'grabbing' },
+                        animation: `fadeInUp ${timing.standard}ms ${easing.decelerate}`,
+                        animationDelay: `${index * 30}ms`,
+                        animationFillMode: 'backwards',
+                        '@keyframes fadeInUp': {
+                          from: { opacity: 0, transform: 'translateY(8px)' },
+                          to: { opacity: 1, transform: 'translateY(0)' },
+                        },
                       }}
                     >
                       <ListItemButton
                         sx={{
-                          pl: 4,
-                          py: 0.75,
+                          pl: 3,
+                          py: 0.5,
+                          borderLeft: '3px solid transparent',
+                          transition: `all ${timing.fast}ms ${easing.smooth}`,
+                          ...focusRing,
                           '&:hover': {
-                            backgroundColor: alpha(category.color, 0.08),
+                            backgroundColor: alpha(category.color, 0.1),
+                            borderLeftColor: category.color,
+                            '& .drag-icon': { color: category.color },
+                            '& .node-dot': { transform: 'scale(1.2)' },
+                          },
+                          '&:active': {
+                            backgroundColor: alpha(category.color, 0.15),
                           },
                         }}
                       >
-                        <DragIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.disabled' }} />
+                        <DragIcon className="drag-icon" sx={{ fontSize: 14, mr: 0.5, color: 'text.disabled', transition: `color ${timing.fast}ms` }} />
                         <Box
+                          className="node-dot"
                           sx={{
-                            width: 8,
-                            height: 8,
+                            width: 6,
+                            height: 6,
                             borderRadius: '50%',
                             backgroundColor: category.color,
-                            mr: 1.5,
+                            mr: 1,
+                            transition: `transform ${timing.fast}ms ${easing.smooth}`,
                           }}
                         />
                         <ListItemText
                           primary={node.label}
                           secondary={node.description}
-                          primaryTypographyProps={{
-                            fontSize: '0.8125rem',
-                            fontWeight: 500,
-                          }}
+                          primaryTypographyProps={{ fontSize: '0.75rem', fontWeight: 500 }}
                           secondaryTypographyProps={{
-                            fontSize: '0.7rem',
+                            fontSize: '0.65rem',
                             noWrap: true,
+                            sx: { color: darkNeutrals.textTertiary },
                           }}
                         />
                         {node.aiModel && (
                           <Chip
                             label="AI"
                             size="small"
-                            sx={{ height: 18, fontSize: '0.65rem', ml: 0.5 }}
+                            sx={{
+                              height: 16,
+                              fontSize: '0.6rem',
+                              ml: 0.5,
+                              bgcolor: alpha(brandColors.tealPulse, 0.15),
+                              color: brandColors.tealPulse,
+                              fontWeight: 600,
+                            }}
                           />
                         )}
                       </ListItemButton>
@@ -567,6 +672,187 @@ export function NodePalette({ boardCategory, onClose, width = 300 }: NodePalette
       </List>
     </Box>
   );
+
+  // Render grouped view - groups > categories > nodes
+  const renderGroupedNodesView = () => (
+    <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <List disablePadding>
+        {nodeCategoryGroups.map(group => {
+          // Skip groups with no matching nodes during search
+          if (searchQuery && !groupHasNodes(group)) return null;
+
+          const groupNodeCount = getGroupNodeCount(group);
+          const isGroupExpanded = expandedGroups.includes(group.id) || !!searchQuery;
+
+          return (
+            <Box key={group.id}>
+              {/* Group Header - Level 1 */}
+              <ListItemButton
+                onClick={() => toggleGroup(group.id)}
+                sx={{
+                  bgcolor: alpha(group.color, 0.08),
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  '&:hover': {
+                    backgroundColor: alpha(group.color, 0.15),
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 36, color: group.color }}>
+                  {groupIcons[group.id]}
+                </ListItemIcon>
+                <ListItemText
+                  primary={group.label}
+                  secondary={group.description}
+                  primaryTypographyProps={{ fontWeight: 600, fontSize: '0.875rem' }}
+                  secondaryTypographyProps={{ fontSize: '0.65rem', noWrap: true, color: 'text.secondary' }}
+                />
+                <Badge
+                  badgeContent={groupNodeCount}
+                  color="primary"
+                  sx={{ mr: 1, '& .MuiBadge-badge': { fontSize: '0.65rem', bgcolor: group.color } }}
+                />
+                {isGroupExpanded ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+
+              {/* Categories within Group - Level 2 */}
+              <Collapse in={isGroupExpanded} timeout="auto" unmountOnExit>
+                <List disablePadding>
+                  {group.categories.map(catId => {
+                    const category = nodeCategories.find(c => c.id === catId);
+                    if (!category) return null;
+
+                    const categoryNodes = filteredNodes.filter(node => node.category === catId);
+                    if (searchQuery && categoryNodes.length === 0) return null;
+
+                    const isCategoryExpanded = expandedCategories.includes(catId) || !!searchQuery;
+
+                    return (
+                      <Box key={catId}>
+                        {/* Category Header */}
+                        <ListItemButton
+                          onClick={() => toggleCategory(catId)}
+                          sx={{
+                            pl: 3,
+                            py: 0.5,
+                            borderBottom: '1px solid',
+                            borderColor: alpha('#fff', 0.05),
+                            '&:hover': {
+                              backgroundColor: alpha(category.color, 0.1),
+                            },
+                          }}
+                        >
+                          <ListItemIcon sx={{ minWidth: 28, color: category.color }}>
+                            {categoryIcons[catId]}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={category.label}
+                            primaryTypographyProps={{ fontWeight: 500, fontSize: '0.8125rem' }}
+                          />
+                          <Badge
+                            badgeContent={categoryNodes.length}
+                            color="default"
+                            sx={{ mr: 1, '& .MuiBadge-badge': { fontSize: '0.65rem' } }}
+                          />
+                          {isCategoryExpanded ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+                        </ListItemButton>
+
+                        {/* Nodes within Category - Level 3 */}
+                        <Collapse in={isCategoryExpanded} timeout="auto" unmountOnExit>
+                          <List disablePadding>
+                            {categoryNodes.map((node, index) => (
+                              <ListItem
+                                key={node.type}
+                                disablePadding
+                                draggable
+                                onDragStart={(e) => handleNodeDragStart(e, node)}
+                                sx={{
+                                  cursor: 'grab',
+                                  '&:active': { cursor: 'grabbing' },
+                                  animation: `fadeInUp ${timing.standard}ms ${easing.decelerate}`,
+                                  animationDelay: `${index * 30}ms`,
+                                  animationFillMode: 'backwards',
+                                  '@keyframes fadeInUp': {
+                                    from: { opacity: 0, transform: 'translateY(8px)' },
+                                    to: { opacity: 1, transform: 'translateY(0)' },
+                                  },
+                                }}
+                              >
+                                <ListItemButton
+                                  sx={{
+                                    pl: 5,
+                                    py: 0.5,
+                                    borderLeft: '3px solid transparent',
+                                    transition: `all ${timing.fast}ms ${easing.smooth}`,
+                                    ...focusRing,
+                                    '&:hover': {
+                                      backgroundColor: alpha(category.color, 0.1),
+                                      borderLeftColor: category.color,
+                                      '& .drag-icon': { color: category.color },
+                                      '& .node-dot': { transform: 'scale(1.2)' },
+                                    },
+                                    '&:active': {
+                                      backgroundColor: alpha(category.color, 0.15),
+                                    },
+                                  }}
+                                >
+                                  <DragIcon className="drag-icon" sx={{ fontSize: 14, mr: 0.5, color: 'text.disabled', transition: `color ${timing.fast}ms` }} />
+                                  <Box
+                                    className="node-dot"
+                                    sx={{
+                                      width: 6,
+                                      height: 6,
+                                      borderRadius: '50%',
+                                      backgroundColor: category.color,
+                                      mr: 1,
+                                      transition: `transform ${timing.fast}ms ${easing.smooth}`,
+                                    }}
+                                  />
+                                  <ListItemText
+                                    primary={node.label}
+                                    secondary={node.description}
+                                    primaryTypographyProps={{ fontSize: '0.75rem', fontWeight: 500 }}
+                                    secondaryTypographyProps={{
+                                      fontSize: '0.65rem',
+                                      noWrap: true,
+                                      sx: { color: darkNeutrals.textTertiary },
+                                    }}
+                                  />
+                                  {node.aiModel && (
+                                    <Chip
+                                      label="AI"
+                                      size="small"
+                                      sx={{
+                                        height: 16,
+                                        fontSize: '0.6rem',
+                                        ml: 0.5,
+                                        bgcolor: alpha(brandColors.tealPulse, 0.15),
+                                        color: brandColors.tealPulse,
+                                        fontWeight: 600,
+                                      }}
+                                    />
+                                  )}
+                                </ListItemButton>
+                              </ListItem>
+                            ))}
+                          </List>
+                        </Collapse>
+                      </Box>
+                    );
+                  })}
+                </List>
+              </Collapse>
+            </Box>
+          );
+        })}
+      </List>
+    </Box>
+  );
+
+  // Render nodes tab - switches between flat and grouped views
+  const renderNodesTab = () => {
+    return nodeViewMode === 'flat' ? renderFlatNodesView() : renderGroupedNodesView();
+  };
 
   // Render tools tab
   const renderToolsTab = () => {
@@ -661,11 +947,40 @@ export function NodePalette({ boardCategory, onClose, width = 300 }: NodePalette
           <Typography variant="subtitle1" fontWeight={600}>
             Node Palette
           </Typography>
-          {onClose && (
-            <IconButton size="small" onClick={onClose}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          )}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {/* View Mode Toggle */}
+            <Tooltip title="Flat view (categories only)">
+              <IconButton
+                size="small"
+                onClick={() => setNodeViewMode('flat')}
+                sx={{
+                  bgcolor: nodeViewMode === 'flat' ? alpha('#3b82f6', 0.15) : 'transparent',
+                  color: nodeViewMode === 'flat' ? 'primary.main' : 'text.secondary',
+                  '&:hover': { bgcolor: alpha('#3b82f6', 0.1) },
+                }}
+              >
+                <FlatViewIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Grouped view (groups > categories)">
+              <IconButton
+                size="small"
+                onClick={() => setNodeViewMode('grouped')}
+                sx={{
+                  bgcolor: nodeViewMode === 'grouped' ? alpha('#3b82f6', 0.15) : 'transparent',
+                  color: nodeViewMode === 'grouped' ? 'primary.main' : 'text.secondary',
+                  '&:hover': { bgcolor: alpha('#3b82f6', 0.1) },
+                }}
+              >
+                <GroupViewIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            {onClose && (
+              <IconButton size="small" onClick={onClose} sx={{ ml: 0.5 }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
         </Box>
         <TextField
           size="small"

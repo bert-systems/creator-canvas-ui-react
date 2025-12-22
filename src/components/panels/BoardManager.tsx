@@ -46,6 +46,10 @@ import {
   Photo as StockIcon,
   MenuBook as StoryIcon,
   FolderOpen as EmptyIcon,
+  ColorLens as MoodboardIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  PhotoLibrary as PhotoLibraryIcon,
 } from '@mui/icons-material';
 import type { CanvasBoard, CardCategory } from '../../models/creativeCanvas';
 import { CATEGORY_INFO } from '../../models/creativeCanvas';
@@ -69,6 +73,12 @@ const getCategoryIcon = (category: CardCategory) => {
       return <StockIcon />;
     case 'story':
       return <StoryIcon />;
+    case 'moodboard':
+      return <MoodboardIcon />;
+    case 'social':
+      return <ShareIcon />;
+    default:
+      return <FashionIcon />;
   }
 };
 
@@ -79,6 +89,37 @@ const formatDate = (dateString: string) => {
     day: 'numeric',
     year: 'numeric',
   });
+};
+
+// Helper to extract preview images from board cards
+const getBoardImages = (board: CanvasBoard): string[] => {
+  if (!board.cards || board.cards.length === 0) return [];
+
+  const images: string[] = [];
+
+  for (const card of board.cards) {
+    // Get generated images
+    if (card.generatedImages && card.generatedImages.length > 0) {
+      images.push(...card.generatedImages);
+    }
+    // Get thumbnail if available
+    if (card.thumbnailUrl) {
+      images.push(card.thumbnailUrl);
+    }
+    // Get images from assets
+    if (card.assets && card.assets.length > 0) {
+      const assetImages = card.assets
+        .filter((asset) => asset.type === 'image')
+        .map((asset) => asset.previewUrl || asset.url || asset.fullResolutionUrl)
+        .filter((url): url is string => !!url);
+      images.push(...assetImages);
+    }
+    // Limit to 10 images per board
+    if (images.length >= 10) break;
+  }
+
+  // Deduplicate and limit
+  return [...new Set(images)].slice(0, 10);
 };
 
 const BoardManager: React.FC<BoardManagerProps> = ({
@@ -94,6 +135,7 @@ const BoardManager: React.FC<BoardManagerProps> = ({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'category'>('recent');
   const [menuAnchor, setMenuAnchor] = useState<{ element: HTMLElement; boardId: string } | null>(null);
+  const [carouselIndices, setCarouselIndices] = useState<Record<string, number>>({});
 
   // Filter and sort boards
   const filteredBoards = useMemo(() => {
@@ -137,8 +179,30 @@ const BoardManager: React.FC<BoardManagerProps> = ({
     setMenuAnchor(null);
   };
 
+  const handleCarouselNav = (
+    event: React.MouseEvent,
+    boardId: string,
+    direction: 'prev' | 'next',
+    imageCount: number
+  ) => {
+    event.stopPropagation();
+    setCarouselIndices((prev) => {
+      const current = prev[boardId] || 0;
+      let newIndex: number;
+      if (direction === 'next') {
+        newIndex = (current + 1) % imageCount;
+      } else {
+        newIndex = current === 0 ? imageCount - 1 : current - 1;
+      }
+      return { ...prev, [boardId]: newIndex };
+    });
+  };
+
   const renderBoardCard = (board: CanvasBoard) => {
     const categoryInfo = CATEGORY_INFO[board.category];
+    const boardImages = getBoardImages(board);
+    const currentImageIndex = carouselIndices[board.id] || 0;
+    const hasImages = boardImages.length > 0;
 
     return (
       <Card
@@ -158,15 +222,84 @@ const BoardManager: React.FC<BoardManagerProps> = ({
       >
         <CardMedia
           sx={{
-            height: 140,
+            height: 180,
             bgcolor: categoryInfo.color + '20',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative',
+            overflow: 'hidden',
           }}
         >
-          {board.thumbnail ? (
+          {hasImages ? (
+            <>
+              <img
+                src={boardImages[currentImageIndex]}
+                alt={`${board.name} preview ${currentImageIndex + 1}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  transition: 'opacity 0.3s ease',
+                }}
+              />
+              {/* Navigation arrows - only show if multiple images */}
+              {boardImages.length > 1 && (
+                <>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleCarouselNav(e, board.id, 'prev', boardImages.length)}
+                    sx={{
+                      position: 'absolute',
+                      left: 4,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                      width: 28,
+                      height: 28,
+                    }}
+                  >
+                    <ChevronLeftIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleCarouselNav(e, board.id, 'next', boardImages.length)}
+                    sx={{
+                      position: 'absolute',
+                      right: 4,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                      width: 28,
+                      height: 28,
+                    }}
+                  >
+                    <ChevronRightIcon fontSize="small" />
+                  </IconButton>
+                </>
+              )}
+              {/* Image counter */}
+              <Chip
+                size="small"
+                icon={<PhotoLibraryIcon sx={{ fontSize: 14 }} />}
+                label={`${currentImageIndex + 1}/${boardImages.length}`}
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  bgcolor: 'rgba(0,0,0,0.6)',
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  height: 22,
+                  '& .MuiChip-icon': { color: 'white' },
+                }}
+              />
+            </>
+          ) : board.thumbnail ? (
             <img
               src={board.thumbnail}
               alt={board.name}
@@ -213,13 +346,18 @@ const BoardManager: React.FC<BoardManagerProps> = ({
           )}
         </CardMedia>
 
-        <CardContent sx={{ flex: 1 }}>
+        <CardContent sx={{ flex: 1, pt: 1.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle1" fontWeight={600} noWrap>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant="h6"
+                fontWeight={600}
+                noWrap
+                sx={{ fontSize: '1.1rem', lineHeight: 1.3 }}
+              >
                 {board.name}
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
                 <Chip
                   size="small"
                   label={categoryInfo.name}
@@ -230,8 +368,8 @@ const BoardManager: React.FC<BoardManagerProps> = ({
                     height: 20,
                   }}
                 />
-                <Typography variant="caption" color="text.secondary">
-                  {formatDate(board.updatedAt)}
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  Updated {formatDate(board.updatedAt)}
                 </Typography>
               </Box>
             </Box>
@@ -280,6 +418,8 @@ const BoardManager: React.FC<BoardManagerProps> = ({
 
   const renderBoardListItem = (board: CanvasBoard) => {
     const categoryInfo = CATEGORY_INFO[board.category];
+    const boardImages = getBoardImages(board);
+    const hasImages = boardImages.length > 0;
 
     return (
       <Paper
@@ -299,15 +439,34 @@ const BoardManager: React.FC<BoardManagerProps> = ({
         }}
         onClick={() => onOpenBoard(board.id)}
       >
-        <Avatar sx={{ bgcolor: categoryInfo.color }}>
-          {getCategoryIcon(board.category)}
-        </Avatar>
+        {/* Thumbnail or category icon */}
+        {hasImages ? (
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 1,
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src={boardImages[0]}
+              alt={board.name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </Box>
+        ) : (
+          <Avatar sx={{ bgcolor: categoryInfo.color }}>
+            {getCategoryIcon(board.category)}
+          </Avatar>
+        )}
 
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="subtitle1" fontWeight={600}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle1" fontWeight={600} noWrap>
             {board.name}
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <Chip
               size="small"
               label={categoryInfo.name}
@@ -321,6 +480,12 @@ const BoardManager: React.FC<BoardManagerProps> = ({
             <Typography variant="caption" color="text.secondary">
               {board.cardCount ?? (board.cards?.length || 0)} cards
             </Typography>
+            {hasImages && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+                <PhotoLibraryIcon sx={{ fontSize: 12 }} />
+                {boardImages.length} images
+              </Typography>
+            )}
             <Typography variant="caption" color="text.secondary">
               Updated {formatDate(board.updatedAt)}
             </Typography>

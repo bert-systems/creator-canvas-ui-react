@@ -30,7 +30,8 @@ import {
   Add as AddIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
-import type { Port, PortType } from '@/models/canvas';
+import type { Port } from '@/models/canvas';
+import { PORT_COLORS } from './portColors';
 
 // ===== Constants =====
 
@@ -38,16 +39,6 @@ const NODE_WIDTH = 300;
 const NODE_MIN_HEIGHT = 320;
 const MAX_REFERENCES = 7;
 
-const PORT_COLORS: Record<PortType, string> = {
-  image: '#3b82f6',
-  video: '#8b5cf6',
-  audio: '#ec4899',
-  text: '#f97316',
-  style: '#06b6d4',
-  character: '#a855f7',
-  mesh3d: '#f59e0b',
-  any: '#6b7280',
-};
 
 // Character node accent color (purple)
 const CHARACTER_COLOR = '#a855f7';
