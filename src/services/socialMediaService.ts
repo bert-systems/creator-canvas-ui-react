@@ -5,6 +5,16 @@
  */
 
 import api from './api';
+import {
+  socialPlatformMap,
+  contentToneMap,
+  captionLengthMap,
+  carouselTypeMap,
+  socialContentTypeMap,
+  storyTypeMap,
+  hashtagStrategyMap,
+  mapEnum,
+} from './apiEnumMapper';
 
 // ==================== TYPE DEFINITIONS ====================
 
@@ -287,9 +297,15 @@ export const socialMediaService = {
    * POST /api/social/post/generate
    */
   async generatePost(request: SocialPostRequest): Promise<SocialPostResponse> {
+    const apiRequest = {
+      ...request,
+      platform: mapEnum(request.platform, socialPlatformMap),
+      contentType: mapEnum(request.contentType, socialContentTypeMap),
+      tone: mapEnum(request.tone, contentToneMap),
+    };
     const response = await api.post<SocialPostResponse>(
       `${SOCIAL_API_BASE}/post/generate`,
-      request
+      apiRequest
     );
     return response.data;
   },
@@ -301,9 +317,14 @@ export const socialMediaService = {
    * POST /api/social/carousel/generate
    */
   async generateCarousel(request: CarouselRequest): Promise<CarouselResponse> {
+    const apiRequest = {
+      ...request,
+      platform: mapEnum(request.platform, socialPlatformMap),
+      carouselType: mapEnum(request.carouselType, carouselTypeMap),
+    };
     const response = await api.post<CarouselResponse>(
       `${SOCIAL_API_BASE}/carousel/generate`,
-      request
+      apiRequest
     );
     return response.data;
   },
@@ -315,9 +336,16 @@ export const socialMediaService = {
    * POST /api/social/caption/generate
    */
   async generateCaption(request: CaptionRequest): Promise<CaptionResponse> {
+    const apiRequest = {
+      ...request,
+      platform: mapEnum(request.platform, socialPlatformMap),
+      tone: mapEnum(request.tone, contentToneMap),
+      length: mapEnum(request.length, captionLengthMap),
+      hashtagStrategy: request.hashtagStrategy ? mapEnum(request.hashtagStrategy, hashtagStrategyMap) : undefined,
+    };
     const response = await api.post<CaptionResponse>(
       `${SOCIAL_API_BASE}/caption/generate`,
-      request
+      apiRequest
     );
     return response.data;
   },
@@ -329,9 +357,14 @@ export const socialMediaService = {
    * POST /api/social/story/create
    */
   async createStory(request: StoryCreateRequest): Promise<StoryCreateResponse> {
+    const apiRequest = {
+      ...request,
+      platform: mapEnum(request.platform, socialPlatformMap),
+      storyType: mapEnum(request.storyType, storyTypeMap),
+    };
     const response = await api.post<StoryCreateResponse>(
       `${SOCIAL_API_BASE}/story/create`,
-      request
+      apiRequest
     );
     return response.data;
   },
@@ -343,9 +376,13 @@ export const socialMediaService = {
    * POST /api/social/template/customize
    */
   async customizeTemplate(request: TemplateCustomizeRequest): Promise<TemplateCustomizeResponse> {
+    const apiRequest = {
+      ...request,
+      platform: mapEnum(request.platform, socialPlatformMap),
+    };
     const response = await api.post<TemplateCustomizeResponse>(
       `${SOCIAL_API_BASE}/template/customize`,
-      request
+      apiRequest
     );
     return response.data;
   },

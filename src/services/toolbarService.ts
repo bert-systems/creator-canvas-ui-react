@@ -87,9 +87,16 @@ export async function getToolbarByCategory(category: BoardCategory | string): Pr
     }
     throw new Error(response.data.error || 'Failed to fetch toolbar');
   } catch (error) {
-    console.error(`[toolbarService] Failed to fetch toolbar for ${category}:`, error);
-    // Return default toolbar on error
-    return getDefaultToolbar(category as BoardCategory);
+    const fallbackToolbar = getDefaultToolbar(category as BoardCategory);
+    console.warn(
+      `[toolbarService] FALLBACK ACTIVATED for category "${category}"\n` +
+      `  Reason: API request failed\n` +
+      `  Error: ${error instanceof Error ? error.message : 'Unknown error'}\n` +
+      `  Fallback: Using client-side DEFAULT_${category.toUpperCase()}_TOOLBAR with ${fallbackToolbar.actions.length} actions\n` +
+      `  Actions: ${fallbackToolbar.actions.map(a => a.label).join(', ')}\n` +
+      `  Note: Request API team to implement GET /api/creative-canvas/toolbars/${category}`
+    );
+    return fallbackToolbar;
   }
 }
 
@@ -174,6 +181,34 @@ const DEFAULT_STOCK_TOOLBAR: CategoryToolbar = {
   ],
 };
 
+const DEFAULT_MOODBOARD_TOOLBAR: CategoryToolbar = {
+  category: 'moodboard',
+  actions: [
+    { id: 'moodboard', icon: '🎨', label: 'Moodboard', nodeType: 'moodboardGenerator' as any, tooltip: 'Generate Moodboard' },
+    { id: 'colorPalette', icon: '🌈', label: 'Colors', nodeType: 'colorPaletteExtractor' as any, tooltip: 'Extract Color Palette' },
+    { id: 'brandKit', icon: '🏷️', label: 'Brand Kit', nodeType: 'brandKitGenerator' as any, tooltip: 'Generate Brand Kit' },
+    { id: 'aesthetic', icon: '✨', label: 'Aesthetic', nodeType: 'aestheticAnalyzer' as any, tooltip: 'Analyze Aesthetic' },
+    { id: 'texture', icon: '🧱', label: 'Texture', nodeType: 'textureGenerator' as any, tooltip: 'Generate Texture' },
+    { id: 'typography', icon: '🔤', label: 'Typography', nodeType: 'typographySuggester' as any, tooltip: 'Suggest Typography' },
+    { id: 'layout', icon: '📐', label: 'Layout', nodeType: 'moodboardLayout' as any, tooltip: 'Arrange Layout' },
+    { id: 'theme', icon: '🎭', label: 'Theme', nodeType: 'visualThemeGenerator' as any, tooltip: 'Generate Visual Theme' },
+  ],
+};
+
+const DEFAULT_SOCIAL_TOOLBAR: CategoryToolbar = {
+  category: 'social',
+  actions: [
+    { id: 'post', icon: '📱', label: 'Post', nodeType: 'socialPostGenerator' as any, tooltip: 'Generate Social Post' },
+    { id: 'carousel', icon: '🎠', label: 'Carousel', nodeType: 'carouselGenerator' as any, tooltip: 'Create Carousel' },
+    { id: 'caption', icon: '✍️', label: 'Caption', nodeType: 'captionGenerator' as any, tooltip: 'Generate Caption' },
+    { id: 'reel', icon: '🎬', label: 'Reel', nodeType: 'reelGenerator' as any, tooltip: 'Generate Reel/Short' },
+    { id: 'story', icon: '📖', label: 'Story', nodeType: 'storyCreator' as any, tooltip: 'Create Story' },
+    { id: 'thumbnail', icon: '🖼️', label: 'Thumbnail', nodeType: 'thumbnailGenerator' as any, tooltip: 'Generate Thumbnail' },
+    { id: 'hook', icon: '🪝', label: 'Hook', nodeType: 'hookGenerator' as any, tooltip: 'Generate Viral Hook' },
+    { id: 'hashtags', icon: '#️⃣', label: 'Hashtags', nodeType: 'hashtagOptimizer' as any, tooltip: 'Optimize Hashtags' },
+  ],
+};
+
 /**
  * Get default toolbar for a category (fallback)
  */
@@ -185,6 +220,10 @@ export function getDefaultToolbar(category: BoardCategory): CategoryToolbar {
       return DEFAULT_STORY_TOOLBAR;
     case 'interior':
       return DEFAULT_INTERIOR_TOOLBAR;
+    case 'moodboard':
+      return DEFAULT_MOODBOARD_TOOLBAR;
+    case 'social':
+      return DEFAULT_SOCIAL_TOOLBAR;
     case 'stock':
     default:
       return DEFAULT_STOCK_TOOLBAR;

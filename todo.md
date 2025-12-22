@@ -1,6 +1,81 @@
 # TODO - Creative Canvas Studio
 
-**Last Updated:** December 20, 2025
+**Last Updated:** December 21, 2025
+
+---
+
+## Social Media & Moodboard Enhancements - Dec 21, 2025 ✅ COMPLETED
+
+### Summary
+Implemented complete Social Media and Moodboard board categories with:
+- 10 new node definitions (6 social, 4 moodboard)
+- Fixed category assignments for existing nodes
+- Added client-side toolbar fallbacks for API 500 errors
+- Created comprehensive API requirements document
+
+### Changes Made
+
+#### Category Fixes
+- `captionGenerator`: `contentCreation` → `socialMedia`
+- `templateCustomizer`: `contentCreation` → `socialMedia`
+
+#### New Social Media Nodes
+| Node | Description | AI Model |
+|------|-------------|----------|
+| `thumbnailGenerator` | Video thumbnail creator | FLUX.2 Pro |
+| `hookGenerator` | Viral hook writer | Gemini 2.5 Flash |
+| `hashtagOptimizer` | Smart hashtag strategy | Gemini 2.5 Flash |
+| `contentRepurposer` | Cross-platform adapter | Gemini 2.5 Flash |
+| `reelGenerator` | AI Reel/Short maker | Kling 2.6 Pro |
+| `trendSpotter` | AI trend analyzer | Gemini 2.5 Flash |
+
+#### New Moodboard Nodes
+| Node | Description | AI Model |
+|------|-------------|----------|
+| `moodboardLayout` | Layout arranger | FLUX.2 Pro |
+| `moodboardExport` | Export & share | None |
+| `visualThemeGenerator` | Visual theme creator | FLUX.2 Pro |
+| `inspirationCurator` | AI inspiration finder | Gemini 2.5 Flash |
+
+#### Toolbar Updates
+- Added `DEFAULT_MOODBOARD_TOOLBAR` (8 actions)
+- Added `DEFAULT_SOCIAL_TOOLBAR` (8 actions)
+- Updated `ContextToolbar` with expanded quick actions
+- Toolbars now gracefully fallback when API returns 500
+
+#### Files Modified
+- `src/config/nodeDefinitions.ts` - Added 10 node definitions, fixed 2 categories
+- `src/services/toolbarService.ts` - Added moodboard/social toolbar fallbacks
+- `src/components/toolbars/ContextToolbar.tsx` - Expanded quick actions
+
+#### API Requirements Created
+- `docs/SOCIAL_MOODBOARD_API_REQUIREMENTS.md` - 10 new endpoints specified
+
+### API Team Action Required
+The toolbar API returns 500 for new categories. Needed:
+```
+GET /api/creative-canvas/toolbars/moodboard
+GET /api/creative-canvas/toolbars/social
+```
+
+See `docs/SOCIAL_MOODBOARD_API_REQUIREMENTS.md` for full endpoint specifications.
+
+### API Team Update (Dec 21, 2025) ✅
+
+Backend team implemented node execution support:
+
+**Node Type → Template ID Mappings Added:**
+- Social: `thumbnailGenerator` → `social-thumbnail`, `hookGenerator` → `social-hook`, etc.
+- Moodboard: `moodboardLayout` → `moodboard-layout`, `visualThemeGenerator` → `moodboard-theme`, etc.
+
+**⚠️ Breaking Change:** Nodes without `AgentBinding` now FAIL with error instead of passthrough.
+- Existing nodes need to be recreated or have `agent_binding` column updated in database
+- Error message: "Node 'X' (category: Y) has no agent binding. This node cannot execute..."
+
+**Debug Logging Added:** Template resolution now logs detailed info for troubleshooting.
+
+### Build Status
+✅ Build successful (48.15s)
 
 ---
 

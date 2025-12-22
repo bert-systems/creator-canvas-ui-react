@@ -5,6 +5,15 @@
  */
 
 import api from './api';
+import {
+  moodboardStyleMap,
+  moodToneMap,
+  industryTypeMap,
+  brandPersonalityMap,
+  textureTypeMap,
+  paletteTypeMap,
+  mapEnum,
+} from './apiEnumMapper';
 
 // ==================== TYPE DEFINITIONS ====================
 
@@ -278,9 +287,14 @@ export const moodboardService = {
    * POST /api/moodboard/generate
    */
   async generateMoodboard(request: MoodboardRequest): Promise<MoodboardResponse> {
+    const apiRequest = {
+      ...request,
+      moodboardStyle: mapEnum(request.moodboardStyle, moodboardStyleMap),
+      mood: mapEnum(request.mood, moodToneMap),
+    };
     const response = await api.post<MoodboardResponse>(
       `${MOODBOARD_API_BASE}/generate`,
-      request
+      apiRequest
     );
     return response.data;
   },
@@ -292,9 +306,13 @@ export const moodboardService = {
    * POST /api/moodboard/colors/extract
    */
   async extractColorPalette(request: ColorPaletteExtractRequest): Promise<ColorPaletteResponse> {
+    const apiRequest = {
+      ...request,
+      paletteType: mapEnum(request.paletteType, paletteTypeMap),
+    };
     const response = await api.post<ColorPaletteResponse>(
       `${MOODBOARD_API_BASE}/colors/extract`,
-      request
+      apiRequest
     );
     return response.data;
   },
@@ -306,9 +324,14 @@ export const moodboardService = {
    * POST /api/moodboard/brand-kit/generate
    */
   async generateBrandKit(request: BrandKitRequest): Promise<BrandKitResponse> {
+    const apiRequest = {
+      ...request,
+      industry: mapEnum(request.industry, industryTypeMap),
+      brandPersonality: mapEnum(request.brandPersonality, brandPersonalityMap),
+    };
     const response = await api.post<BrandKitResponse>(
       `${MOODBOARD_API_BASE}/brand-kit/generate`,
-      request
+      apiRequest
     );
     return response.data;
   },
@@ -348,9 +371,13 @@ export const moodboardService = {
    * POST /api/moodboard/texture/generate
    */
   async generateTexture(request: TextureGenerateRequest): Promise<TextureGenerateResponse> {
+    const apiRequest = {
+      ...request,
+      textureType: mapEnum(request.textureType, textureTypeMap),
+    };
     const response = await api.post<TextureGenerateResponse>(
       `${MOODBOARD_API_BASE}/texture/generate`,
-      request
+      apiRequest
     );
     return response.data;
   },

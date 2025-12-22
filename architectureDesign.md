@@ -395,7 +395,24 @@ interface CardWorkflow {
 
 ### Node Definition System
 
-Node types are defined in `src/config/nodeDefinitions.ts`:
+**Refactored December 2025:** Node definitions have been split into category-specific files for maintainability.
+
+**Main entry point:** `src/config/nodeDefinitions.ts` - Aggregates all category files
+
+**Category-specific files** (`src/config/nodes/`):
+| File | Categories | Node Count |
+|------|------------|------------|
+| `inputNodes.ts` | Input | 5 nodes |
+| `imageGenNodes.ts` | Image Generation | 8 nodes |
+| `videoGenNodes.ts` | Video, 3D, Character | 9 nodes |
+| `styleNodes.ts` | Style, Composite | 8 nodes |
+| `outputNodes.ts` | Output, Multi-Frame, Enhancement | 18 nodes |
+| `storytellingNodes.ts` | Narrative, World Building, Dialogue, Branching | 26 nodes |
+| `interiorDesignNodes.ts` | Interior Design, Space Planning | 6 nodes |
+| `moodboardNodes.ts` | Moodboard, Brand Identity | 11 nodes |
+| `socialMediaNodes.ts` | Social Media | 13 nodes |
+
+**Node Categories:**
 - **Input nodes** - Text, image, video, audio uploads
 - **Image Gen nodes** - FLUX.2 Pro/Dev, Nano Banana Pro, FLUX Kontext
 - **Video Gen nodes** - Kling 2.6, VEO 3.1, Kling Avatar
@@ -403,8 +420,12 @@ Node types are defined in `src/config/nodeDefinitions.ts`:
 - **Character nodes** - Character Lock, Face Memory, Element Library
 - **Style nodes** - Style DNA, Style Transfer, LoRA Training
 - **Composite nodes** - Virtual Try-On, Runway Animation, Storyboard
-- **Multi-Frame nodes** - Stacks, Queues, Grids for variations (NEW in v3.0)
-- **Enhancement nodes** - Image Upscaler, Prompt Enhancer (NEW in v3.0)
+- **Multi-Frame nodes** - Stacks, Queues, Grids for variations
+- **Enhancement nodes** - Image Upscaler, Prompt Enhancer
+- **Storytelling nodes** - Story Genesis, Character Creator, Scene Generator, etc.
+- **Interior Design nodes** - Room Redesign, Virtual Staging, Floor Plans
+- **Moodboard nodes** - Moodboard Generator, Color Extractor, Brand Kit
+- **Social Media nodes** - Post Generator, Carousel, Reels, Hashtag Optimizer
 - **Output nodes** - Preview, Export
 
 ### Multi-Frame Node System (NEW in v3.0)
@@ -773,6 +794,14 @@ const executeClothesSwap = async (params) => {
 |----------|--------|-------------|----------------|--------|
 | `/api/fashion/clothes-swap` | POST | Swap garments between images | Dec 19, 2025 | ✅ Implemented |
 | `/api/fashion/runway-animation` | POST | Generate fashion runway videos | Dec 19, 2025 | ✅ Implemented |
+| `/api/export/manuscript` | POST | Export story to PDF/RTF/DOCX formats (Story Synthesizer) | Dec 21, 2025 | ⏳ Pending |
+| `/api/export/screenplay` | POST | Export story to Fountain/FDX screenplay format | Dec 21, 2025 | ⏳ Pending |
+| `/api/stories` | GET | List user's saved stories (Story Asset Library) | Dec 21, 2025 | ✅ Implemented |
+| `/api/stories` | POST | Save a story to library | Dec 21, 2025 | ✅ Implemented |
+| `/api/stories/{id}` | GET | Get a specific saved story | Dec 21, 2025 | ✅ Implemented |
+| `/api/stories/{id}` | PUT | Update a saved story | Dec 21, 2025 | ✅ Implemented |
+| `/api/stories/{id}` | DELETE | Delete a saved story | Dec 21, 2025 | ✅ Implemented |
+| `/api/stories/{id}/share` | POST | Share story with collaborators | Dec 21, 2025 | ✅ Implemented |
 
 **How to Add New Requirements:**
 1. Add the endpoint to this table with ⏳ Pending status
@@ -780,6 +809,32 @@ const executeClothesSwap = async (params) => {
 3. Notify the API team via proper channels
 4. DO NOT implement workarounds - wait for proper implementation
 5. Update status to ✅ Implemented when the API team completes the endpoint
+
+### 3. Node Type → Template ID Mappings (Backend)
+
+> **Updated:** December 21, 2025
+
+The backend resolves frontend `nodeType` values to internal `templateId` values for agent binding. Frontend sends `nodeType`, backend handles resolution.
+
+**Social Media Nodes:**
+| Frontend nodeType | Backend templateId |
+|-------------------|-------------------|
+| `thumbnailGenerator`, `socialThumbnail` | `social-thumbnail` |
+| `hookGenerator`, `socialHook` | `social-hook` |
+| `hashtagOptimizer`, `socialHashtag` | `social-hashtag` |
+| `contentRepurposer`, `socialRepurpose` | `social-repurpose` |
+| `reelGenerator`, `socialReel` | `social-reel` |
+| `trendSpotter`, `socialTrends` | `social-trends` |
+
+**Moodboard Nodes:**
+| Frontend nodeType | Backend templateId |
+|-------------------|-------------------|
+| `moodboardLayout`, `layoutArranger` | `moodboard-layout` |
+| `moodboardExport`, `exportMoodboard` | `moodboard-export` |
+| `themeGenerator`, `moodboardTheme`, `visualTheme` | `moodboard-theme` |
+| `inspirationCurator`, `moodboardInspiration` | `moodboard-inspiration` |
+
+**⚠️ Breaking Change (Dec 21, 2025):** Nodes without `AgentBinding` now **FAIL** with descriptive error instead of silent passthrough. Existing nodes may need to be recreated.
 
 ---
 
@@ -792,11 +847,13 @@ const executeClothesSwap = async (params) => {
 - Performance optimized for large graphs
 
 ### 2. Board Categories
-Four distinct creative domains, each with specialized templates:
+Six distinct creative domains, each with specialized templates:
 - **Fashion** - Garments, textiles, collections
 - **Interior** - Rooms, mood boards, layouts
 - **Stock** - Commercial photos, illustrations
 - **Story** - Scenes, characters, narratives
+- **Moodboard** - Visual inspiration, brand identity, color palettes (NEW Dec 2025)
+- **Social** - Social media posts, carousels, reels, content (NEW Dec 2025)
 
 ### 3. Unified Node System (v3.1 - December 2025)
 

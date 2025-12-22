@@ -166,6 +166,10 @@ export const boardService = {
         description: request.description,
         isPublic: request.isPublic,
         settings: request.settings,
+        viewportState: request.viewportState,
+        thumbnail: request.thumbnail,
+        sharedWith: request.sharedWith,
+        tags: request.tags,
       },
       getAuthHeaders()
     );

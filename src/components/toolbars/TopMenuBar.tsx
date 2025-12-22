@@ -7,7 +7,7 @@
  * @version 4.0
  */
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useEffect } from 'react';
 import {
   Box,
   AppBar,
@@ -18,6 +18,7 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
+  InputBase,
   ListItemText,
   Divider,
   Tooltip,
@@ -40,6 +41,7 @@ import {
   Help as HelpIcon,
   PlayArrow as ExecuteIcon,
   Stop as StopIcon,
+  AccountTree as AutoLayoutIcon,
 } from '@mui/icons-material';
 import type { BoardCategory } from '@/models/canvas';
 import { brandColors } from '@/theme';
@@ -51,6 +53,7 @@ import { brandColors } from '@/theme';
 interface TopMenuBarProps {
   boardName?: string;
   boardCategory?: BoardCategory | null;
+  onBoardNameChange?: (newName: string) => void;
   onSave?: () => void;
   onSaveAs?: () => void;
   onOpen?: () => void;
@@ -63,6 +66,9 @@ interface TopMenuBarProps {
   onFitView?: () => void;
   onToggleGrid?: () => void;
   onToggleMinimap?: () => void;
+  onAutoLayout?: () => void;
+  hasSelection?: boolean;
+  selectionCount?: number;
   onSettings?: () => void;
   onExecuteAll?: () => void;
   onStopAll?: () => void;
@@ -81,6 +87,7 @@ interface TopMenuBarProps {
 export const TopMenuBar = memo<TopMenuBarProps>(({
   boardName = 'Untitled Board',
   boardCategory,
+  onBoardNameChange,
   onSave,
   onSaveAs,
   onOpen,
@@ -93,6 +100,9 @@ export const TopMenuBar = memo<TopMenuBarProps>(({
   onFitView,
   onToggleGrid,
   onToggleMinimap,
+  onAutoLayout,
+  hasSelection = false,
+  selectionCount = 0,
   onSettings,
   onExecuteAll,
   onStopAll,
@@ -105,6 +115,39 @@ export const TopMenuBar = memo<TopMenuBarProps>(({
 }) => {
   const [fileMenuAnchor, setFileMenuAnchor] = useState<null | HTMLElement>(null);
   const [viewMenuAnchor, setViewMenuAnchor] = useState<null | HTMLElement>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(boardName);
+
+  // Sync editedName when boardName prop changes
+  useEffect(() => {
+    setEditedName(boardName);
+  }, [boardName]);
+
+  const handleStartEditingName = useCallback(() => {
+    setEditedName(boardName);
+    setIsEditingName(true);
+  }, [boardName]);
+
+  const handleSaveName = useCallback(() => {
+    const trimmedName = editedName.trim();
+    if (trimmedName && trimmedName !== boardName) {
+      onBoardNameChange?.(trimmedName);
+    }
+    setIsEditingName(false);
+  }, [editedName, boardName, onBoardNameChange]);
+
+  const handleCancelEditName = useCallback(() => {
+    setEditedName(boardName);
+    setIsEditingName(false);
+  }, [boardName]);
+
+  const handleNameKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveName();
+    } else if (e.key === 'Escape') {
+      handleCancelEditName();
+    }
+  }, [handleSaveName, handleCancelEditName]);
 
   const handleFileMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
     setFileMenuAnchor(event.currentTarget);
@@ -248,6 +291,16 @@ export const TopMenuBar = memo<TopMenuBarProps>(({
             <ListItemIcon><LayersIcon fontSize="small" /></ListItemIcon>
             <ListItemText>{showMinimap ? 'Hide' : 'Show'} Minimap</ListItemText>
           </MenuItem>
+          <Divider />
+          <MenuItem onClick={() => handleAction(onAutoLayout)}>
+            <ListItemIcon><AutoLayoutIcon fontSize="small" /></ListItemIcon>
+            <ListItemText>
+              Auto-Layout{hasSelection && selectionCount > 0 ? ` (${selectionCount} selected)` : ''}
+            </ListItemText>
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+              {navigator.platform?.includes('Mac') ? '⌘L' : 'Ctrl+L'}
+            </Typography>
+          </MenuItem>
         </Menu>
 
         <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
@@ -270,11 +323,54 @@ export const TopMenuBar = memo<TopMenuBarProps>(({
           </Tooltip>
         </Box>
 
-        {/* Board Title */}
+        {/* Board Title - Inline Editable */}
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-          <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-            {boardName}
-          </Typography>
+          {isEditingName ? (
+            <InputBase
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={handleNameKeyDown}
+              autoFocus
+              sx={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'text.primary',
+                bgcolor: 'action.hover',
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'primary.main',
+                minWidth: 150,
+                maxWidth: 300,
+                textAlign: 'center',
+                '& input': {
+                  textAlign: 'center',
+                },
+              }}
+            />
+          ) : (
+            <Tooltip title="Click to rename board">
+              <Typography
+                variant="subtitle2"
+                fontWeight={600}
+                color="text.primary"
+                onClick={handleStartEditingName}
+                sx={{
+                  cursor: 'pointer',
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                }}
+              >
+                {boardName}
+              </Typography>
+            </Tooltip>
+          )}
           {boardCategory && (
             <Chip
               label={boardCategory}

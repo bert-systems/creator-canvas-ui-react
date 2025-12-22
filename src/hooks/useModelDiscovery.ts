@@ -128,6 +128,20 @@ export function getValidImageModelIds(): string[] {
 // Hook
 // ============================================================================
 
+// Default fallback LLM models (also used in fetchModels when API returns empty)
+const DEFAULT_LLM_MODELS: DiscoveredModel[] = [
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast & efficient (Default)', tier: 'fast' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Advanced reasoning', tier: 'production' },
+  { id: 'claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Best balance of intelligence and speed', tier: 'production' },
+  { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI multimodal flagship', tier: 'flagship' },
+];
+
+// Default fallback 3D models
+const DEFAULT_3D_MODELS: DiscoveredModel[] = [
+  { id: 'meshy', name: 'Meshy 6', description: 'High-detail 3D models', tier: 'production' },
+  { id: 'tripo', name: 'Tripo v2.5', description: 'Fast game-ready 3D', tier: 'fast' },
+];
+
 export function useModelDiscovery() {
   const [state, setState] = useState<ModelDiscoveryState>(() => {
     // Return cached state if valid
@@ -141,8 +155,8 @@ export function useModelDiscovery() {
     return {
       imageModels: localImageModels,
       videoModels: [],
-      llmModels: [],
-      threeDModels: [],
+      llmModels: DEFAULT_LLM_MODELS, // Include defaults to prevent MUI Select warnings
+      threeDModels: DEFAULT_3D_MODELS,
       isLoading: true,
       error: null,
       lastFetched: null,
@@ -250,19 +264,11 @@ export function useModelDiscovery() {
 
       // Fallback LLM models if API doesn't return any
       if (llmModels.length === 0) {
-        llmModels.push(
-          { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast & efficient (Default)', tier: 'fast' },
-          { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Advanced reasoning', tier: 'production' },
-          { id: 'claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Best balance of intelligence and speed', tier: 'production' },
-          { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI multimodal flagship', tier: 'flagship' },
-        );
+        llmModels.push(...DEFAULT_LLM_MODELS);
       }
 
       // 3D models (static for now - can be fetched from API when available)
-      const threeDModels: DiscoveredModel[] = [
-        { id: 'meshy', name: 'Meshy 6', description: 'High-detail 3D models', tier: 'production' },
-        { id: 'tripo', name: 'Tripo v2.5', description: 'Fast game-ready 3D', tier: 'fast' },
-      ];
+      const threeDModels: DiscoveredModel[] = [...DEFAULT_3D_MODELS];
 
       const newState: ModelDiscoveryState = {
         imageModels,

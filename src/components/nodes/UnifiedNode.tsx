@@ -18,6 +18,8 @@
 import { memo, useMemo, useCallback, useState, useContext } from 'react';
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react';
 import { CanvasActionsContext } from '../canvas/CreativeCanvasStudio';
+import { useCanvasStore } from '../../stores/canvasStore';
+import { storyLibraryService } from '../../services/storyLibraryService';
 import {
   Box,
   Typography,
@@ -113,6 +115,17 @@ const errorShakeAnimation = keyframes`
   20%, 40%, 60%, 80% { transform: translateX(2px); }
 `;
 
+const collisionPulseAnimation = keyframes`
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(242, 73, 42, 0.4);
+    border-color: #F2492A;
+  }
+  50% {
+    box-shadow: 0 0 12px 4px rgba(242, 73, 42, 0.6);
+    border-color: #FF6B4A;
+  }
+`;
+
 // ============================================================================
 // PROPS
 // ============================================================================
@@ -199,10 +212,21 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
   const [portMenuContext, setPortMenuContext] = useState<{
     portId: string;
     portType: string;
+    direction: 'input' | 'output';
   } | null>(null);
 
   // Get canvas actions from context
-  const { onCreateConnectedInputNode, getCompatibleInputNodes } = useContext(CanvasActionsContext);
+  const {
+    onExecute: contextExecute,
+    onCreateConnectedInputNode,
+    getCompatibleInputNodes,
+    onCreateConnectedOutputNode,
+    getCompatibleOutputNodes,
+    onAutoGenerateWorkflow
+  } = useContext(CanvasActionsContext);
+
+  // Get story library actions from store
+  const saveStory = useCanvasStore((state) => state.saveStory);
 
   // Get node definition for fallback values
   const definition = useMemo(() => getNodeDefinition(data.nodeType), [data.nodeType]);
@@ -265,9 +289,12 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
     setMenuAnchor(null);
   };
 
+  // Use context execute if prop not provided
+  const executeNode = onExecute || contextExecute;
+
   const handleExecute = () => {
     handleMenuClose();
-    onExecute?.(id);
+    executeNode?.(id);
   };
 
   const handleDelete = () => {
@@ -292,21 +319,38 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
 
   // Node container styles based on status
   const containerSx = useMemo(() => {
+    // Extract collision state from data (injected by CreativeCanvasStudio)
+    const isColliding = (data as Record<string, unknown>).isColliding as boolean;
+    const isDragging = (data as Record<string, unknown>).isDragging as boolean;
+
     const base = {
+      width: '100%',
+      height: '100%',
       minWidth: dimensions.defaultWidth,
       minHeight: dimensions.minHeight,
-      maxHeight: displayMode === 'expanded' ? dimensions.maxHeight : 'auto',
       bgcolor: 'background.paper',
       borderRadius: 2,
       border: '2px solid',
       borderColor: selected ? 'primary.main' : 'divider',
       overflow: 'hidden',
-      transition: 'all 0.2s ease',
+      transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+      display: 'flex',
+      flexDirection: 'column',
       '&:hover': {
         borderColor: selected ? 'primary.main' : 'primary.light',
         boxShadow: 2,
       },
     };
+
+    // Collision state takes priority - show red pulsing border
+    if (isColliding) {
+      return {
+        ...base,
+        borderColor: '#F2492A',
+        boxShadow: '0 0 8px 2px rgba(242, 73, 42, 0.5)',
+        animation: isDragging ? `${collisionPulseAnimation} 0.5s infinite` : 'none',
+      };
+    }
 
     // Status-specific animations
     if (data.status === 'running') {
@@ -330,7 +374,7 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
     }
 
     return base;
-  }, [dimensions, displayMode, selected, data.status]);
+  }, [dimensions, displayMode, selected, data.status, data]);
 
   return (
     <>
@@ -451,7 +495,7 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
                     e.preventDefault();
                     e.stopPropagation();
                     setPortMenuAnchor(e.currentTarget as HTMLElement);
-                    setPortMenuContext({ portId: port.id, portType: port.type });
+                    setPortMenuContext({ portId: port.id, portType: port.type, direction: 'input' });
                   }}
                 >
                   <Handle
@@ -514,13 +558,98 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
               overflow: 'hidden',
             }}
           >
-            {/* Preview slot */}
+            {/* Preview slot - result has priority over cachedOutput for proper format */}
             {displayMode !== 'compact' && slotConfig.preview && (
               <PreviewSlot
                 config={slotConfig.preview}
-                result={data.cachedOutput || data.result}
+                result={data.result}
+                cachedOutput={data.cachedOutput as Record<string, unknown> | undefined}
                 status={data.status || 'idle'}
                 progress={data.progress}
+                nodeType={data.nodeType}
+                onAutoGenerateWorkflow={
+                  // Only show for Story Genesis nodes with completed story data
+                  data.nodeType === 'storyGenesis' &&
+                  data.status === 'completed' &&
+                  (data.cachedOutput as Record<string, unknown> | undefined)?.story
+                    ? () => onAutoGenerateWorkflow?.(id)
+                    : undefined
+                }
+                onSaveToLibrary={
+                  // Only show for Story Genesis nodes with completed story data
+                  data.nodeType === 'storyGenesis' &&
+                  data.status === 'completed' &&
+                  (data.cachedOutput as Record<string, unknown> | undefined)?.story
+                    ? async () => {
+                        const cached = data.cachedOutput as Record<string, unknown> | undefined;
+                        if (cached?.story) {
+                          const story = cached.story as Record<string, unknown>;
+                          const characters = cached.characters as Array<Record<string, unknown>> | undefined;
+                          const outline = cached.outline as Record<string, unknown> | undefined;
+
+                          try {
+                            // Save to API
+                            const savedStory = await storyLibraryService.saveFromNodeOutput(
+                              story,
+                              characters,
+                              outline
+                            );
+                            console.log('[UnifiedNode] Story saved to API:', savedStory.id, savedStory.title);
+
+                            // Also save to local store for quick access
+                            saveStory({
+                              title: story.title as string,
+                              tagline: story.tagline as string,
+                              logline: story.logline as string,
+                              genre: story.genre as string,
+                              tone: story.tone as string,
+                              themes: story.themes as string[],
+                              premise: story.premise as string,
+                              characters: characters?.map(c => ({
+                                name: c.name as string,
+                                role: c.role as string,
+                                archetype: c.archetype as string,
+                                briefDescription: c.briefDescription as string,
+                              })),
+                              outline: outline ? {
+                                acts: ((outline.acts as Array<Record<string, unknown>>) || []).map(act => ({
+                                  actNumber: act.actNumber as number,
+                                  title: act.title as string,
+                                  summary: act.summary as string,
+                                })),
+                              } : undefined,
+                            });
+                          } catch (err) {
+                            console.error('[UnifiedNode] Failed to save story to API:', err);
+                            // Still save locally as fallback
+                            saveStory({
+                              title: story.title as string,
+                              tagline: story.tagline as string,
+                              logline: story.logline as string,
+                              genre: story.genre as string,
+                              tone: story.tone as string,
+                              themes: story.themes as string[],
+                              premise: story.premise as string,
+                              characters: characters?.map(c => ({
+                                name: c.name as string,
+                                role: c.role as string,
+                                archetype: c.archetype as string,
+                                briefDescription: c.briefDescription as string,
+                              })),
+                              outline: outline ? {
+                                acts: ((outline.acts as Array<Record<string, unknown>>) || []).map(act => ({
+                                  actNumber: act.actNumber as number,
+                                  title: act.title as string,
+                                  summary: act.summary as string,
+                                })),
+                              } : undefined,
+                            });
+                            console.log('[UnifiedNode] Story saved to local storage (offline fallback)');
+                          }
+                        }
+                      }
+                    : undefined
+                }
               />
             )}
 
@@ -567,10 +696,28 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
             {outputs.map((port) => (
               <Tooltip
                 key={port.id}
-                title={`${port.name} (${port.type})`}
+                title={`${port.name} (${port.type}) - Right-click to connect`}
                 placement="right"
               >
-                <Box sx={{ position: 'relative', height: 20, display: 'flex', justifyContent: 'flex-end' }}>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    height: 20,
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    cursor: 'context-menu',
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                      borderRadius: 0.5,
+                    },
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPortMenuAnchor(e.currentTarget as HTMLElement);
+                    setPortMenuContext({ portId: port.id, portType: port.type, direction: 'output' });
+                  }}
+                >
                   {displayMode !== 'compact' && (
                     <Typography
                       variant="caption"
@@ -650,7 +797,7 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
               config={slotConfig.actions}
               status={data.status || 'idle'}
               isLocked={data.isLocked}
-              onExecute={() => onExecute?.(id)}
+              onExecute={() => executeNode?.(id)}
               onDownload={() => onDownload?.(id)}
             />
           </Box>
@@ -734,7 +881,7 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
         </MenuItem>
       </Menu>
 
-      {/* Port context menu for auto-creating input nodes */}
+      {/* Port context menu for auto-creating connected nodes */}
       <Menu
         anchorEl={portMenuAnchor}
         open={Boolean(portMenuAnchor)}
@@ -742,8 +889,14 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
           setPortMenuAnchor(null);
           setPortMenuContext(null);
         }}
-        anchorOrigin={{ vertical: 'center', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'center', horizontal: 'right' }}
+        anchorOrigin={{
+          vertical: 'center',
+          horizontal: portMenuContext?.direction === 'output' ? 'right' : 'left'
+        }}
+        transformOrigin={{
+          vertical: 'center',
+          horizontal: portMenuContext?.direction === 'output' ? 'left' : 'right'
+        }}
         slotProps={{
           paper: {
             sx: {
@@ -756,11 +909,15 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
       >
         <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider' }}>
           <Typography variant="caption" color="text.secondary">
-            Add input for <strong>{portMenuContext?.portId}</strong> ({portMenuContext?.portType})
+            {portMenuContext?.direction === 'output'
+              ? <>Connect <strong>{portMenuContext?.portId}</strong> ({portMenuContext?.portType}) to →</>
+              : <>Add input for <strong>{portMenuContext?.portId}</strong> ({portMenuContext?.portType})</>
+            }
           </Typography>
         </Box>
 
-        {portMenuContext && getCompatibleInputNodes?.(portMenuContext.portType).map((nodeOption) => (
+        {/* Input port menu - show compatible upstream nodes */}
+        {portMenuContext?.direction === 'input' && getCompatibleInputNodes?.(portMenuContext.portType).map((nodeOption) => (
           <MenuItem
             key={nodeOption.type}
             onClick={() => {
@@ -779,10 +936,41 @@ export const UnifiedNode = memo<UnifiedNodeProps>(({
           </MenuItem>
         ))}
 
-        {(!getCompatibleInputNodes || getCompatibleInputNodes(portMenuContext?.portType || 'any').length === 0) && (
+        {/* Output port menu - show compatible downstream nodes */}
+        {portMenuContext?.direction === 'output' && getCompatibleOutputNodes?.(portMenuContext.portType).map((nodeOption) => (
+          <MenuItem
+            key={nodeOption.type}
+            onClick={() => {
+              onCreateConnectedOutputNode?.(id, portMenuContext.portId, portMenuContext.portType, nodeOption.type);
+              setPortMenuAnchor(null);
+              setPortMenuContext(null);
+            }}
+          >
+            <ListItemIcon>
+              {iconMap[nodeOption.icon] || <AddIcon fontSize="small" />}
+            </ListItemIcon>
+            <ListItemText
+              primary={nodeOption.label}
+              primaryTypographyProps={{ variant: 'body2' }}
+            />
+          </MenuItem>
+        ))}
+
+        {/* No compatible nodes message for input */}
+        {portMenuContext?.direction === 'input' && (!getCompatibleInputNodes || getCompatibleInputNodes(portMenuContext?.portType || 'any').length === 0) && (
           <MenuItem disabled>
             <ListItemText
-              primary="No compatible nodes"
+              primary="No compatible source nodes"
+              primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+            />
+          </MenuItem>
+        )}
+
+        {/* No compatible nodes message for output */}
+        {portMenuContext?.direction === 'output' && (!getCompatibleOutputNodes || getCompatibleOutputNodes(portMenuContext?.portType || 'any').length === 0) && (
+          <MenuItem disabled>
+            <ListItemText
+              primary="No compatible target nodes"
               primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
             />
           </MenuItem>

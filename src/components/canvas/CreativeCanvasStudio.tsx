@@ -83,6 +83,7 @@ import {
   Image as ImageUploadIcon,
   Collections as ReferenceImageIcon,
   AutoAwesome as PromptEnhanceIcon,
+  AccountTree as AutoLayoutIcon,
 } from '@mui/icons-material';
 import type {
   CanvasBoard,
@@ -95,7 +96,7 @@ import type {
   ConnectionActionType,
   ConnectionActionOptions,
 } from '../../models/creativeCanvas';
-import type { CanvasNodeData, NodeType, Port, PortType, NodeResult } from '../../models/canvas';
+import type { CanvasNodeData, NodeType, NodeCategory, Port, PortType, NodeResult } from '../../models/canvas';
 import {
   CATEGORY_INFO,
   normalizeCardFromApi,
@@ -184,6 +185,12 @@ import { NodeInspector } from '../panels/NodeInspector';
 // Creative Palette Redesign (Elevated Vision v3.0 - Phase 3)
 import { CreativePalette } from '../palette';
 import { validateConnection, getEdgeStyle, createConnectionValidator } from '../../utils/connectionValidation';
+import { applyLayoutToSelection } from '../../utils/autoLayout';
+import {
+  findCollisions,
+  findNearestFreePosition,
+  resolveAllCollisions,
+} from '../../utils/collisionDetection';
 // New Creative Card system (Elevated Vision v3.0)
 import { CreativeCard, StandardEdge, FlowingEdge, StyleEdge, CharacterEdge, DelightEdge } from '../cards';
 // Creative Collaborators (Agents) - Elevated Vision v3.0
@@ -233,6 +240,22 @@ export interface CanvasActionsContextValue {
     icon: string;
     outputPortId: string;
   }>;
+  /** Create a new node and connect it to the specified output port */
+  onCreateConnectedOutputNode?: (
+    sourceNodeId: string,
+    sourcePortId: string,
+    sourcePortType: string,
+    targetNodeType: string
+  ) => void;
+  /** Get compatible output node types for a port type */
+  getCompatibleOutputNodes?: (portType: string) => Array<{
+    type: string;
+    label: string;
+    icon: string;
+    inputPortId: string;
+  }>;
+  /** Auto-generate workflow nodes from Story Genesis output */
+  onAutoGenerateWorkflow?: (sourceNodeId: string) => void;
 }
 
 export const CanvasActionsContext = React.createContext<CanvasActionsContextValue>({});
@@ -347,6 +370,10 @@ const CreativeCanvasInner: React.FC = () => {
   const reactFlowInstance = useReactFlow();
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
+  // Debounce timer for parameter updates - prevents API call on every keystroke
+  const parameterUpdateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingParameterUpdatesRef = useRef<Map<string, { nodeId: string; params: Record<string, unknown> }>>(new Map());
+
   // Get workflow context
   const { initialWorkflow, onWorkflowLoaded, userPersona: _userPersona } = React.useContext(WorkflowContext);
   const [workflowLoaded, setWorkflowLoaded] = useState(false);
@@ -367,6 +394,24 @@ const CreativeCanvasInner: React.FC = () => {
   const [activeView, setActiveView] = useState<'canvas' | 'boards' | 'library' | 'marketplace'>('boards');
   const [templateBrowserOpen, setTemplateBrowserOpen] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+  // Collision detection state
+  const [collidingNodeIds, setCollidingNodeIds] = useState<Set<string>>(new Set());
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
+
+  // Nodes with collision state injected for visual feedback
+  const nodesWithCollisionState = useMemo(() => {
+    if (collidingNodeIds.size === 0) return nodes;
+
+    return nodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        isColliding: collidingNodeIds.has(node.id),
+        isDragging: draggedNodeId === node.id,
+      },
+    }));
+  }, [nodes, collidingNodeIds, draggedNodeId]);
+
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId?: string } | null>(null);
   const [createBoardDialogOpen, setCreateBoardDialogOpen] = useState(false);
   const [newBoardName, setNewBoardName] = useState('');
@@ -822,6 +867,32 @@ const CreativeCanvasInner: React.FC = () => {
                 },
               }));
               setNodes(flowNodes);
+
+              // Resolve any overlapping nodes after loading
+              setTimeout(() => {
+                setNodes(currentNodes => {
+                  const result = resolveAllCollisions(currentNodes);
+                  if (result.adjustedCount > 0) {
+                    console.log(`[CreativeCanvasStudio] Resolved ${result.adjustedCount} node collisions`);
+                    // Persist adjusted positions
+                    const positionUpdates = result.nodes
+                      .filter((node, i) =>
+                        node.position.x !== currentNodes[i]?.position.x ||
+                        node.position.y !== currentNodes[i]?.position.y
+                      )
+                      .map(node => ({
+                        nodeId: node.id,
+                        position: node.position,
+                      }));
+
+                    if (positionUpdates.length > 0 && currentBoard) {
+                      nodeService.batchUpdate(currentBoard.id, { updates: positionUpdates })
+                        .catch(err => console.warn('Failed to persist collision resolution:', err));
+                    }
+                  }
+                  return result.nodes;
+                });
+              }, 200); // Delay to ensure nodes are measured
             }
 
             if (fullGraph.edges) {
@@ -864,8 +935,11 @@ const CreativeCanvasInner: React.FC = () => {
         // Convert backend nodes to React Flow nodes
         if (nodesResponse.success && nodesResponse.nodes) {
           const flowNodes: Node[] = nodesResponse.nodes.map((apiNode) => {
-            // Use specialized node component if registered, otherwise fallback to canvasNode
-            const registeredNodeType = apiNode.nodeType in nodeTypes ? apiNode.nodeType : 'canvasNode';
+            // In v4.0 unified system, always use 'unifiedNode' type
+            // In legacy mode, use specialized node component if registered, otherwise canvasNode
+            const registeredNodeType = useUnifiedPalette
+              ? 'unifiedNode'
+              : (apiNode.nodeType in nodeTypes ? apiNode.nodeType : 'canvasNode');
             return {
               id: apiNode.id,
               type: registeredNodeType,
@@ -1017,7 +1091,10 @@ const CreativeCanvasInner: React.FC = () => {
       }
 
       const newApiNode = nodeResponse.node;
-      const registeredNodeType = newApiNode.nodeType in nodeTypes ? newApiNode.nodeType : 'canvasNode';
+      // In v4.0 unified system, always use 'unifiedNode' type
+      const registeredNodeType = useUnifiedPalette
+        ? 'unifiedNode'
+        : (newApiNode.nodeType in nodeTypes ? newApiNode.nodeType : 'canvasNode');
 
       const newNode: Node<CanvasNodeData> = {
         id: newApiNode.id,
@@ -1258,27 +1335,87 @@ const CreativeCanvasInner: React.FC = () => {
   // Handle node drag stop - update position via batch endpoint (includes boardId for ownership)
   // Note: During migration, legacy cards (created before v3.1) will 404 on the node endpoint.
   // This is expected - position updates locally, just doesn't persist for legacy nodes.
+  /**
+   * Handle node drag start - initialize collision tracking
+   */
+  const onNodeDragStart = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      setDraggedNodeId(node.id);
+      setCollidingNodeIds(new Set());
+    },
+    []
+  );
+
+  /**
+   * Handle node drag - detect collisions in real-time
+   */
+  const onNodeDrag = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      // Find collisions with other nodes
+      const collision = findCollisions(nodes, node);
+
+      if (collision.hasCollision) {
+        // Include both the dragged node and colliding nodes for visual feedback
+        setCollidingNodeIds(new Set([node.id, ...collision.collidingNodeIds]));
+      } else {
+        setCollidingNodeIds(new Set());
+      }
+    },
+    [nodes]
+  );
+
+  /**
+   * Handle node drag stop - snap to free position if colliding
+   */
   const onNodeDragStop = useCallback(async (_event: React.MouseEvent, node: Node) => {
-    if (!currentBoard) return;
+    if (!currentBoard) {
+      setDraggedNodeId(null);
+      setCollidingNodeIds(new Set());
+      return;
+    }
 
     try {
+      // Check for collisions and find free position if needed
+      const collision = findCollisions(nodes, node);
+      let finalPosition = node.position;
+
+      if (collision.hasCollision) {
+        const snapResult = findNearestFreePosition(
+          nodes.filter(n => n.id !== node.id), // Exclude the dragged node
+          node,
+          node.position
+        );
+        finalPosition = snapResult.position;
+
+        // Update the node position in React Flow state if adjusted
+        if (snapResult.wasAdjusted) {
+          setNodes(nds => nds.map(n =>
+            n.id === node.id
+              ? { ...n, position: finalPosition }
+              : n
+          ));
+        }
+      }
+
       // Use batch endpoint - includes boardId for proper ownership verification
       await nodeService.batchUpdate(currentBoard.id, {
         updates: [{
           nodeId: node.id,
-          position: { x: node.position.x, y: node.position.y },
+          position: { x: finalPosition.x, y: finalPosition.y },
         }],
       });
-      // Position is already updated in React Flow state - no need to update local state
     } catch (err: unknown) {
       // Silently ignore 404s for legacy nodes created before v3.1 migration
       const axiosError = err as { response?: { status?: number } };
       if (axiosError?.response?.status !== 404) {
         console.error('Failed to update node position:', err);
       }
-      // Position is still updated in React Flow state for immediate feedback
+    } finally {
+      // Clear collision state
+      setDraggedNodeId(null);
+      setCollidingNodeIds(new Set());
     }
-  }, [currentBoard]);
+  }, [currentBoard, nodes, setNodes]);
 
   // Handle node selection - update both legacy selection and flow node selection for inspector
   const onSelectionChange = useCallback(({ nodes: selectedNodesList }: { nodes: Node[] }) => {
@@ -1361,18 +1498,6 @@ const CreativeCanvasInner: React.FC = () => {
       setSelectedFlowNode(null);
     }
   }, []);
-
-  // Handle delete key
-  const onKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'Delete' && selectedNodes.length > 0) {
-      handleDeleteSelectedCards();
-    }
-  }, [selectedNodes]);
-
-  useEffect(() => {
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [onKeyDown]);
 
   // === UNIFIED NODE SYSTEM v3.1 ===
   // Delete selected nodes via backend API (with legacy fallback)
@@ -1531,19 +1656,131 @@ const CreativeCanvasInner: React.FC = () => {
     setShowMinimap(prev => !prev);
   }, []);
 
+  /**
+   * Apply auto-layout to nodes using Dagre algorithm
+   * Layouts selected nodes if any are selected, otherwise layouts all nodes
+   */
+  const handleAutoLayout = useCallback(async () => {
+    if (!currentBoard || nodes.length === 0) return;
+
+    // Determine which nodes to layout
+    const nodesToLayout = selectedNodes.length > 0 ? selectedNodes : nodes.map(n => n.id);
+
+    console.log('[CreativeCanvasStudio] Auto-layout:', {
+      selectedCount: selectedNodes.length,
+      totalNodes: nodes.length,
+      layoutingCount: nodesToLayout.length,
+    });
+
+    // Apply Dagre layout algorithm
+    const layoutResult = applyLayoutToSelection(
+      nodes,
+      selectedNodes, // Empty array = layout all
+      edges,
+      {
+        direction: 'LR',      // Left to Right
+        nodeSpacing: 80,      // Gap between nodes
+        rankSpacing: 120,     // Gap between levels
+        gridSnap: 20,         // Match existing grid
+      }
+    );
+
+    // Update React Flow state with new positions
+    setNodes(layoutResult.nodes);
+
+    // Persist position changes to backend
+    try {
+      const positionUpdates = layoutResult.nodes
+        .filter(node => nodesToLayout.includes(node.id))
+        .map(node => ({
+          nodeId: node.id,
+          position: { x: node.position.x, y: node.position.y },
+        }));
+
+      if (positionUpdates.length > 0) {
+        await nodeService.batchUpdate(currentBoard.id, { updates: positionUpdates });
+      }
+
+      setSuccessMessage(
+        selectedNodes.length > 0
+          ? `Auto-arranged ${selectedNodes.length} selected node${selectedNodes.length > 1 ? 's' : ''}`
+          : `Auto-arranged ${nodes.length} node${nodes.length > 1 ? 's' : ''}`
+      );
+    } catch (err) {
+      console.error('[CreativeCanvasStudio] Failed to persist layout:', err);
+      // Layout is already applied visually, just log the error
+    }
+
+    // Fit view to show the newly arranged nodes
+    setTimeout(() => {
+      reactFlowInstance.fitView({ padding: 0.2 });
+      setZoomLevel(Math.round(reactFlowInstance.getZoom() * 100));
+    }, 100);
+  }, [currentBoard, nodes, edges, selectedNodes, setNodes, reactFlowInstance]);
+
+  // Handle keyboard shortcuts
+  const onKeyDown = useCallback((event: KeyboardEvent) => {
+    // Delete key - delete selected nodes
+    if (event.key === 'Delete' && selectedNodes.length > 0) {
+      handleDeleteSelectedCards();
+    }
+    // Ctrl+L / Cmd+L - Auto-layout
+    if (event.key === 'l' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault(); // Prevent browser's address bar focus
+      handleAutoLayout();
+    }
+  }, [selectedNodes, handleAutoLayout]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onKeyDown]);
+
   const handleSaveBoard = useCallback(async () => {
     if (!currentBoard) return;
     try {
+      const viewport = reactFlowInstance.getViewport();
+      console.log('[CreativeCanvasStudio] Saving board:', {
+        boardId: currentBoard.id,
+        name: currentBoard.name,
+        nodeCount: nodes.length,
+        edgeCount: edges.length,
+        viewport,
+      });
+
       await creativeCanvasService.boards.update(currentBoard.id, {
         name: currentBoard.name,
-        viewportState: reactFlowInstance.getViewport(),
+        viewportState: viewport,
       });
-      setSuccessMessage('Board saved');
+
+      // Note: Nodes and edges are auto-persisted when created/modified
+      // This save only persists board metadata and viewport state
+      setSuccessMessage(`Board saved (${nodes.length} nodes, ${edges.length} connections)`);
     } catch (err) {
-      console.error('Failed to save board:', err);
+      console.error('[CreativeCanvasStudio] Failed to save board:', err);
       setError('Failed to save board');
     }
-  }, [currentBoard, reactFlowInstance]);
+  }, [currentBoard, reactFlowInstance, nodes.length, edges.length]);
+
+  // Handle board name change (inline editing)
+  const handleBoardNameChange = useCallback(async (newName: string) => {
+    if (!currentBoard || newName === currentBoard.name) return;
+
+    try {
+      console.log('[CreativeCanvasStudio] Renaming board:', { from: currentBoard.name, to: newName });
+
+      await creativeCanvasService.boards.update(currentBoard.id, {
+        name: newName,
+      });
+
+      // Update local state
+      setCurrentBoard(prev => prev ? { ...prev, name: newName } : prev);
+      setSuccessMessage(`Board renamed to "${newName}"`);
+    } catch (err) {
+      console.error('[CreativeCanvasStudio] Failed to rename board:', err);
+      setError('Failed to rename board');
+    }
+  }, [currentBoard]);
 
   const handleExecuteAll = useCallback(async () => {
     if (isExecutingAll) return;
@@ -1726,8 +1963,11 @@ const CreativeCanvasInner: React.FC = () => {
 
             const apiNode = nodeResponse.node;
 
-            // Use specialized node component if registered, otherwise fallback to canvasNode
-            const registeredNodeType = apiNode.nodeType in nodeTypes ? apiNode.nodeType : 'canvasNode';
+            // In v4.0 unified system, always use 'unifiedNode' type
+            // In legacy mode, use specialized node component if registered, otherwise canvasNode
+            const registeredNodeType = useUnifiedPalette
+              ? 'unifiedNode'
+              : (apiNode.nodeType in nodeTypes ? apiNode.nodeType : 'canvasNode');
 
             // Convert API NodePort[] back to local Port[] format
             const localInputs: Port[] = (apiNode.inputs || []).map(p => ({
@@ -1973,7 +2213,10 @@ const CreativeCanvasInner: React.FC = () => {
         }
 
         const apiNode = nodeResponse.node;
-        const registeredNodeType = apiNode.nodeType in nodeTypes ? apiNode.nodeType : 'canvasNode';
+        // In v4.0 unified system, always use 'unifiedNode' type
+        const registeredNodeType = useUnifiedPalette
+          ? 'unifiedNode'
+          : (apiNode.nodeType in nodeTypes ? apiNode.nodeType : 'canvasNode');
 
         // Convert API ports to local format
         const localInputs: Port[] = (apiNode.inputs || []).map(p => ({
@@ -2016,13 +2259,9 @@ const CreativeCanvasInner: React.FC = () => {
     [currentBoard, reactFlowInstance, setNodes, nodeTypes]
   );
 
-  // Handle parameter change from inspector - update local state and persist to backend
+  // Handle parameter change from inspector - update local state immediately, debounce API calls
   const handleParameterChange = useCallback(
     (nodeId: string, paramId: string, value: unknown) => {
-      // Get current node data for the update
-      const currentNode = nodes.find(n => n.id === nodeId);
-      const currentParams = (currentNode?.data as CanvasNodeData | undefined)?.parameters || {};
-
       // Update local state immediately for responsive UI
       setNodes((nds) =>
         nds.map((node) => {
@@ -2061,27 +2300,41 @@ const CreativeCanvasInner: React.FC = () => {
         );
       }
 
-      // Persist to backend (try node API, fallback to card API)
-      nodeService.update(nodeId, {
-        parameters: {
-          ...currentParams,
+      // Accumulate pending updates for this node
+      const existing = pendingParameterUpdatesRef.current.get(nodeId);
+      pendingParameterUpdatesRef.current.set(nodeId, {
+        nodeId,
+        params: {
+          ...(existing?.params || {}),
           [paramId]: value,
         },
-      }).catch(async (err: unknown) => {
-        const axiosError = err as { response?: { status?: number } };
-        if (axiosError?.response?.status === 404) {
-          // Fallback to legacy card API
-          try {
-            await creativeCanvasService.cards.update(nodeId, {
-              config: { [paramId]: value },
-            });
-          } catch {
-            console.error('Failed to persist parameter change');
-          }
-        }
       });
+
+      // Clear existing timer and set new one (debounce 500ms)
+      if (parameterUpdateTimerRef.current) {
+        clearTimeout(parameterUpdateTimerRef.current);
+      }
+
+      parameterUpdateTimerRef.current = setTimeout(() => {
+        // Persist all pending updates to backend
+        pendingParameterUpdatesRef.current.forEach(({ nodeId: nId, params }) => {
+          nodeService.update(nId, { parameters: params }).catch(async (err: unknown) => {
+            const axiosError = err as { response?: { status?: number } };
+            if (axiosError?.response?.status === 404) {
+              // Fallback to legacy card API
+              try {
+                await creativeCanvasService.cards.update(nId, { config: params });
+              } catch {
+                console.error('Failed to persist parameter change');
+              }
+            }
+          });
+        });
+        // Clear pending updates after sending
+        pendingParameterUpdatesRef.current.clear();
+      }, 500);
     },
-    [nodes, setNodes, selectedFlowNode]
+    [setNodes, selectedFlowNode]
   );
 
   // Handle node execution from inspector
@@ -2520,7 +2773,7 @@ const CreativeCanvasInner: React.FC = () => {
           throw new Error('Story Genesis requires a core idea. Enter a prompt or connect an input.');
         }
 
-        const storyResponse = await storyGenerationService.startStory({
+        const apiResponse = await storyGenerationService.startStory({
           starterPrompt,
           genre: (nodeData?.parameters?.genre as StoryGenre) || 'fantasy',
           tone: (nodeData?.parameters?.tone as StoryTone) || 'serious',
@@ -2530,16 +2783,34 @@ const CreativeCanvasInner: React.FC = () => {
           themes: (nodeData?.parameters?.themes as string[]) || [],
         });
 
+        console.log('[handleNodeExecute] Story Genesis API response:', {
+          hasStory: !!apiResponse.story,
+          storyTitle: apiResponse.story?.title,
+          characterCount: apiResponse.characters?.length,
+          hasOutline: !!apiResponse.outline,
+          logline: apiResponse.logline?.substring(0, 50) + '...',
+          tagline: apiResponse.tagline,
+        });
+
+        // Merge logline/tagline into story object for StoryGenesisNode's enhanced preview
+        const enrichedStory = apiResponse.story ? {
+          ...apiResponse.story,
+          logline: apiResponse.logline,
+          tagline: apiResponse.tagline,
+        } : null;
+
         executeResponse = {
           success: true,
           nodeId,
           status: 'completed',
           output: {
-            story: storyResponse.story,
-            characters: storyResponse.characters,
-            outline: storyResponse.outline,
-            logline: storyResponse.logline,
-            text: storyResponse.logline, // For text preview
+            // Full story object with logline/tagline merged for enhanced preview
+            story: enrichedStory,
+            characters: apiResponse.characters,
+            outline: apiResponse.outline,
+            logline: apiResponse.logline,
+            tagline: apiResponse.tagline,
+            text: apiResponse.logline, // For basic text preview
             outputType: 'text',
           },
         };
@@ -2791,6 +3062,110 @@ const CreativeCanvasInner: React.FC = () => {
             outputType: 'text',
           },
         };
+      } else if (nodeType === 'storySynthesizer') {
+        // Story Synthesizer - Compile and export story elements
+        console.log('[handleNodeExecute] Processing Story Synthesizer');
+
+        const storyInput = inputData.story as Record<string, unknown>;
+        const characters = inputData.characters as Array<Record<string, unknown>> | undefined;
+        const outline = inputData.outline as Record<string, unknown> | undefined;
+        const scenes = inputData.scenes as Array<Record<string, unknown>> | undefined;
+        const locations = inputData.locations as Array<Record<string, unknown>> | undefined;
+        const treatment = inputData.treatment as Record<string, unknown> | undefined;
+
+        if (!storyInput) {
+          throw new Error('Story Synthesizer requires a story concept. Connect the Story input.');
+        }
+
+        const exportFormat = (nodeData?.parameters?.format as string) || 'markdown';
+        const sections = (nodeData?.parameters?.sections as string) || 'all';
+        const includeMetadata = (nodeData?.parameters?.includeMetadata as boolean) ?? true;
+        // const includeVisualPrompts = (nodeData?.parameters?.includeVisualPrompts as boolean) ?? false; // Reserved for future
+
+        // Compile the story document based on format
+        let document = '';
+        const storyData = {
+          story: storyInput,
+          characters: characters || [],
+          outline: outline,
+          scenes: scenes || [],
+          locations: locations || [],
+          treatment: treatment,
+        };
+
+        if (exportFormat === 'json') {
+          // JSON export - raw structured data
+          document = JSON.stringify(storyData, null, 2);
+        } else if (exportFormat === 'markdown') {
+          // Markdown export - formatted document
+          const story = storyInput as Record<string, unknown>;
+          document = `# ${story.title || 'Untitled Story'}\n\n`;
+
+          if (story.tagline) document += `> *"${story.tagline}"*\n\n`;
+          if (story.logline) document += `**Logline:** ${story.logline}\n\n`;
+          if (story.genre || story.tone) {
+            document += `**Genre:** ${story.genre || 'N/A'} | **Tone:** ${story.tone || 'N/A'}\n\n`;
+          }
+          if (story.themes && Array.isArray(story.themes)) {
+            document += `**Themes:** ${(story.themes as string[]).join(', ')}\n\n`;
+          }
+          if (story.premise) document += `## Premise\n\n${story.premise}\n\n`;
+
+          if (characters && characters.length > 0) {
+            document += `## Characters\n\n`;
+            for (const char of characters) {
+              document += `### ${char.name || 'Unknown'}\n`;
+              document += `**Role:** ${char.role || 'N/A'} | **Archetype:** ${char.archetype || 'N/A'}\n\n`;
+              if (char.briefDescription) document += `${char.briefDescription}\n\n`;
+              if (char.motivation) document += `**Motivation:** ${char.motivation}\n\n`;
+            }
+          }
+
+          if (outline && (outline as Record<string, unknown>).acts) {
+            document += `## Story Outline\n\n`;
+            const acts = (outline as Record<string, unknown>).acts as Array<{ actNumber: number; title: string; summary: string }>;
+            for (const act of acts) {
+              document += `### Act ${act.actNumber}: ${act.title}\n\n${act.summary}\n\n`;
+            }
+          }
+
+          if (scenes && scenes.length > 0 && sections !== 'story-characters') {
+            document += `## Scenes\n\n`;
+            for (let i = 0; i < scenes.length; i++) {
+              const scene = scenes[i];
+              document += `### Scene ${i + 1}: ${scene.title || 'Untitled'}\n\n`;
+              document += `${scene.content || scene.description || ''}\n\n`;
+            }
+          }
+
+          if (includeMetadata) {
+            document += `---\n\n*Generated with Creative Canvas Studio Story Synthesizer*\n`;
+            document += `*Export Date: ${new Date().toISOString().split('T')[0]}*\n`;
+          }
+        } else {
+          // Default text format
+          document = `Story: ${(storyInput as Record<string, unknown>).title || 'Untitled'}\n\n`;
+          document += `Format: ${exportFormat} - Full export not yet implemented for this format.\n`;
+          document += `Use JSON or Markdown for complete exports.`;
+        }
+
+        // Create a download URL (data URL for client-side download)
+        const mimeType = exportFormat === 'json' ? 'application/json' : 'text/markdown';
+        const blob = new Blob([document], { type: mimeType });
+        const downloadUrl = URL.createObjectURL(blob);
+
+        executeResponse = {
+          success: true,
+          nodeId,
+          status: 'completed',
+          output: {
+            document,
+            exportUrl: downloadUrl,
+            format: exportFormat,
+            text: `Story exported as ${exportFormat.toUpperCase()}. ${document.length} characters.`,
+            outputType: 'text',
+          },
+        };
       } else {
         // ========================================
         // STANDARD NODE EXECUTION
@@ -2931,6 +3306,29 @@ const CreativeCanvasInner: React.FC = () => {
               } else if (nodeResult?.type === 'video' && nodeResult.url) {
                 // Video nodes expect resultVideoUrl
                 updatedData.resultVideoUrl = nodeResult.url;
+              }
+
+              // StoryGenesisNode expects enhanced story data for "Moment of Delight" preview
+              if (nodeDataLocal.nodeType === 'storyGenesis' && execOutput) {
+                // Populate the rich story metadata for enhanced preview
+                if (execOutput.story) {
+                  updatedData.storyResponse = execOutput.story;
+                }
+                if (execOutput.characters) {
+                  updatedData.characters = execOutput.characters;
+                }
+                if (execOutput.outline) {
+                  updatedData.outline = execOutput.outline;
+                }
+                if (execOutput.logline) {
+                  updatedData.generatedLogline = execOutput.logline;
+                }
+                console.log('[handleNodeExecute] 📖 Set Story Genesis enhanced data:', {
+                  hasStoryResponse: !!execOutput.story,
+                  characterCount: Array.isArray(execOutput.characters) ? execOutput.characters.length : 0,
+                  hasOutline: !!execOutput.outline,
+                  logline: typeof execOutput.logline === 'string' ? execOutput.logline.substring(0, 50) + '...' : 'N/A',
+                });
               }
 
               console.log('[handleNodeExecute] 🎨 Node data updated:', {
@@ -3164,6 +3562,142 @@ const CreativeCanvasInner: React.FC = () => {
   }, []);
 
   /**
+   * Get compatible output node types for a given port type.
+   * Returns nodes that have an input matching the provided output type.
+   */
+  const getCompatibleOutputNodes = useCallback((portType: string) => {
+    // Map of port types to recommended downstream node types
+    const outputNodeMap: Record<string, Array<{ type: string; label: string; icon: string; inputPortId: string }>> = {
+      text: [
+        { type: 'flux2Pro', label: 'Generate Image', icon: 'AutoAwesome', inputPortId: 'prompt' },
+        { type: 'kling26T2V', label: 'Generate Video', icon: 'Videocam', inputPortId: 'prompt' },
+        { type: 'enhancePrompt', label: 'Enhance Prompt', icon: 'AutoAwesome', inputPortId: 'text' },
+      ],
+      image: [
+        { type: 'preview', label: 'Preview', icon: 'Preview', inputPortId: 'content' },
+        { type: 'export', label: 'Export / Download', icon: 'Download', inputPortId: 'content' },
+        { type: 'kling26I2V', label: 'Animate Image', icon: 'Animation', inputPortId: 'image' },
+        { type: 'fluxKontext', label: 'Edit Image', icon: 'Transform', inputPortId: 'image' },
+        { type: 'meshy6', label: '3D from Image', icon: 'ViewInAr', inputPortId: 'image' },
+        { type: 'upscaleImage', label: 'Upscale Image', icon: 'ZoomIn', inputPortId: 'image' },
+        // Fashion workflows
+        { type: 'virtualTryOn', label: 'Virtual Try-On', icon: 'Checkroom', inputPortId: 'model' },
+        { type: 'clothesSwap', label: 'Swap Garment', icon: 'SwapHoriz', inputPortId: 'person' },
+        { type: 'runwayAnimation', label: 'Runway Animation', icon: 'DirectionsWalk', inputPortId: 'image' },
+        { type: 'styleDNA', label: 'Extract Style', icon: 'Palette', inputPortId: 'references' },
+        { type: 'collectionSlideshow', label: 'Create Slideshow', icon: 'Slideshow', inputPortId: 'images' },
+        // Interior Design
+        { type: 'roomRedesign', label: 'Redesign Room', icon: 'Home', inputPortId: 'roomImage' },
+        // Social Media
+        { type: 'socialPostGenerator', label: 'Create Post', icon: 'Article', inputPortId: 'productImage' },
+        { type: 'thumbnailGenerator', label: 'Create Thumbnail', icon: 'Crop169', inputPortId: 'keyFrame' },
+      ],
+      video: [
+        { type: 'preview', label: 'Preview', icon: 'Preview', inputPortId: 'content' },
+        { type: 'export', label: 'Export / Download', icon: 'Download', inputPortId: 'content' },
+        // Social Media
+        { type: 'thumbnailGenerator', label: 'Create Thumbnail', icon: 'Crop169', inputPortId: 'keyFrame' },
+        { type: 'captionGenerator', label: 'Generate Caption', icon: 'Notes', inputPortId: 'context' },
+        { type: 'reelGenerator', label: 'Reel from Video', icon: 'MovieCreation', inputPortId: 'concept' },
+      ],
+      character: [
+        { type: 'characterCreator', label: 'Character Creator', icon: 'PersonAdd', inputPortId: 'characterSeed' },
+        { type: 'nanoBananaPro', label: 'Multi-Character Scene', icon: 'GroupAdd', inputPortId: 'characters' },
+        { type: 'sceneGenerator', label: 'Generate Scene', icon: 'Theaters', inputPortId: 'characters' },
+        { type: 'dialogueGenerator', label: 'Generate Dialogue', icon: 'Chat', inputPortId: 'characters' },
+        { type: 'characterRelationship', label: 'Define Relationship', icon: 'People', inputPortId: 'character1' },
+      ],
+      story: [
+        { type: 'storyStructure', label: 'Story Structure', icon: 'AccountTree', inputPortId: 'story' },
+        { type: 'characterCreator', label: 'Character Creator', icon: 'PersonAdd', inputPortId: 'story' },
+        { type: 'sceneGenerator', label: 'Scene Generator', icon: 'Theaters', inputPortId: 'story' },
+        { type: 'treatmentGenerator', label: 'Treatment Generator', icon: 'Description', inputPortId: 'story' },
+        { type: 'storySynthesizer', label: 'Story Synthesizer', icon: 'Article', inputPortId: 'story' },
+        { type: 'locationCreator', label: 'Location Creator', icon: 'Place', inputPortId: 'story' },
+      ],
+      outline: [
+        { type: 'sceneGenerator', label: 'Scene Generator', icon: 'Theaters', inputPortId: 'outline' },
+        { type: 'storySynthesizer', label: 'Story Synthesizer', icon: 'Article', inputPortId: 'outline' },
+      ],
+      location: [
+        { type: 'sceneGenerator', label: 'Scene Generator', icon: 'Theaters', inputPortId: 'location' },
+        { type: 'locationCreator', label: 'Expand Location', icon: 'Place', inputPortId: 'locationSeed' },
+        { type: 'storySynthesizer', label: 'Story Synthesizer', icon: 'Article', inputPortId: 'locations' },
+      ],
+      scene: [
+        { type: 'sceneVisualizer', label: 'Visualize Scene', icon: 'Panorama', inputPortId: 'scene' },
+        { type: 'dialogueGenerator', label: 'Generate Dialogue', icon: 'Chat', inputPortId: 'scene' },
+        { type: 'sceneGenerator', label: 'Next Scene', icon: 'Theaters', inputPortId: 'precedingScene' },
+        { type: 'storySynthesizer', label: 'Story Synthesizer', icon: 'Article', inputPortId: 'scenes' },
+      ],
+      plotPoint: [
+        { type: 'sceneGenerator', label: 'Scene Generator', icon: 'Theaters', inputPortId: 'plotPoint' },
+        { type: 'plotPoint', label: 'Next Plot Point', icon: 'TrendingUp', inputPortId: 'precedingPlot' },
+      ],
+      dialogue: [
+        { type: 'dialogueGenerator', label: 'Continue Dialogue', icon: 'Chat', inputPortId: 'precedingDialogue' },
+      ],
+      treatment: [
+        { type: 'storySynthesizer', label: 'Story Synthesizer', icon: 'Article', inputPortId: 'treatment' },
+      ],
+      style: [
+        { type: 'styleTransfer', label: 'Apply Style', icon: 'Style', inputPortId: 'style' },
+        { type: 'flux2Dev', label: 'Generate with Style', icon: 'Science', inputPortId: 'style' },
+      ],
+      // Social Media outputs
+      post: [
+        { type: 'preview', label: 'Preview', icon: 'Preview', inputPortId: 'content' },
+        { type: 'export', label: 'Export / Download', icon: 'Download', inputPortId: 'content' },
+        { type: 'contentScheduler', label: 'Add to Calendar', icon: 'CalendarMonth', inputPortId: 'posts' },
+        { type: 'captionGenerator', label: 'Generate Caption', icon: 'Notes', inputPortId: 'postImage' },
+      ],
+      caption: [
+        { type: 'socialPostGenerator', label: 'Create Post', icon: 'Article', inputPortId: 'topic' },
+        { type: 'hashtagOptimizer', label: 'Optimize Hashtags', icon: 'Tag', inputPortId: 'content' },
+      ],
+      carousel: [
+        { type: 'preview', label: 'Preview', icon: 'Preview', inputPortId: 'content' },
+        { type: 'export', label: 'Export Carousel', icon: 'Download', inputPortId: 'content' },
+        { type: 'captionGenerator', label: 'Generate Caption', icon: 'Notes', inputPortId: 'context' },
+      ],
+      // Brand & Moodboard outputs
+      brandKit: [
+        { type: 'socialPostGenerator', label: 'Create Post', icon: 'Article', inputPortId: 'brandKit' },
+        { type: 'carouselGenerator', label: 'Create Carousel', icon: 'ViewCarousel', inputPortId: 'brandKit' },
+        { type: 'templateCustomizer', label: 'Customize Template', icon: 'CropPortrait', inputPortId: 'brandKit' },
+        { type: 'storyCreator', label: 'Create Story/Reel', icon: 'Slideshow', inputPortId: 'brandKit' },
+      ],
+      moodboard: [
+        { type: 'preview', label: 'Preview', icon: 'Preview', inputPortId: 'content' },
+        { type: 'moodboardExport', label: 'Export Moodboard', icon: 'PictureAsPdf', inputPortId: 'moodboard' },
+        { type: 'moodboardLayout', label: 'Arrange Layout', icon: 'Dashboard', inputPortId: 'images' },
+      ],
+      colorPalette: [
+        { type: 'typographySuggester', label: 'Font Pairing', icon: 'FontDownload', inputPortId: 'colorPalette' },
+        { type: 'moodboardLayout', label: 'Create Moodboard', icon: 'Dashboard', inputPortId: 'colorPalette' },
+        { type: 'visualThemeGenerator', label: 'Generate Theme', icon: 'AutoAwesome', inputPortId: 'references' },
+      ],
+      // Interior Design outputs
+      room: [
+        { type: 'preview', label: 'Preview', icon: 'Preview', inputPortId: 'content' },
+        { type: 'export', label: 'Export / Download', icon: 'Download', inputPortId: 'content' },
+        { type: 'furnitureSuggestion', label: 'Suggest Furniture', icon: 'Weekend', inputPortId: 'roomImage' },
+        { type: 'materialPalette', label: 'Material Palette', icon: 'Layers', inputPortId: 'roomImage' },
+      ],
+      floorPlan: [
+        { type: 'room3DVisualizer', label: '3D Visualization', icon: 'ViewInAr', inputPortId: 'floorPlan' },
+        { type: 'furnitureSuggestion', label: 'Furniture Layout', icon: 'Weekend', inputPortId: 'roomImage' },
+      ],
+      any: [
+        { type: 'preview', label: 'Preview', icon: 'Preview', inputPortId: 'content' },
+        { type: 'export', label: 'Export / Download', icon: 'Download', inputPortId: 'content' },
+      ],
+    };
+
+    return outputNodeMap[portType] || outputNodeMap['any'];
+  }, []);
+
+  /**
    * Create a new input node and connect it to the specified target port.
    * The new node is positioned to the left of the target node.
    */
@@ -3278,6 +3812,121 @@ const CreativeCanvasInner: React.FC = () => {
     [currentBoard, nodes, setNodes, setEdges, getCompatibleInputNodes]
   );
 
+  /**
+   * Create a new output node and connect it to the specified source port.
+   * The new node is positioned to the right of the source node.
+   */
+  const handleCreateConnectedOutputNode = useCallback(
+    async (
+      sourceNodeId: string,
+      sourcePortId: string,
+      sourcePortType: string,
+      targetNodeType: string
+    ) => {
+      if (!currentBoard) {
+        setError('No board selected');
+        return;
+      }
+
+      const sourceNode = nodes.find(n => n.id === sourceNodeId);
+      if (!sourceNode) {
+        setError('Source node not found');
+        return;
+      }
+
+      // Get node definition for the target node type
+      const nodeDef = nodeDefinitions.find(def => def.type === targetNodeType);
+      if (!nodeDef) {
+        setError(`Unknown node type: ${targetNodeType}`);
+        return;
+      }
+
+      // Find the input port that matches the source port type
+      const compatibleNodes = getCompatibleOutputNodes(sourcePortType);
+      const targetNodeInfo = compatibleNodes.find(n => n.type === targetNodeType);
+      const inputPortId = targetNodeInfo?.inputPortId || nodeDef.inputs?.[0]?.id || 'input';
+
+      // Position the new node to the right of the source node
+      const newPosition = {
+        x: sourceNode.position.x + 320, // Node width + spacing
+        y: sourceNode.position.y,
+      };
+
+      try {
+        // Create the node via API
+        const apiNode = await unifiedNodeService.createNode(currentBoard.id, {
+          nodeType: targetNodeType as NodeType,
+          category: nodeDef.category,
+          label: nodeDef.displayName || nodeDef.label,
+          displayMode: nodeDef.defaultDisplayMode || 'standard',
+          position: newPosition,
+          dimensions: { width: 280, height: 320 },
+          inputs: (nodeDef.inputs || []).map(p => ({
+            id: p.id,
+            name: p.name,
+            type: p.type,
+            required: p.required ?? false,
+            multi: p.multiple ?? false,
+          })),
+          outputs: (nodeDef.outputs || []).map(p => ({
+            id: p.id,
+            name: p.name,
+            type: p.type,
+            required: p.required ?? false,
+            multi: p.multiple ?? false,
+          })),
+          parameters: {},
+          aiModel: nodeDef.aiModel,
+        });
+
+        // Create React Flow node
+        const newNode: Node = {
+          id: apiNode.id,
+          type: 'unifiedNode',
+          position: newPosition,
+          data: {
+            ...apiNode,
+            status: 'idle',
+          },
+        };
+
+        // Create the edge connecting the source node to the new node
+        const newEdgeId = `edge-${sourceNodeId}-${apiNode.id}-${Date.now()}`;
+        const newEdge: Edge = {
+          id: newEdgeId,
+          source: sourceNodeId,
+          sourceHandle: sourcePortId,
+          target: apiNode.id,
+          targetHandle: inputPortId,
+          type: 'smoothstep',
+          animated: false,
+        };
+
+        // Persist edge to backend
+        try {
+          await edgeService.create(currentBoard.id, {
+            sourceNodeId: sourceNodeId,
+            sourcePortId: sourcePortId,
+            targetNodeId: apiNode.id,
+            targetPortId: inputPortId,
+          });
+        } catch (edgeErr) {
+          console.warn('Failed to persist edge to backend:', edgeErr);
+        }
+
+        // Add node and edge to state
+        setNodes(nds => [...nds, newNode]);
+        setEdges(eds => [...eds, newEdge]);
+
+        setSuccessMessage(`Created ${nodeDef.displayName || nodeDef.label} and connected from ${sourcePortId}`);
+      } catch (err) {
+        console.error('Failed to create connected output node:', err);
+        setError('Failed to create node');
+      }
+    },
+    [currentBoard, nodes, setNodes, setEdges, getCompatibleOutputNodes]
+  );
+
   // Handle style selection from CreativePalette (Phase 3)
   const handleStyleSelect = useCallback(
     (styleId: string, keywords: string[]) => {
@@ -3325,6 +3974,183 @@ const CreativeCanvasInner: React.FC = () => {
       }
     },
     [selectedFlowNode, handleParameterChange]
+  );
+
+  /**
+   * Auto-generate workflow nodes from Story Genesis output.
+   * Creates CharacterCreator, StoryStructure, and SceneGenerator nodes
+   * positioned to the right of the source Story Genesis node,
+   * and connects them via edges.
+   */
+  const handleAutoGenerateWorkflow = useCallback(
+    async (sourceNodeId: string) => {
+      if (!currentBoard) {
+        setError('No board selected');
+        return;
+      }
+
+      // Find the source Story Genesis node
+      const sourceNode = nodes.find(n => n.id === sourceNodeId);
+      if (!sourceNode) {
+        setError('Source node not found');
+        return;
+      }
+
+      // Get story data from the source node
+      const nodeData = sourceNode.data as CanvasNodeData;
+      const cachedOutput = nodeData.cachedOutput as Record<string, unknown> | undefined;
+
+      if (!cachedOutput?.story) {
+        setError('Story data not found. Generate a story first.');
+        return;
+      }
+
+      console.log('[handleAutoGenerateWorkflow] Starting workflow generation from node:', sourceNodeId);
+
+      const baseX = sourceNode.position.x;
+      const baseY = sourceNode.position.y;
+      const horizontalSpacing = 350;
+      const verticalSpacing = 180;
+
+      // Define the nodes to create with their configurations
+      const workflowNodes = [
+        {
+          type: 'storyStructure',
+          label: 'Story Structure',
+          category: 'narrative' as NodeCategory,
+          offsetX: horizontalSpacing,
+          offsetY: -verticalSpacing,
+          sourcePort: 'story',
+          targetPort: 'story',
+        },
+        {
+          type: 'characterCreator',
+          label: 'Character Creator',
+          category: 'character' as NodeCategory,
+          offsetX: horizontalSpacing,
+          offsetY: 0,
+          sourcePort: 'story', // Use story context as input for character expansion
+          targetPort: 'story', // CharacterCreator has 'story' input for Story Context
+        },
+        {
+          type: 'sceneGenerator',
+          label: 'Scene Generator',
+          category: 'narrative' as NodeCategory,
+          offsetX: horizontalSpacing,
+          offsetY: verticalSpacing,
+          sourcePort: 'story',
+          targetPort: 'story', // Input port is 'story' (Story Context)
+        },
+        {
+          type: 'storySynthesizer',
+          label: 'Story Synthesizer',
+          category: 'output' as NodeCategory,
+          offsetX: horizontalSpacing * 2, // Place further to the right
+          offsetY: 0,
+          sourcePort: 'story', // Connect story output from Story Genesis
+          targetPort: 'story',
+        },
+      ];
+
+      const createdNodes: Node[] = [];
+      const createdEdges: Edge[] = [];
+
+      try {
+        for (const config of workflowNodes) {
+          // Get node definition
+          const nodeDef = nodeDefinitions.find(def => def.type === config.type);
+          if (!nodeDef) {
+            console.warn(`Node definition not found for: ${config.type}`);
+            continue;
+          }
+
+          // Calculate position
+          const newPosition = {
+            x: baseX + config.offsetX,
+            y: baseY + config.offsetY,
+          };
+
+          // Create the node via API
+          const apiNode = await unifiedNodeService.createNode(currentBoard.id, {
+            nodeType: config.type as NodeType,
+            category: config.category,
+            label: config.label,
+            displayMode: 'standard',
+            position: newPosition,
+            dimensions: { width: 280, height: 320 },
+            inputs: (nodeDef.inputs || []).map(p => ({
+              id: p.id,
+              name: p.name,
+              type: p.type,
+              required: p.required ?? false,
+              multi: p.multiple ?? false,
+            })),
+            outputs: (nodeDef.outputs || []).map(p => ({
+              id: p.id,
+              name: p.name,
+              type: p.type,
+              required: p.required ?? false,
+              multi: p.multiple ?? false,
+            })),
+            parameters: {},
+            aiModel: nodeDef.aiModel,
+          });
+
+          // Create React Flow node
+          const newNode: Node = {
+            id: apiNode.id,
+            type: 'unifiedNode',
+            position: newPosition,
+            data: {
+              ...apiNode,
+              status: 'idle',
+            },
+          };
+          createdNodes.push(newNode);
+
+          // Create edge connecting source to this new node
+          const edgeId = `edge-${sourceNodeId}-${apiNode.id}-${Date.now()}`;
+          const newEdge: Edge = {
+            id: edgeId,
+            source: sourceNodeId,
+            sourceHandle: config.sourcePort,
+            target: apiNode.id,
+            targetHandle: config.targetPort,
+            type: 'smoothstep',
+            animated: false,
+          };
+          createdEdges.push(newEdge);
+
+          // Persist edge to backend
+          try {
+            await edgeService.create(currentBoard.id, {
+              sourceNodeId: sourceNodeId,
+              sourcePortId: config.sourcePort,
+              targetNodeId: apiNode.id,
+              targetPortId: config.targetPort,
+            });
+          } catch (edgeErr) {
+            console.warn('Failed to persist edge to backend:', edgeErr);
+          }
+
+          console.log(`[handleAutoGenerateWorkflow] Created ${config.label} node:`, apiNode.id);
+        }
+
+        // Add all created nodes and edges to state
+        setNodes(nds => [...nds, ...createdNodes]);
+        setEdges(eds => [...eds, ...createdEdges]);
+
+        setSuccessMessage(`✨ Generated ${createdNodes.length} workflow nodes from Story Genesis!`);
+        console.log('[handleAutoGenerateWorkflow] Workflow generation complete:', {
+          nodesCreated: createdNodes.length,
+          edgesCreated: createdEdges.length,
+        });
+      } catch (err) {
+        console.error('Failed to generate workflow:', err);
+        setError('Failed to generate workflow nodes');
+      }
+    },
+    [currentBoard, nodes, setNodes, setEdges]
   );
 
   // Render toolbar - Brand styled floating toolbar
@@ -3395,6 +4221,22 @@ const CreativeCanvasInner: React.FC = () => {
       <Tooltip title="Fit View">
         <IconButton onClick={() => reactFlowInstance.fitView()}>
           <FitViewIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip title={`Auto-Layout${selectedNodes.length > 0 ? ` (${selectedNodes.length} selected)` : ''} (Ctrl+L)`}>
+        <IconButton
+          onClick={handleAutoLayout}
+          disabled={nodes.length === 0}
+          sx={{
+            color: darkNeutrals.textSecondary,
+            '&:hover': {
+              color: brandColors.tealPulse,
+              bgcolor: `${brandColors.tealPulse}15`,
+            },
+          }}
+        >
+          <AutoLayoutIcon />
         </IconButton>
       </Tooltip>
 
@@ -3538,12 +4380,16 @@ const CreativeCanvasInner: React.FC = () => {
       <TopMenuBar
         boardName={currentBoard?.name}
         boardCategory={currentBoard?.category}
+        onBoardNameChange={handleBoardNameChange}
         onSave={handleSaveBoard}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
         onToggleGrid={handleToggleGrid}
         onToggleMinimap={handleToggleMinimap}
+        onAutoLayout={handleAutoLayout}
+        hasSelection={selectedNodes.length > 0}
+        selectionCount={selectedNodes.length}
         onExecuteAll={handleExecuteAll}
         onStopAll={handleStopAll}
         isExecuting={isExecutingAll}
@@ -3607,15 +4453,20 @@ const CreativeCanvasInner: React.FC = () => {
           onParameterChange: handleParameterChange,
           onCreateConnectedInputNode: handleCreateConnectedInputNode,
           getCompatibleInputNodes,
+          onCreateConnectedOutputNode: handleCreateConnectedOutputNode,
+          getCompatibleOutputNodes,
+          onAutoGenerateWorkflow: handleAutoGenerateWorkflow,
         }}>
         <ReactFlow
-          nodes={nodes}
+          nodes={nodesWithCollisionState}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodesDelete={onNodesDelete}
           onEdgesDelete={onEdgesDelete}
           onConnect={onConnect}
+          onNodeDragStart={onNodeDragStart}
+          onNodeDrag={onNodeDrag}
           onNodeDragStop={onNodeDragStop}
           onSelectionChange={onSelectionChange}
           onMoveEnd={onMoveEnd}
@@ -3629,6 +4480,7 @@ const CreativeCanvasInner: React.FC = () => {
           minZoom={0.1}
           maxZoom={4}
           fitView
+          fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
           proOptions={{ hideAttribution: true }}
           connectOnClick={false}
           deleteKeyCode={['Backspace', 'Delete']}

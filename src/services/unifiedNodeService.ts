@@ -33,8 +33,8 @@ interface CreateNodeRequest {
   aiModel?: string;
 }
 
-interface FullGraphResponse {
-  success: boolean;
+// The actual graph data structure
+interface FullGraphData {
   board?: {
     id: string;
     name: string;
@@ -60,6 +60,27 @@ interface FullGraphResponse {
       nodeType?: string;
     }[];
   };
+  stats?: {
+    nodeCount: number;
+    edgeCount: number;
+    executedCount: number;
+    pendingCount: number;
+    runningCount: number;
+    errorCount: number;
+  };
+}
+
+// API response wrapper with nested data
+interface FullGraphApiResponse {
+  success: boolean;
+  message?: string | null;
+  data?: FullGraphData;
+  error?: string;
+}
+
+// What we return to consumers (unwrapped)
+interface FullGraphResponse extends FullGraphData {
+  success: boolean;
   error?: string;
 }
 
@@ -109,17 +130,24 @@ interface DisplayModeResponse {
 
 /**
  * Get the full graph for a board including nodes, edges, and toolbar
+ *
+ * API returns: { success, message, data: { nodes, edges, board, toolbar, stats } }
+ * We unwrap and return: { success, nodes, edges, board, toolbar, stats }
  */
 export async function getFullGraph(
   boardId: string
 ): Promise<FullGraphResponse> {
   try {
-    const response = await api.get<FullGraphResponse>(
+    const response = await api.get<FullGraphApiResponse>(
       `/api/creative-canvas/boards/${boardId}/full-graph`
     );
 
-    if (response.data.success) {
-      return response.data;
+    if (response.data.success && response.data.data) {
+      // Unwrap the nested data structure
+      return {
+        success: true,
+        ...response.data.data,
+      };
     }
 
     throw new Error(response.data.error || 'Failed to get full graph');

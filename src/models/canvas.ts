@@ -161,6 +161,7 @@ export type NodeType =
   | 'storyPivot'             // Radically change story direction
   | 'intrigueLift'           // Add mystery and tension
   | 'storyEnhancer'          // Polish and improve prose
+  | 'storySynthesizer'       // Export story to various formats
   // Character nodes - Deep character development
   | 'characterCreator'       // Create multi-dimensional characters
   | 'characterRelationship'  // Map character relationships
@@ -555,9 +556,11 @@ export interface ConnectionAction {
 // ASSET LIBRARY
 // ============================================================================
 
+export type AssetType = 'image' | 'video' | 'audio' | 'mesh3d' | 'style' | 'character' | 'story';
+
 export interface Asset {
   id: string;
-  type: 'image' | 'video' | 'audio' | 'mesh3d' | 'style' | 'character';
+  type: AssetType;
   name: string;
   url: string;
   thumbnailUrl?: string;
@@ -566,6 +569,36 @@ export interface Asset {
   boardId?: string;
   nodeId?: string;
   createdAt: string;
+}
+
+/**
+ * Story asset for the Story Asset Library
+ * Extends base Asset with story-specific data
+ */
+export interface StoryAsset extends Asset {
+  type: 'story';
+  storyData: {
+    title: string;
+    tagline?: string;
+    logline?: string;
+    genre?: string;
+    tone?: string;
+    themes?: string[];
+    premise?: string;
+    characters?: Array<{
+      name: string;
+      role: string;
+      archetype: string;
+      briefDescription?: string;
+    }>;
+    outline?: {
+      acts: Array<{
+        actNumber: number;
+        title: string;
+        summary: string;
+      }>;
+    };
+  };
 }
 
 // ============================================================================

@@ -304,7 +304,8 @@ export const DEFAULT_SLOT_CONFIGS: Partial<Record<NodeCategory, NodeSlotConfig>>
     actions: { primary: 'execute', secondary: ['duplicate'] },
   },
   input: {
-    preview: { type: 'image', aspectRatio: 'auto', showZoom: true },
+    // Text preview for input nodes - shows entered text with nice styling
+    preview: { type: 'text', aspectRatio: 'auto' },
     parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'] },
     actions: { primary: 'preview' },
   },

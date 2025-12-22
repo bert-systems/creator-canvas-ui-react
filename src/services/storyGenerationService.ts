@@ -998,12 +998,57 @@ class StoryGenerationService {
   // ----- Story Generation -----
 
   async startStory(request: StoryStartRequest): Promise<StoryStartResponse> {
-    const response = await api.post<StoryStartResponse>('/api/storytelling/start', request);
+    // Import enum mappers from central utility
+    const { storyGenreMap, povMap, targetLengthMap, audienceMap, storyToneMap, mapEnum } = await import('./apiEnumMapper');
+
+    // Map frontend field values to API-expected PascalCase format
+    const apiRequest = {
+      starterPrompt: request.starterPrompt,
+      themes: request.themes || [],
+      genre: mapEnum(request.genre, storyGenreMap),
+      subGenre: request.subGenre,
+      tone: mapEnum(request.tone, storyToneMap),
+      mood: request.mood,
+      pointOfView: mapEnum(request.pointOfView, povMap),
+      targetLength: mapEnum(request.targetLength, targetLengthMap),
+      targetAudience: mapEnum(request.targetAudience, audienceMap),
+      visualStyle: request.visualStyle,
+      // LLM config
+      model: request.model,
+      temperature: request.temperature,
+      maxTokens: request.maxTokens,
+      topP: request.topP,
+      topK: request.topK,
+      providerOptions: request.providerOptions,
+      rag: request.rag,
+    };
+
+    const response = await api.post<StoryStartResponse>('/api/storytelling/start', apiRequest);
     return response.data;
   }
 
   async generateStructure(request: StoryStructureRequest): Promise<StoryStructureResponse> {
-    const response = await api.post<StoryStructureResponse>('/api/storytelling/structure', request);
+    // Import enum mappers
+    const { storyFrameworkMap, detailLevelMap, storyGenreMap, storyToneMap, mapEnum } = await import('./apiEnumMapper');
+
+    // Map frontend values to API-expected PascalCase format
+    const apiRequest = {
+      request: {
+        storyId: request.storyId,
+        story: request.story ? {
+          ...request.story,
+          genre: mapEnum(request.story.genre, storyGenreMap),
+          tone: mapEnum(request.story.tone, storyToneMap),
+        } : undefined,
+        framework: mapEnum(request.framework, storyFrameworkMap),
+        characters: request.characters,
+        detailLevel: mapEnum(request.detailLevel, detailLevelMap),
+        includeSubplots: request.includeSubplots,
+        subplotCount: request.subplotCount,
+      },
+    };
+
+    const response = await api.post<StoryStructureResponse>('/api/storytelling/structure', apiRequest);
     return response.data;
   }
 

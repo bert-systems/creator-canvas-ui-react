@@ -5,6 +5,14 @@
  */
 
 import api from './api';
+import {
+  garmentTypeMap,
+  seasonMap,
+  genderMap,
+  bodyShapeMap,
+  silhouetteMap,
+  mapEnum,
+} from './apiEnumMapper';
 
 // ==================== TYPE DEFINITIONS ====================
 
@@ -641,7 +649,13 @@ class FashionService {
   // ===== Garment Design Endpoints =====
 
   async designGarment(request: DesignGarmentRequest): Promise<DesignGarmentResponse> {
-    const response = await api.post(`${this.baseUrl}/fashion/design/garment`, request);
+    const apiRequest = {
+      ...request,
+      garmentType: mapEnum(request.garmentType, garmentTypeMap),
+      silhouette: request.silhouette ? mapEnum(request.silhouette, silhouetteMap) : undefined,
+      season: request.season ? mapEnum(request.season, seasonMap) : undefined,
+    };
+    const response = await api.post(`${this.baseUrl}/fashion/design/garment`, apiRequest);
     return response.data;
   }
 
@@ -680,7 +694,15 @@ class FashionService {
   // ===== Model & Casting Endpoints =====
 
   async castModel(request: CastModelRequest): Promise<CastModelResponse> {
-    const response = await api.post(`${this.baseUrl}/fashion/model/cast`, request);
+    const apiRequest = {
+      ...request,
+      gender: mapEnum(request.gender, genderMap),
+      bodyType: request.bodyType ? {
+        ...request.bodyType,
+        shape: mapEnum(request.bodyType.shape, bodyShapeMap),
+      } : undefined,
+    };
+    const response = await api.post(`${this.baseUrl}/fashion/model/cast`, apiRequest);
     return response.data;
   }
 
@@ -690,14 +712,22 @@ class FashionService {
   }
 
   async scaleSize(request: ScaleSizeRequest): Promise<ScaleSizeResponse> {
-    const response = await api.post(`${this.baseUrl}/fashion/model/scale-size`, request);
+    const apiRequest = {
+      ...request,
+      garmentType: mapEnum(request.garmentType, garmentTypeMap),
+    };
+    const response = await api.post(`${this.baseUrl}/fashion/model/scale-size`, apiRequest);
     return response.data;
   }
 
   // ===== Styling Endpoints =====
 
   async composeOutfit(request: ComposeOutfitRequest): Promise<ComposeOutfitResponse> {
-    const response = await api.post(`${this.baseUrl}/fashion/style/compose-outfit`, request);
+    const apiRequest = {
+      ...request,
+      seasonality: request.seasonality ? mapEnum(request.seasonality, seasonMap) : undefined,
+    };
+    const response = await api.post(`${this.baseUrl}/fashion/style/compose-outfit`, apiRequest);
     return response.data;
   }
 
@@ -707,7 +737,11 @@ class FashionService {
   }
 
   async styleLayering(request: StyleLayeringRequest): Promise<StyleLayeringResponse> {
-    const response = await api.post(`${this.baseUrl}/fashion/style/layering`, request);
+    const apiRequest = {
+      ...request,
+      season: mapEnum(request.season, seasonMap),
+    };
+    const response = await api.post(`${this.baseUrl}/fashion/style/layering`, apiRequest);
     return response.data;
   }
 
@@ -729,7 +763,11 @@ class FashionService {
   }
 
   async createGhostMannequin(request: CreateGhostMannequinRequest): Promise<CreateGhostMannequinResponse> {
-    const response = await api.post(`${this.baseUrl}/fashion/photo/ghost-mannequin`, request);
+    const apiRequest = {
+      ...request,
+      garmentType: mapEnum(request.garmentType, garmentTypeMap),
+    };
+    const response = await api.post(`${this.baseUrl}/fashion/photo/ghost-mannequin`, apiRequest);
     return response.data;
   }
 
@@ -753,7 +791,11 @@ class FashionService {
   // ===== Collection Endpoints =====
 
   async buildCollection(request: BuildCollectionRequest): Promise<BuildCollectionResponse> {
-    const response = await api.post(`${this.baseUrl}/fashion/collection/build`, request);
+    const apiRequest = {
+      ...request,
+      season: mapEnum(request.season, seasonMap),
+    };
+    const response = await api.post(`${this.baseUrl}/fashion/collection/build`, apiRequest);
     return response.data;
   }
 
