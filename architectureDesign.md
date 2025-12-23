@@ -1,6 +1,6 @@
 # Architecture Design - Creative Canvas Studio
 
-**Last Updated:** December 20, 2025
+**Last Updated:** December 22, 2025
 
 ## Overview
 
@@ -358,6 +358,89 @@ Redesigned creative palette with intent-based organization replacing the technic
   - **Character Lock** - Create/update/delete character profiles with up to 7 reference images
   - **Face Memory** - 5-slot face memory system for multi-character scenes
   - **Element Library** - Kling O1 integration for video element consistency
+
+---
+
+## Studios Architecture (v5.0) - December 2025
+
+> **Status:** ✅ IMPLEMENTATION COMPLETE
+> **Documentation:** `todo.md` (Phases 1-5)
+
+### Overview
+
+Studios provide category-specific UX surfaces that offer guided creation flows as an alternative to the freeform node canvas. Each studio is tailored to its domain with specialized tools and workflows.
+
+### Studio Directory Structure
+
+```
+src/components/studios/
+├── shared/
+│   ├── studioTokens.ts           # Design system tokens
+│   ├── SurfaceCard.tsx           # Card component
+│   ├── AIPromptBar.tsx           # AI prompt input
+│   ├── StatusIndicator.tsx       # Status states
+│   ├── CollaborationPresence.tsx # Collaboration UI
+│   └── index.ts
+├── modes/
+│   ├── FlowMode.tsx              # Step-by-step wizard
+│   ├── WorkspaceMode.tsx         # Panel-based layout
+│   ├── TimelineMode.tsx          # Project management
+│   └── index.ts
+├── StudioShell.tsx               # Container with mode switching
+├── StudioCommandPalette.tsx      # ⌘K command interface
+├── fashion/
+│   ├── FashionStudio.tsx
+│   └── flows/CreateLookbookFlow.tsx
+├── social/
+│   ├── SocialStudio.tsx
+│   └── flows/{CreatePostFlow,CreateCarouselFlow}.tsx
+├── moodboards/
+│   ├── MoodboardsStudio.tsx
+│   └── flows/{CreateMoodboardFlow,CreateBrandKitFlow}.tsx
+└── index.ts
+```
+
+### Three Studio Modes
+
+| Mode | Purpose | Component |
+|------|---------|-----------|
+| **Flow** | Step-by-step wizard for guided creation | `FlowMode.tsx` |
+| **Workspace** | Panel-based layout with gallery | `WorkspaceMode.tsx` |
+| **Timeline** | Project management with status tracking | `TimelineMode.tsx` |
+
+### Design System Tokens
+
+```typescript
+// Color Philosophy: Neutral-first (90% grayscale)
+studioColors = {
+  carbon: '#09090B',      // App background
+  surface: '#18181B',     // Cards, panels
+  surface2: '#1F1F23',    // Elevated surfaces
+  border: '#27272A',      // Subtle separators
+  accent: '#3B9B94',      // Primary actions (muted teal)
+  success: '#22C55E',     // Success states
+  warning: '#F59E0B',     // Warning states
+  error: '#EF4444',       // Error states
+}
+```
+
+### Supporting Services
+
+- **`src/stores/userStore.ts`** - Zustand user state with preferences
+- **`src/services/assetLibraryService.ts`** - Asset/project/collection CRUD
+- **`src/services/downloadService.ts`** - Export images, JSON, CSS
+
+### Routing
+
+```typescript
+// App.tsx routes
+'/studios/fashion/*'    → FashionStudio
+'/studios/social/*'     → SocialStudio
+'/studios/moodboards/*' → MoodboardsStudio
+'/canvas'               → Advanced canvas
+```
+
+---
 
 ## Data Models
 

@@ -1,9 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { theme } from './theme';
 import { CreativeCanvasStudio } from './components/canvas/CreativeCanvasStudio';
 import { PersonaSelector, WorkflowSelector } from './components/onboarding';
+import { FashionStudio } from './components/studios/fashion';
+import { SocialStudio } from './components/studios/social';
+import { MoodboardsStudio } from './components/studios/moodboards';
+import { AppNavigation } from './components/navigation';
 import {
   type PersonaType,
   type WorkflowTemplate,
@@ -99,9 +103,19 @@ function AppContent() {
     setPendingWorkflow(null);
   }, []);
 
+  // Determine if navigation should be hidden (onboarding pages)
+  const hideNavigation = useMemo(() => {
+    return location.pathname.startsWith('/welcome');
+  }, [location.pathname]);
+
   return (
-    <Box sx={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <Routes>
+    <Box sx={{ width: '100vw', height: '100vh', overflow: 'hidden', display: 'flex' }}>
+      {/* Left Navigation */}
+      <AppNavigation hidden={hideNavigation} />
+
+      {/* Main Content */}
+      <Box sx={{ flex: 1, overflow: 'hidden' }}>
+        <Routes>
         {/* Onboarding - Persona Selection */}
         <Route
           path="/welcome"
@@ -130,13 +144,21 @@ function AppContent() {
           }
         />
 
-        {/* Main App */}
+        {/* Main App - Canvas */}
         <Route
           path="/"
           element={
             <CreativeCanvasStudio
               initialWorkflow={pendingWorkflow}
               onWorkflowLoaded={handleWorkflowLoaded}
+              userPersona={onboardingState.persona}
+            />
+          }
+        />
+        <Route
+          path="/canvas"
+          element={
+            <CreativeCanvasStudio
               userPersona={onboardingState.persona}
             />
           }
@@ -150,9 +172,42 @@ function AppContent() {
           }
         />
 
+        {/* Studios */}
+        <Route
+          path="/studios/fashion/*"
+          element={
+            <FashionStudio
+              onBack={() => navigate('/')}
+              onNavigate={{
+                toFashion: () => navigate('/studios/fashion'),
+                toSocial: () => navigate('/studios/social'),
+                toMoodboards: () => navigate('/studios/moodboards'),
+                toCanvas: () => navigate('/canvas'),
+              }}
+            />
+          }
+        />
+        <Route
+          path="/studios/social/*"
+          element={
+            <SocialStudio
+              onBack={() => navigate('/')}
+            />
+          }
+        />
+        <Route
+          path="/studios/moodboards/*"
+          element={
+            <MoodboardsStudio
+              onBack={() => navigate('/')}
+            />
+          }
+        />
+
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </Box>
     </Box>
   );
 }
