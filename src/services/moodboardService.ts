@@ -186,6 +186,10 @@ export interface MoodboardRequest {
   includeColorPalette: boolean;
   aspectRatio?: AspectRatio;
   outputFormat?: 'collage' | 'grid' | 'scattered';
+  /** Override the default image generation model (e.g., 'flux-pro', 'nano-banana-pro') */
+  imageModel?: string;
+  /** Override the default LLM model (e.g., 'gemini-2.5-flash', 'gemini-2.0-flash') */
+  llmModel?: string;
 }
 
 export interface ColorPaletteExtractRequest {
@@ -194,6 +198,8 @@ export interface ColorPaletteExtractRequest {
   paletteType: PaletteType;
   includeNeutrals: boolean;
   generateVariations: boolean;
+  /** Override the default LLM model for color analysis */
+  llmModel?: string;
 }
 
 export interface BrandKitRequest {
@@ -205,6 +211,10 @@ export interface BrandKitRequest {
   includePatterns: boolean;
   includeIconography: boolean;
   colorPreferences?: string[];
+  /** Override the default image generation model for brand visuals */
+  imageModel?: string;
+  /** Override the default LLM model for brand kit generation */
+  llmModel?: string;
 }
 
 export interface TypographySuggestRequest {
@@ -213,6 +223,8 @@ export interface TypographySuggestRequest {
   style: TypographyStyle;
   useCase: TypographyUseCase;
   mood?: string;
+  /** Override the default LLM model for typography suggestions */
+  llmModel?: string;
 }
 
 export interface AestheticAnalyzeRequest {
@@ -220,6 +232,8 @@ export interface AestheticAnalyzeRequest {
   analysisDepth: AnalysisDepth;
   compareToTrends: boolean;
   extractStyles: boolean;
+  /** Override the default LLM model for aesthetic analysis */
+  llmModel?: string;
 }
 
 export interface TextureGenerateRequest {
@@ -230,6 +244,8 @@ export interface TextureGenerateRequest {
   seamless: boolean;
   resolution: '512' | '1024' | '2048' | '4096';
   colorOverride?: string;
+  /** Override the default image generation model for texture creation */
+  imageModel?: string;
 }
 
 // ===== Response Interfaces =====

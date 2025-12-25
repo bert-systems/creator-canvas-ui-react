@@ -8,6 +8,7 @@ import { FashionStudio } from './components/studios/fashion';
 import { SocialStudio } from './components/studios/social';
 import { MoodboardsStudio } from './components/studios/moodboards';
 import { AppNavigation } from './components/navigation';
+import { AssetLibraryPage, InspirationGalleryPage } from './components/asset-library';
 import {
   type PersonaType,
   type WorkflowTemplate,
@@ -202,6 +203,16 @@ function AppContent() {
               onBack={() => navigate('/')}
             />
           }
+        />
+
+        {/* Asset Library & Gallery */}
+        <Route
+          path="/library"
+          element={<AssetLibraryPage />}
+        />
+        <Route
+          path="/inspiration"
+          element={<InspirationGalleryPage />}
         />
 
         {/* Fallback */}

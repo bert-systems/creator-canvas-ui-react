@@ -285,7 +285,9 @@ export const StudioShell: React.FC<StudioShellProps> = ({
           component="main"
           sx={{
             flex: 1,
-            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
             background: studioColors.ink,
           }}
         >

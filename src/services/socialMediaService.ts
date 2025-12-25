@@ -168,6 +168,10 @@ export interface SocialPostRequest {
   includeCaption: boolean;
   includeHashtags: boolean;
   hashtagCount?: number;
+  /** Override the default image generation model (e.g., 'flux-pro', 'nano-banana-pro') */
+  imageModel?: string;
+  /** Override the default LLM model (e.g., 'gemini-2.5-flash', 'gemini-2.0-flash') */
+  llmModel?: string;
 }
 
 export interface CarouselRequest {
@@ -179,6 +183,10 @@ export interface CarouselRequest {
   carouselType: CarouselType;
   visualStyle: SocialVisualStyle;
   includeCaption: boolean;
+  /** Override the default image generation model for carousel slides */
+  imageModel?: string;
+  /** Override the default LLM model for carousel content */
+  llmModel?: string;
 }
 
 export interface CaptionRequest {
@@ -192,6 +200,8 @@ export interface CaptionRequest {
   includeCTA: boolean;
   hashtagCount: number;
   hashtagStrategy?: HashtagStrategy;
+  /** Override the default LLM model for caption generation */
+  llmModel?: string;
 }
 
 export interface StoryCreateRequest {
@@ -204,6 +214,8 @@ export interface StoryCreateRequest {
   includeMusic: boolean;
   includeTextOverlays: boolean;
   musicMood?: MusicMood;
+  /** Override the default video generation model for story/reel creation */
+  videoModel?: string;
 }
 
 export interface TemplateCustomizeRequest {
@@ -213,6 +225,8 @@ export interface TemplateCustomizeRequest {
   featureImage?: string;
   platform: SocialPlatform;
   generateVariations: boolean;
+  /** Override the default image generation model for template customization */
+  imageModel?: string;
 }
 
 export interface ContentScheduleRequest {
@@ -223,6 +237,8 @@ export interface ContentScheduleRequest {
   optimizeTimings: boolean;
   timezone: string;
   audienceData?: AudienceInsights;
+  /** Override the default LLM model for content scheduling optimization */
+  llmModel?: string;
 }
 
 // ===== Response Interfaces =====

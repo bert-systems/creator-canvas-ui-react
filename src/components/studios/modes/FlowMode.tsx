@@ -80,7 +80,8 @@ export const FlowMode: React.FC<FlowModeProps> = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
+        flex: 1,
+        minHeight: 0,
         background: studioColors.ink,
       }}
     >
@@ -225,6 +226,7 @@ export const FlowMode: React.FC<FlowModeProps> = ({
       <Box
         sx={{
           flex: 1,
+          minHeight: 0,
           overflow: 'auto',
           px: 4,
           py: 4,

@@ -189,6 +189,7 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
     switch (mode) {
       case 'flow':
         return (
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
           <Box sx={{ maxWidth: 800, mx: 'auto', p: 4 }}>
             {/* Hero section with prompt bar */}
             <Box sx={{ textAlign: 'center', mb: 6 }}>
@@ -369,6 +370,7 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
                 </Box>
               )}
             </Box>
+          </Box>
           </Box>
         );
 

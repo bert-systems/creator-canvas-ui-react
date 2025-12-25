@@ -31,6 +31,8 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HistoryIcon from '@mui/icons-material/History';
 import FolderIcon from '@mui/icons-material/Folder';
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
+import ExploreIcon from '@mui/icons-material/Explore';
 import {
   studioColors,
   studioRadii,
@@ -307,6 +309,14 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
         { id: 'fashion', label: 'Fashion', icon: <CheckroomIcon />, path: '/studios/fashion' },
         { id: 'social', label: 'Social Media', icon: <ShareIcon />, path: '/studios/social' },
         { id: 'moodboards', label: 'Moodboards', icon: <ColorLensIcon />, path: '/studios/moodboards' },
+      ],
+    },
+    {
+      id: 'library',
+      label: 'Library',
+      items: [
+        { id: 'my-library', label: 'My Library', icon: <PhotoLibraryIcon />, path: '/library' },
+        { id: 'inspiration', label: 'Inspiration', icon: <ExploreIcon />, path: '/inspiration' },
       ],
     },
     {
