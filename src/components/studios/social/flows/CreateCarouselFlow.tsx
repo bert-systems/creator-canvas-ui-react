@@ -1,6 +1,11 @@
 /**
  * CreateCarouselFlow - Step-by-step carousel creation wizard
  * Steps: Topic → Slides → Generate → Review
+ *
+ * Uses parallel API calls for fast generation:
+ * 1. /api/social/carousel/plan - Get style seed + slide content (~3-5s)
+ * 2. /api/social/carousel/slide/generate - Generate all slides IN PARALLEL (~15-20s)
+ * Total: ~20-25s instead of 75-200s sequential
  */
 
 import React, { useState, useCallback } from 'react';
@@ -13,15 +18,34 @@ import {
   CircularProgress,
   Button,
   IconButton,
+  LinearProgress,
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DownloadIcon from '@mui/icons-material/Download';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { FlowMode, type FlowStep } from '../../modes/FlowMode';
-import { SurfaceCard, studioColors, studioTypography } from '../../shared';
-import { socialMediaService, type CarouselResponse, type CarouselType } from '@/services/socialMediaService';
+import { SurfaceCard, studioColors, studioTypography, studioRadii } from '../../shared';
+import {
+  socialMediaService,
+  type CarouselResponse,
+  type CarouselType,
+  type ParallelCarouselResult,
+} from '@/services/socialMediaService';
 import { downloadService } from '@/services/downloadService';
+
+// Task status for progress tracking
+type TaskStatus = 'pending' | 'running' | 'completed' | 'error';
+
+interface SlideTask {
+  slideNumber: number;
+  status: TaskStatus;
+  imageUrl?: string;
+  headline?: string;
+}
 
 // Flow step definitions
 const FLOW_STEPS: FlowStep[] = [
@@ -65,8 +89,14 @@ export const CreateCarouselFlow: React.FC<CreateCarouselFlowProps> = ({ onCancel
   const [carouselType, setCarouselType] = useState<CarouselType>('educational');
   const [visualStyle, setVisualStyle] = useState('modern');
 
+  // Progress tracking state
+  const [planningComplete, setPlanningComplete] = useState(false);
+  const [slideTasks, setSlideTasks] = useState<SlideTask[]>([]);
+  const [completedSlides, setCompletedSlides] = useState(0);
+
   // Generated result
   const [generatedCarousel, setGeneratedCarousel] = useState<CarouselResponse | null>(null);
+  const [parallelResult, setParallelResult] = useState<ParallelCarouselResult | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,24 +111,72 @@ export const CreateCarouselFlow: React.FC<CreateCarouselFlowProps> = ({ onCancel
     }
   }, [currentStep, topic, generatedCarousel]);
 
-  // Handle generation
+  // Handle parallel generation
   const handleGenerate = useCallback(async () => {
     setIsProcessing(true);
     setError(null);
+    setPlanningComplete(false);
+    setCompletedSlides(0);
+
+    // Initialize slide tasks
+    const initialTasks: SlideTask[] = Array.from({ length: slideCount }, (_, i) => ({
+      slideNumber: i + 1,
+      status: 'pending',
+    }));
+    setSlideTasks(initialTasks);
 
     try {
-      const result = await socialMediaService.generateCarousel({
-        topic,
-        platform: 'instagram',
-        slideCount,
-        carouselType,
-        visualStyle: visualStyle as 'modern' | 'minimal' | 'bold' | 'elegant' | 'playful',
-        includeCaption: true,
-      });
+      // Use parallel generation with progress callback
+      const result = await socialMediaService.generateCarouselParallel(
+        {
+          topic,
+          platform: 'instagram',
+          slideCount,
+          carouselType,
+          visualStyle: visualStyle as 'modern' | 'minimal' | 'bold' | 'elegant' | 'playful',
+          includeCaption: true,
+        },
+        // Callback when each slide completes
+        (slideNumber, slide) => {
+          setSlideTasks(prev => prev.map(t =>
+            t.slideNumber === slideNumber
+              ? { ...t, status: 'completed', imageUrl: slide.imageUrl, headline: slide.headline }
+              : t
+          ));
+          setCompletedSlides(prev => prev + 1);
+        }
+      );
 
-      setGeneratedCarousel(result);
-      setCurrentSlide(0);
-      setCurrentStep(3); // Move to review step
+      // Planning is complete once we have slides
+      setPlanningComplete(true);
+
+      // Mark any failed slides
+      if (result.errors.length > 0) {
+        setSlideTasks(prev => prev.map(t => {
+          const hasSlide = result.slides.some(s => s.slideNumber === t.slideNumber);
+          return hasSlide ? t : { ...t, status: 'error' };
+        }));
+      }
+
+      setParallelResult(result);
+
+      // Convert to CarouselResponse format for compatibility
+      if (result.slides.length > 0) {
+        setGeneratedCarousel({
+          slides: result.slides,
+          caption: result.caption,
+          coverSlide: result.slides[0]?.imageUrl || '',
+          metadata: {
+            totalSlides: result.slides.length,
+            platform: 'instagram',
+            dimensions: { width: 1080, height: 1080 },
+          },
+        });
+        setCurrentSlide(0);
+        setCurrentStep(3); // Move to review step
+      } else {
+        setError('No slides were generated. Please try again.');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate carousel');
     } finally {
@@ -301,6 +379,8 @@ export const CreateCarouselFlow: React.FC<CreateCarouselFlowProps> = ({ onCancel
         );
 
       case 2:
+        const progress = slideTasks.length > 0 ? (completedSlides / slideTasks.length) * 100 : 0;
+
         return (
           <Box
             sx={{
@@ -308,20 +388,153 @@ export const CreateCarouselFlow: React.FC<CreateCarouselFlowProps> = ({ onCancel
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              minHeight: 300,
-              gap: 3,
+              minHeight: 400,
+              gap: 4,
+              maxWidth: 700,
+              mx: 'auto',
             }}
           >
             {isProcessing ? (
               <>
-                <CircularProgress sx={{ color: studioColors.accent }} />
-                <Typography sx={{ color: studioColors.textSecondary }}>
-                  Creating {slideCount} carousel slides...
+                {/* Header */}
+                <Box sx={{ textAlign: 'center' }}>
+                  <AutoAwesomeIcon sx={{ fontSize: 48, color: studioColors.accent, mb: 2 }} />
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.lg,
+                      fontWeight: studioTypography.fontWeight.semibold,
+                      color: studioColors.textPrimary,
+                    }}
+                  >
+                    Creating Your Carousel
+                  </Typography>
+                  <Typography sx={{ color: studioColors.textSecondary, mt: 1 }}>
+                    {!planningComplete
+                      ? 'Planning content and style...'
+                      : `Generating ${slideTasks.length} slides in parallel`}
+                  </Typography>
+                </Box>
+
+                {/* Progress Bar */}
+                <Box sx={{ width: '100%' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textSecondary }}>
+                      {planningComplete ? 'Generating slides' : 'Planning'}
+                    </Typography>
+                    <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textSecondary }}>
+                      {completedSlides} / {slideTasks.length} complete
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant={planningComplete ? 'determinate' : 'indeterminate'}
+                    value={progress}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      background: studioColors.surface2,
+                      '& .MuiLinearProgress-bar': {
+                        background: studioColors.accent,
+                        borderRadius: 4,
+                      },
+                    }}
+                  />
+                </Box>
+
+                {/* Slide Grid - Live Preview */}
+                {slideTasks.length > 0 && (
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${Math.min(slideTasks.length, 5)}, 1fr)`,
+                      gap: 2,
+                      width: '100%',
+                    }}
+                  >
+                    {slideTasks.map((task) => (
+                      <Box
+                        key={task.slideNumber}
+                        sx={{
+                          position: 'relative',
+                          aspectRatio: '1/1',
+                          borderRadius: `${studioRadii.md}px`,
+                          overflow: 'hidden',
+                          background: studioColors.surface2,
+                          border: `1px solid ${studioColors.border}`,
+                        }}
+                      >
+                        {/* Status overlay or image */}
+                        {task.status === 'completed' && task.imageUrl ? (
+                          <Box
+                            component="img"
+                            src={task.imageUrl}
+                            alt={`Slide ${task.slideNumber}`}
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            {task.status === 'running' || task.status === 'pending' ? (
+                              <CircularProgress size={24} sx={{ color: studioColors.accent }} />
+                            ) : task.status === 'error' ? (
+                              <ErrorOutlineIcon sx={{ fontSize: 24, color: studioColors.error || '#f44336' }} />
+                            ) : null}
+                          </Box>
+                        )}
+
+                        {/* Slide number badge */}
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 4,
+                            left: 4,
+                            width: 20,
+                            height: 20,
+                            borderRadius: '50%',
+                            background: task.status === 'completed'
+                              ? (studioColors.success || '#4CAF50')
+                              : studioColors.surface3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {task.status === 'completed' ? (
+                            <CheckCircleIcon sx={{ fontSize: 14, color: '#fff' }} />
+                          ) : (
+                            <Typography sx={{ fontSize: 10, color: studioColors.textSecondary, fontWeight: 600 }}>
+                              {task.slideNumber}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+
+                {/* Performance note */}
+                <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textMuted, textAlign: 'center' }}>
+                  Generating all slides in parallel for faster results
                 </Typography>
               </>
             ) : error ? (
               <>
-                <Typography sx={{ color: studioColors.error }}>{error}</Typography>
+                <ErrorOutlineIcon sx={{ fontSize: 48, color: studioColors.error || '#f44336' }} />
+                <Typography sx={{ color: studioColors.error || '#f44336', textAlign: 'center' }}>
+                  {error}
+                </Typography>
                 <Button
                   onClick={handleGenerate}
                   sx={{
@@ -342,6 +555,21 @@ export const CreateCarouselFlow: React.FC<CreateCarouselFlowProps> = ({ onCancel
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 900, mx: 'auto' }}>
             {generatedCarousel && (
               <>
+                {/* Generation time badge */}
+                {parallelResult && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Chip
+                      size="small"
+                      label={`Generated in ${(parallelResult.totalTimeMs / 1000).toFixed(1)}s`}
+                      sx={{
+                        background: studioColors.surface2,
+                        color: studioColors.textSecondary,
+                        fontSize: 11,
+                      }}
+                    />
+                  </Box>
+                )}
+
                 {/* Slide viewer */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <IconButton
@@ -355,7 +583,7 @@ export const CreateCarouselFlow: React.FC<CreateCarouselFlowProps> = ({ onCancel
                     <ChevronLeftIcon />
                   </IconButton>
 
-                  <Box sx={{ flex: 1 }}>
+                  <Box sx={{ flex: 1, position: 'relative' }}>
                     <SurfaceCard sx={{ p: 0, overflow: 'hidden' }}>
                       <Box
                         sx={{

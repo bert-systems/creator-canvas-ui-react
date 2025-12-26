@@ -181,11 +181,17 @@ export const PreviewSlot = memo<PreviewSlotProps>(({
       }
       // Handle direct imageUrl
       if (typeof cachedOutput.imageUrl === 'string') return cachedOutput.imageUrl;
+      // Handle moodboard generation response { moodboard: '...' }
+      if (typeof cachedOutput.moodboard === 'string') return cachedOutput.moodboard;
+      // Handle brand kit generation response { brandKit: {...}, moodboard: '...' }
+      if (typeof cachedOutput.moodboardUrl === 'string') return cachedOutput.moodboardUrl;
       // Handle { video: '...' } or { videoUrl: '...' } format
       if (typeof cachedOutput.video === 'string') return cachedOutput.video;
       if (typeof cachedOutput.videoUrl === 'string') return cachedOutput.videoUrl;
       // Handle compositeImageUrl from multiframe responses
       if (typeof cachedOutput.compositeImageUrl === 'string') return cachedOutput.compositeImageUrl;
+      // Handle texture generation response { texture: '...' }
+      if (typeof cachedOutput.texture === 'string') return cachedOutput.texture;
     }
 
     return undefined;

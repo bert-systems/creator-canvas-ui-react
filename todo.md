@@ -1,6 +1,6 @@
 # TODO - Creative Canvas Studio
 
-**Last Updated:** December 22, 2025
+**Last Updated:** December 25, 2025
 
 ---
 
@@ -2712,6 +2712,74 @@ Implemented comprehensive Asset Library enhancements and full Marketplace system
 
 ---
 
+## API Performance Optimization - Dec 25, 2025 ✅ COMPLETED
+
+### Summary
+Implemented parallel API orchestration for moodboard and carousel generation flows, reducing generation time from 2+ minutes to ~20-30 seconds. Also fixed UI rendering issues.
+
+### Moodboard Parallel Generation
+
+#### New API Endpoints (Split from Monolithic)
+| Endpoint | Purpose | Time |
+|----------|---------|------|
+| `POST /api/moodboard/generate` | Primary moodboard image | ~15-20s |
+| `POST /api/moodboard/element/generate` | Single element (Texture, Pattern, etc.) | ~15-20s |
+| `POST /api/moodboard/analyze` | LLM theme analysis | ~5s |
+
+#### Service Updates (`src/services/moodboardService.ts`)
+- Added `MoodboardElementType` type (8 element types)
+- Added `generateElement()` for single element generation
+- Added `analyze()` for LLM theme analysis
+- Added `generateParallel()` orchestrator using Promise.all()
+
+#### Flow Updates (`CreateMoodboardFlow.tsx`)
+- Element type selection chips (Texture, Lifestyle, Product, ColorSwatch, Pattern, Atmosphere, Typography, Material)
+- Parallel generation with live progress tracking
+- Progress bar showing individual task status
+- Elements appear in grid as they complete
+
+### Carousel Parallel Generation
+
+#### New API Endpoints (Split from Monolithic)
+| Endpoint | Purpose | Time |
+|----------|---------|------|
+| `POST /api/social/carousel/plan` | LLM planning (style seed, content) | ~3-5s |
+| `POST /api/social/carousel/slide/generate` | Single slide image | ~15-20s each |
+
+#### Service Updates (`src/services/socialMediaService.ts`)
+- Added `CarouselStyleSeed`, `CarouselPlanRequest`, `CarouselSlideGenerateRequest` types
+- Added `planCarousel()` for LLM planning
+- Added `generateSlide()` for single slide generation
+- Added `generateCarouselParallel()` orchestrator with callback for live updates
+
+#### Flow Updates (`CreateCarouselFlow.tsx`)
+- Parallel slide generation with live preview grid
+- Progress bar showing planning vs generation phases
+- Slides appear in grid as they complete
+
+### Bug Fixes
+
+#### AssetCard formatCount Error (`src/components/asset-library/AssetCard.tsx`)
+- Fixed `formatCount` function failing on undefined values
+- Added null check: `if (count == null) return '0';`
+
+#### Moodboard Node Preview (`src/components/nodes/slots/PreviewSlot.tsx`)
+- Fixed moodboard images not rendering in node preview
+- Added handlers for: `moodboard`, `moodboardUrl`, `texture` fields in API response
+
+#### Brand Kit UI (`src/components/studios/moodboards/flows/CreateBrandKitFlow.tsx`)
+- Beautiful presentation UI for brand kit generation results
+- Hero moodboard section with gradient overlay
+- Color palette swatches with copy-to-clipboard
+- Typography preview with font stacks
+- Voice & tone cards
+- Usage guidelines accordion
+
+### Build Status
+✅ Build successful (47.69s)
+
+---
+
 ## Notes
 
 ### Strategy Document
@@ -2752,6 +2820,7 @@ Backend API specs for video, 3D, try-on, character APIs are documented in strate
 | Dec 11, 2025 | Phase 2 Video: VideoGenNode, VEOVideoNode, TalkingHeadNode, VideoPreviewPlayer |
 | Dec 11, 2025 | Phase 1 Foundation: FlowNode, connectionValidation, NodePalette, NodeInspector |
 | Dec 19, 2025 | **Domain-Specific Quick-Action Toolbars**: Implemented context-aware toolbars that show domain-specific quick actions based on board category. Fashion boards show Try-On, Clothes Swap, Runway Animation, Colorway, Pattern, E-commerce, Lookbook, Collection icons. Storytelling boards show Story Genesis, Character Creator, Scene, Location, Dialogue, Plot Twist, World Lore, Timeline icons. Interior boards show Room, Lighting, Materials, 3D Room icons. Stock boards show FLUX Pro/Dev, Recraft, Video, 3D, Enhance icons. Created `src/components/canvas/DomainToolbar.tsx` component integrated into top toolbar. |
+| Dec 25, 2025 | **API PARALLEL ORCHESTRATION**: Implemented parallel API orchestration for moodboard and carousel generation. Moodboard split into `/moodboard/generate`, `/moodboard/element/generate`, `/moodboard/analyze`. Carousel split into `/carousel/plan`, `/carousel/slide/generate`. Added Promise.all() orchestrators with live progress tracking. Fixed AssetCard formatCount undefined error. Fixed PreviewSlot to handle moodboard/texture URL fields. Created beautiful brand kit presentation UI. Build verified. |
 | Dec 19, 2025 | **Fashion Node Image Display Fix**: Fixed Virtual Try-On and Clothes Swap nodes not displaying generated images. Root cause: Specialized nodes (VirtualTryOnNode) use `data.resultImageUrl` property, but generic result handler only set `data.result.url`. Added `resultImageUrl` property to node data for specialized nodes. Also fixed Clothes Swap node definition - it was missing the garment image input (had text prompt instead), now aligned with Swagger v3 API schema. |
 | Dec 11, 2025 | Context init, created 4 doc artifacts |
 | Nov 2025 | Initial Creative Canvas implementation (v1.0 strategy) |
