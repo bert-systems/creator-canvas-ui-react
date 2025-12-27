@@ -622,6 +622,52 @@ export interface BranchGenerateRequest {
   format: SceneFormat;
 }
 
+// Consequence Tracking (swagger v18)
+export interface ConsequenceTrackRequest {
+  storyId: string;
+  previousChoices: { choiceId: string; pathTaken: string }[];
+  storyContext: string;
+  characters: string[];
+}
+
+export interface ConsequenceTrackResponse {
+  accumulatedConsequences: {
+    worldState: string[];
+    characterChanges: { character: string; changes: string[] }[];
+    relationshipChanges: string[];
+  };
+  narrativeMomentum: string;
+}
+
+// Path Merging (swagger v18)
+export interface PathMergeRequest {
+  storyId: string;
+  paths: { pathId: string; summary: string; keyEvents: string[] }[];
+  storyContext: string;
+  mergePoint: string;
+}
+
+export interface PathMergeResponse {
+  mergedScene: string;
+  pathVariations: { pathId: string; uniqueElements: string[] }[];
+  unifiedOutcome: string;
+}
+
+// Scene Visualization (swagger v18)
+export interface SceneVisualizeRequest {
+  scene: string;
+  characters: { name: string; description: string }[];
+  location: string;
+  style: 'cinematic' | 'illustrated' | 'concept_art' | 'storyboard';
+  aspectRatio: '16:9' | '1:1' | '9:16';
+}
+
+export interface SceneVisualizeResponse {
+  imageUrl: string;
+  prompt: string;
+  model: string;
+}
+
 export interface CharacterGenerateRequest {
   storyId?: string;
   concept: string;
@@ -1067,13 +1113,30 @@ class StoryGenerationService {
     return response.data;
   }
 
+  /**
+   * Generate a choice point with multiple path options
+   * POST /api/storytelling/branch/choice (swagger v18)
+   */
   async generateChoicePoint(request: ChoicePointRequest): Promise<ChoicePointResponse> {
-    const response = await api.post<ChoicePointResponse>('/api/storytelling/generate-choice', request);
+    const response = await api.post<ChoicePointResponse>('/api/storytelling/branch/choice', request);
     return response.data;
   }
 
-  async generateBranch(request: BranchGenerateRequest): Promise<BranchGenerateResponse> {
-    const response = await api.post<BranchGenerateResponse>('/api/storytelling/generate-branch', request);
+  /**
+   * Track accumulated consequences across choices
+   * POST /api/storytelling/branch/consequence (swagger v18)
+   */
+  async trackConsequences(request: ConsequenceTrackRequest): Promise<ConsequenceTrackResponse> {
+    const response = await api.post<ConsequenceTrackResponse>('/api/storytelling/branch/consequence', request);
+    return response.data;
+  }
+
+  /**
+   * Merge divergent paths back into single narrative
+   * POST /api/storytelling/branch/merge (swagger v18)
+   */
+  async mergePaths(request: PathMergeRequest): Promise<PathMergeResponse> {
+    const response = await api.post<PathMergeResponse>('/api/storytelling/branch/merge', request);
     return response.data;
   }
 
@@ -1084,13 +1147,21 @@ class StoryGenerationService {
     return response.data;
   }
 
+  /**
+   * Generate character voice profile with speech patterns & sample dialogue
+   * POST /api/storytelling/character/voice (swagger v18)
+   */
   async generateVoiceProfile(request: VoiceProfileRequest): Promise<VoiceProfileResponse> {
-    const response = await api.post<VoiceProfileResponse>('/api/agent/character/voice-profile', request);
+    const response = await api.post<VoiceProfileResponse>('/api/storytelling/character/voice', request);
     return response.data;
   }
 
+  /**
+   * Generate relationship dynamics between two characters
+   * POST /api/storytelling/character/relationship (swagger v18)
+   */
   async generateRelationship(request: RelationshipRequest): Promise<RelationshipResponse> {
-    const response = await api.post<RelationshipResponse>('/api/agent/character/relationship', request);
+    const response = await api.post<RelationshipResponse>('/api/storytelling/character/relationship', request);
     return response.data;
   }
 
@@ -1133,13 +1204,21 @@ class StoryGenerationService {
     return response.data;
   }
 
+  /**
+   * Generate world lore, history, cultures, factions
+   * POST /api/storytelling/world/lore (swagger v18)
+   */
   async generateLore(request: WorldLoreRequest): Promise<WorldLoreResponse> {
-    const response = await api.post<WorldLoreResponse>('/api/agent/world/generate-lore', request);
+    const response = await api.post<WorldLoreResponse>('/api/storytelling/world/lore', request);
     return response.data;
   }
 
+  /**
+   * Generate story event timeline with character arcs
+   * POST /api/storytelling/world/timeline (swagger v18)
+   */
   async generateTimeline(request: TimelineRequest): Promise<TimelineResponse> {
-    const response = await api.post<TimelineResponse>('/api/agent/world/timeline', request);
+    const response = await api.post<TimelineResponse>('/api/storytelling/world/timeline', request);
     return response.data;
   }
 
@@ -1198,6 +1277,15 @@ class StoryGenerationService {
   }
 
   // ----- Visualization -----
+
+  /**
+   * Generate scene visualization prompts
+   * POST /api/storytelling/visualize/scene (swagger v18)
+   */
+  async visualizeScene(request: SceneVisualizeRequest): Promise<SceneVisualizeResponse> {
+    const response = await api.post<SceneVisualizeResponse>('/api/storytelling/visualize/scene', request);
+    return response.data;
+  }
 
   async sceneToVisuals(request: SceneToVisualsRequest): Promise<SceneToVisualsResponse> {
     const response = await api.post<SceneToVisualsResponse>('/api/agent/prompt/scene-to-visuals', request);
@@ -1290,6 +1378,10 @@ class StoryGenerationService {
 
   // ----- Export -----
 
+  /**
+   * Export story as manuscript document
+   * POST /api/storytelling/format/manuscript (swagger v18)
+   */
   async exportManuscript(
     storyId: string,
     scenes: SceneData[],
@@ -1301,7 +1393,7 @@ class StoryGenerationService {
       contactInfo?: string;
     }
   ): Promise<{ downloadUrl: string; format: string; wordCount: number; pageCount: number }> {
-    const response = await api.post('/api/export/manuscript', {
+    const response = await api.post('/api/storytelling/format/manuscript', {
       storyId,
       scenes,
       format,
@@ -1310,6 +1402,10 @@ class StoryGenerationService {
     return response.data;
   }
 
+  /**
+   * Export story as screenplay
+   * POST /api/storytelling/format/screenplay (swagger v18)
+   */
   async exportScreenplay(
     storyId: string,
     scenes: SceneData[],
@@ -1320,7 +1416,7 @@ class StoryGenerationService {
       basedOn?: string;
     }
   ): Promise<{ downloadUrl: string; format: string; pageCount: number; estimatedRuntime: string }> {
-    const response = await api.post('/api/export/screenplay', {
+    const response = await api.post('/api/storytelling/format/screenplay', {
       storyId,
       scenes,
       format,

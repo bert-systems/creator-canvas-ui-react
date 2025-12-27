@@ -272,7 +272,7 @@ export const downloadService = {
    */
   generateFilename(
     prefix: string,
-    type: 'lookbook' | 'post' | 'carousel' | 'moodboard' | 'brandkit' | 'image',
+    type: 'lookbook' | 'post' | 'carousel' | 'moodboard' | 'brandkit' | 'image' | 'interior' | 'staging',
     options: { index?: number; addTimestamp?: boolean } = {}
   ): string {
     let filename = `${prefix}_${type}`;

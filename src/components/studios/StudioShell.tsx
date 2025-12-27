@@ -14,7 +14,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { studioColors, studioRadii, studioMotion, studioTypography } from './shared/studioTokens';
 
 export type StudioMode = 'flow' | 'workspace' | 'timeline';
-export type StudioCategory = 'fashion' | 'social' | 'moodboards';
+export type StudioCategory = 'fashion' | 'social' | 'moodboards' | 'interior' | 'storyteller';
 
 export interface StudioShellProps {
   /** Studio category */
@@ -45,6 +45,8 @@ const categoryLabels: Record<StudioCategory, string> = {
   fashion: 'Fashion Studio',
   social: 'Social Studio',
   moodboards: 'Moodboards Studio',
+  interior: 'Interior Design Studio',
+  storyteller: 'Storyteller Studio',
 };
 
 const modeConfig: Record<StudioMode, { icon: typeof ViewStreamIcon; label: string; tooltip: string }> = {

@@ -102,6 +102,43 @@ const PERSONALITIES: { id: BrandPersonality; label: string; description: string 
   { id: 'vintage', label: 'Vintage', description: 'Classic and timeless' },
 ];
 
+// Color preferences
+const COLOR_PREFERENCES = [
+  { id: 'warm', label: 'Warm Tones', colors: ['#E17055', '#FDCB6E', '#FAB1A0'], description: 'Inviting, friendly' },
+  { id: 'cool', label: 'Cool Tones', colors: ['#74B9FF', '#81ECEC', '#A29BFE'], description: 'Calm, professional' },
+  { id: 'neutral', label: 'Neutral', colors: ['#636E72', '#B2BEC3', '#DFE6E9'], description: 'Versatile, balanced' },
+  { id: 'vibrant', label: 'Vibrant', colors: ['#FF6B6B', '#4ECDC4', '#FFE66D'], description: 'Energetic, bold' },
+  { id: 'earth', label: 'Earth Tones', colors: ['#8D6E63', '#A1887F', '#5D4037'], description: 'Natural, organic' },
+  { id: 'monochrome', label: 'Monochrome', colors: ['#2D3436', '#636E72', '#B2BEC3'], description: 'Sophisticated, clean' },
+];
+
+// Typography style preferences
+const TYPOGRAPHY_STYLES = [
+  { id: 'modern-sans', label: 'Modern Sans', description: 'Clean, contemporary' },
+  { id: 'classic-serif', label: 'Classic Serif', description: 'Elegant, traditional' },
+  { id: 'geometric', label: 'Geometric', description: 'Bold, architectural' },
+  { id: 'humanist', label: 'Humanist', description: 'Friendly, approachable' },
+  { id: 'display', label: 'Display', description: 'Unique, statement' },
+  { id: 'mixed', label: 'Mixed Pairing', description: 'Serif + Sans combo' },
+];
+
+// Visual weight
+const VISUAL_WEIGHTS = [
+  { id: 'light', label: 'Light & Airy', description: 'Minimal, breathing room' },
+  { id: 'balanced', label: 'Balanced', description: 'Even visual weight' },
+  { id: 'bold', label: 'Bold & Dense', description: 'Strong presence' },
+];
+
+// Design era influences
+const DESIGN_ERAS = [
+  { id: 'contemporary', label: 'Contemporary', description: '2020s design trends' },
+  { id: 'midcentury', label: 'Mid-Century', description: '1950s-60s inspired' },
+  { id: 'artdeco', label: 'Art Deco', description: '1920s glamour' },
+  { id: 'minimalist', label: 'Minimalist', description: 'Less is more' },
+  { id: 'maximalist', label: 'Maximalist', description: 'Bold and expressive' },
+  { id: 'scandinavian', label: 'Scandinavian', description: 'Nordic simplicity' },
+];
+
 interface CreateBrandKitFlowProps {
   onCancel: () => void;
   onComplete: (result: BrandKit) => void;
@@ -117,6 +154,10 @@ export const CreateBrandKitFlow: React.FC<CreateBrandKitFlowProps> = ({ onCancel
   const [industry, setIndustry] = useState<IndustryType>('creative');
   const [personality, setPersonality] = useState<BrandPersonality>('modern');
   const [targetAudience, setTargetAudience] = useState('');
+  const [colorPreference, setColorPreference] = useState('neutral');
+  const [typographyStyle, setTypographyStyle] = useState('modern-sans');
+  const [visualWeight, setVisualWeight] = useState('balanced');
+  const [designEra, setDesignEra] = useState('contemporary');
 
   // Generated result - includes full API response for moodboard URL
   const [generatedKit, setGeneratedKit] = useState<BrandKit | null>(null);
@@ -310,83 +351,315 @@ export const CreateBrandKitFlow: React.FC<CreateBrandKitFlowProps> = ({ onCancel
 
       case 1:
         return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 700, mx: 'auto' }}>
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: studioTypography.fontSize.sm,
-                  fontWeight: studioTypography.fontWeight.medium,
-                  color: studioColors.textSecondary,
-                  mb: 2,
-                }}
-              >
-                Brand Personality
-              </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5 }}>
-                {PERSONALITIES.map((p) => (
-                  <SurfaceCard
-                    key={p.id}
-                    onClick={() => setPersonality(p.id)}
-                    interactive
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 950, mx: 'auto' }}>
+            {/* Two-column layout */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+              {/* Left Column */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Brand Personality */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
                     sx={{
-                      p: 2,
-                      border: personality === p.id
-                        ? `2px solid ${studioColors.accent}`
-                        : `1px solid ${studioColors.border}`,
-                      background: personality === p.id ? studioColors.surface2 : studioColors.surface1,
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 2,
                     }}
                   >
-                    <Typography
-                      sx={{
-                        fontSize: studioTypography.fontSize.sm,
-                        fontWeight: studioTypography.fontWeight.medium,
+                    Brand Personality
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {PERSONALITIES.map((p) => (
+                      <Box
+                        key={p.id}
+                        onClick={() => setPersonality(p.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: `${studioRadii.sm}px`,
+                          border: personality === p.id
+                            ? `2px solid ${studioColors.accent}`
+                            : `1px solid ${studioColors.border}`,
+                          background: personality === p.id ? studioColors.accent : studioColors.surface2,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            background: personality === p.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.sm,
+                            fontWeight: studioTypography.fontWeight.medium,
+                            color: personality === p.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          }}
+                        >
+                          {p.label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            color: personality === p.id ? 'rgba(255,255,255,0.7)' : studioColors.textMuted,
+                          }}
+                        >
+                          {p.description}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Color Preference */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Color Preference
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {COLOR_PREFERENCES.map((color) => (
+                      <Box
+                        key={color.id}
+                        onClick={() => setColorPreference(color.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: `${studioRadii.sm}px`,
+                          background: colorPreference === color.id ? studioColors.surface3 : studioColors.surface2,
+                          border: `2px solid ${colorPreference === color.id ? studioColors.accent : 'transparent'}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
+                          {color.colors.map((c, i) => (
+                            <Box
+                              key={i}
+                              sx={{
+                                width: 18,
+                                height: 18,
+                                borderRadius: '4px',
+                                background: c,
+                                border: '1px solid rgba(255,255,255,0.2)',
+                              }}
+                            />
+                          ))}
+                        </Box>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            fontWeight: studioTypography.fontWeight.medium,
+                            color: studioColors.textPrimary,
+                          }}
+                        >
+                          {color.label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: 10,
+                            color: studioColors.textMuted,
+                          }}
+                        >
+                          {color.description}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Target Audience */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1,
+                    }}
+                  >
+                    Target Audience (optional)
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    placeholder="e.g., Young professionals aged 25-40 interested in sustainability"
+                    value={targetAudience}
+                    onChange={(e) => setTargetAudience(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        background: studioColors.surface2,
                         color: studioColors.textPrimary,
-                      }}
-                    >
-                      {p.label}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: studioTypography.fontSize.xs,
-                        color: studioColors.textTertiary,
-                        mt: 0.5,
-                      }}
-                    >
-                      {p.description}
-                    </Typography>
-                  </SurfaceCard>
-                ))}
+                        '& fieldset': { borderColor: studioColors.border },
+                        '&:hover fieldset': { borderColor: studioColors.borderHover },
+                        '&.Mui-focused fieldset': { borderColor: studioColors.accent },
+                      },
+                      '& .MuiInputBase-input::placeholder': { color: studioColors.textMuted },
+                    }}
+                  />
+                </SurfaceCard>
+              </Box>
+
+              {/* Right Column */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Typography Style */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Typography Style
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {TYPOGRAPHY_STYLES.map((typo) => (
+                      <Box
+                        key={typo.id}
+                        onClick={() => setTypographyStyle(typo.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: `${studioRadii.sm}px`,
+                          background: typographyStyle === typo.id ? studioColors.accent : studioColors.surface2,
+                          border: `1px solid ${typographyStyle === typo.id ? studioColors.accent : studioColors.border}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            background: typographyStyle === typo.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.sm,
+                            fontWeight: studioTypography.fontWeight.medium,
+                            color: typographyStyle === typo.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          }}
+                        >
+                          {typo.label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            color: typographyStyle === typo.id ? 'rgba(255,255,255,0.7)' : studioColors.textMuted,
+                          }}
+                        >
+                          {typo.description}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Visual Weight */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Visual Weight
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {VISUAL_WEIGHTS.map((weight) => (
+                      <Chip
+                        key={weight.id}
+                        label={weight.label}
+                        onClick={() => setVisualWeight(weight.id)}
+                        sx={{
+                          background: visualWeight === weight.id ? studioColors.accent : studioColors.surface2,
+                          color: visualWeight === weight.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          border: `1px solid ${visualWeight === weight.id ? studioColors.accent : studioColors.border}`,
+                          '&:hover': {
+                            background: visualWeight === weight.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Design Era */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Design Era / Influence
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {DESIGN_ERAS.map((era) => (
+                      <Box
+                        key={era.id}
+                        onClick={() => setDesignEra(era.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: `${studioRadii.sm}px`,
+                          background: designEra === era.id ? studioColors.accent : studioColors.surface2,
+                          border: `1px solid ${designEra === era.id ? studioColors.accent : studioColors.border}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            background: designEra === era.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.sm,
+                            fontWeight: studioTypography.fontWeight.medium,
+                            color: designEra === era.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          }}
+                        >
+                          {era.label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            color: designEra === era.id ? 'rgba(255,255,255,0.7)' : studioColors.textMuted,
+                          }}
+                        >
+                          {era.description}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </SurfaceCard>
               </Box>
             </Box>
 
-            <Box>
+            {/* Summary Card */}
+            <SurfaceCard sx={{ p: 2.5, background: studioColors.surface2 }}>
               <Typography
                 sx={{
-                  fontSize: studioTypography.fontSize.sm,
-                  fontWeight: studioTypography.fontWeight.medium,
-                  color: studioColors.textSecondary,
-                  mb: 1,
+                  fontSize: studioTypography.fontSize.xs,
+                  fontWeight: studioTypography.fontWeight.semibold,
+                  color: studioColors.textTertiary,
+                  textTransform: 'uppercase',
+                  mb: 1.5,
                 }}
               >
-                Target Audience (optional)
+                Brand Summary
               </Typography>
-              <TextField
-                fullWidth
-                placeholder="e.g., Young professionals aged 25-40 interested in sustainability"
-                value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value)}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    background: studioColors.surface2,
-                    color: studioColors.textPrimary,
-                    '& fieldset': { borderColor: studioColors.border },
-                    '&:hover fieldset': { borderColor: studioColors.borderHover },
-                    '&.Mui-focused fieldset': { borderColor: studioColors.accent },
-                  },
-                  '& .MuiInputBase-input::placeholder': { color: studioColors.textMuted },
-                }}
-              />
-            </Box>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                <Chip size="small" label={PERSONALITIES.find(p => p.id === personality)?.label} sx={{ background: studioColors.accent, color: '#fff', fontSize: 11 }} />
+                <Chip size="small" label={COLOR_PREFERENCES.find(c => c.id === colorPreference)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={TYPOGRAPHY_STYLES.find(t => t.id === typographyStyle)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={VISUAL_WEIGHTS.find(w => w.id === visualWeight)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={DESIGN_ERAS.find(e => e.id === designEra)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+              </Box>
+            </SurfaceCard>
           </Box>
         );
 

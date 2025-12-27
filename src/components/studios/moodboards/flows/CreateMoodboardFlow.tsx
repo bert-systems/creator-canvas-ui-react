@@ -68,6 +68,43 @@ const MOOD_TONES: { id: MoodTone; label: string }[] = [
   { id: 'serene', label: 'Serene' },
 ];
 
+// Color palette preferences
+const COLOR_PALETTES = [
+  { id: 'neutral', label: 'Neutral', colors: ['#F5F5F4', '#D6D3D1', '#78716C'], description: 'Timeless earth tones' },
+  { id: 'pastel', label: 'Pastel', colors: ['#F8BBD9', '#B3E5FC', '#DCEDC8'], description: 'Soft, gentle hues' },
+  { id: 'bold', label: 'Bold', colors: ['#FF5722', '#2196F3', '#FFEB3B'], description: 'Strong, vibrant colors' },
+  { id: 'monochrome', label: 'Monochrome', colors: ['#212121', '#616161', '#BDBDBD'], description: 'Single color family' },
+  { id: 'earthy', label: 'Earthy', colors: ['#8D6E63', '#A1887F', '#BCAAA4'], description: 'Natural, organic tones' },
+  { id: 'jewel', label: 'Jewel Tones', colors: ['#7B1FA2', '#00897B', '#C62828'], description: 'Rich, saturated' },
+];
+
+// Texture emphasis
+const TEXTURE_OPTIONS = [
+  { id: 'smooth', label: 'Smooth', description: 'Clean, polished surfaces' },
+  { id: 'organic', label: 'Organic', description: 'Natural textures like wood, stone' },
+  { id: 'woven', label: 'Woven', description: 'Fabrics, textiles, fibers' },
+  { id: 'rough', label: 'Rough', description: 'Raw, unfinished materials' },
+  { id: 'layered', label: 'Layered', description: 'Mixed texture complexity' },
+];
+
+// Image composition styles
+const COMPOSITION_STYLES = [
+  { id: 'flat-lay', label: 'Flat Lay', description: 'Top-down arrangement' },
+  { id: 'styled-vignette', label: 'Styled Vignette', description: 'Curated scene arrangement' },
+  { id: 'abstract', label: 'Abstract', description: 'Artistic, non-literal' },
+  { id: 'lifestyle', label: 'Lifestyle', description: 'In-context scenes' },
+  { id: 'close-up', label: 'Close-up Details', description: 'Macro texture focus' },
+];
+
+// Lighting preferences
+const LIGHTING_OPTIONS = [
+  { id: 'natural', label: 'Natural Light', description: 'Soft, window-lit' },
+  { id: 'golden-hour', label: 'Golden Hour', description: 'Warm, sunset glow' },
+  { id: 'bright', label: 'Bright & Clean', description: 'High-key lighting' },
+  { id: 'moody', label: 'Moody Shadows', description: 'Dramatic contrast' },
+  { id: 'studio', label: 'Studio', description: 'Controlled, even' },
+];
+
 // Element types for parallel generation
 const ELEMENT_TYPES: { id: MoodboardElementType; label: string; description: string }[] = [
   { id: 'Texture', label: 'Texture', description: 'Close-up texture details' },
@@ -122,6 +159,10 @@ export const CreateMoodboardFlow: React.FC<CreateMoodboardFlowProps> = ({ onCanc
   const [style, setStyle] = useState<MoodboardStyle>('collage');
   const [tone, setTone] = useState<MoodTone>('balanced');
   const [selectedElements, setSelectedElements] = useState<MoodboardElementType[]>(DEFAULT_ELEMENTS);
+  const [colorPalette, setColorPalette] = useState('neutral');
+  const [textureEmphasis, setTextureEmphasis] = useState('organic');
+  const [compositionStyle, setCompositionStyle] = useState('styled-vignette');
+  const [lightingPreference, setLightingPreference] = useState('natural');
 
   // Generation progress tracking
   const [tasks, setTasks] = useState<GenerationTask[]>([]);
@@ -391,165 +432,344 @@ export const CreateMoodboardFlow: React.FC<CreateMoodboardFlowProps> = ({ onCanc
 
       case 1:
         return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 800, mx: 'auto' }}>
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: studioTypography.fontSize.sm,
-                  fontWeight: studioTypography.fontWeight.medium,
-                  color: studioColors.textSecondary,
-                  mb: 2,
-                }}
-              >
-                Layout Style
-              </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5 }}>
-                {MOODBOARD_STYLES.map((s) => (
-                  <SurfaceCard
-                    key={s.id}
-                    onClick={() => setStyle(s.id)}
-                    interactive
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 950, mx: 'auto' }}>
+            {/* Two-column layout */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+              {/* Left Column */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Layout Style */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
                     sx={{
-                      p: 2,
-                      textAlign: 'center',
-                      border: style === s.id
-                        ? `2px solid ${studioColors.accent}`
-                        : `1px solid ${studioColors.border}`,
-                      background: style === s.id ? studioColors.surface2 : studioColors.surface1,
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 2,
                     }}
                   >
-                    <Typography
-                      sx={{
-                        fontSize: studioTypography.fontSize.sm,
-                        fontWeight: studioTypography.fontWeight.medium,
-                        color: studioColors.textPrimary,
-                      }}
-                    >
-                      {s.label}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: studioTypography.fontSize.xs,
-                        color: studioColors.textTertiary,
-                        mt: 0.5,
-                      }}
-                    >
-                      {s.description}
-                    </Typography>
-                  </SurfaceCard>
-                ))}
-              </Box>
-            </Box>
-
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: studioTypography.fontSize.sm,
-                  fontWeight: studioTypography.fontWeight.medium,
-                  color: studioColors.textSecondary,
-                  mb: 1.5,
-                }}
-              >
-                Mood Tone
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {MOOD_TONES.map((t) => (
-                  <Chip
-                    key={t.id}
-                    label={t.label}
-                    onClick={() => setTone(t.id)}
-                    sx={{
-                      background: tone === t.id ? studioColors.accent : studioColors.surface2,
-                      color: tone === t.id ? studioColors.textPrimary : studioColors.textSecondary,
-                      border: `1px solid ${tone === t.id ? studioColors.accent : studioColors.border}`,
-                      '&:hover': {
-                        background: tone === t.id ? studioColors.accentMuted : studioColors.surface3,
-                      },
-                    }}
-                  />
-                ))}
-              </Box>
-            </Box>
-
-            {/* Element Types Selection */}
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                <Typography
-                  sx={{
-                    fontSize: studioTypography.fontSize.sm,
-                    fontWeight: studioTypography.fontWeight.medium,
-                    color: studioColors.textSecondary,
-                  }}
-                >
-                  Elements to Generate
-                </Typography>
-                <Chip
-                  size="small"
-                  label={`${selectedElements.length} selected`}
-                  sx={{
-                    background: studioColors.accent,
-                    color: studioColors.textPrimary,
-                    height: 20,
-                    fontSize: 11,
-                  }}
-                />
-              </Box>
-              <Typography
-                sx={{
-                  fontSize: studioTypography.fontSize.xs,
-                  color: studioColors.textTertiary,
-                  mb: 2,
-                }}
-              >
-                Select which supporting elements to generate in parallel (~20-30s total)
-              </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5 }}>
-                {ELEMENT_TYPES.map((el) => {
-                  const isSelected = selectedElements.includes(el.id);
-                  return (
-                    <SurfaceCard
-                      key={el.id}
-                      onClick={() => toggleElement(el.id)}
-                      interactive
-                      sx={{
-                        p: 2,
-                        textAlign: 'center',
-                        border: isSelected
-                          ? `2px solid ${studioColors.accent}`
-                          : `1px solid ${studioColors.border}`,
-                        background: isSelected ? studioColors.surface2 : studioColors.surface1,
-                        opacity: isSelected ? 1 : 0.7,
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                        {isSelected && (
-                          <CheckCircleIcon sx={{ fontSize: 16, color: studioColors.accent }} />
-                        )}
+                    Layout Style
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {MOODBOARD_STYLES.map((s) => (
+                      <Box
+                        key={s.id}
+                        onClick={() => setStyle(s.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: `${studioRadii.sm}px`,
+                          textAlign: 'center',
+                          border: style === s.id
+                            ? `2px solid ${studioColors.accent}`
+                            : `1px solid ${studioColors.border}`,
+                          background: style === s.id ? studioColors.accent : studioColors.surface2,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            background: style === s.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      >
                         <Typography
                           sx={{
                             fontSize: studioTypography.fontSize.sm,
                             fontWeight: studioTypography.fontWeight.medium,
+                            color: style === s.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          }}
+                        >
+                          {s.label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            color: style === s.id ? 'rgba(255,255,255,0.7)' : studioColors.textMuted,
+                          }}
+                        >
+                          {s.description}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Color Palette */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Color Palette
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {COLOR_PALETTES.map((palette) => (
+                      <Box
+                        key={palette.id}
+                        onClick={() => setColorPalette(palette.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: `${studioRadii.sm}px`,
+                          background: colorPalette === palette.id ? studioColors.surface3 : studioColors.surface2,
+                          border: `2px solid ${colorPalette === palette.id ? studioColors.accent : 'transparent'}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
+                          {palette.colors.map((color, i) => (
+                            <Box
+                              key={i}
+                              sx={{
+                                width: 18,
+                                height: 18,
+                                borderRadius: '4px',
+                                background: color,
+                                border: '1px solid rgba(255,255,255,0.2)',
+                              }}
+                            />
+                          ))}
+                        </Box>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            fontWeight: studioTypography.fontWeight.medium,
                             color: studioColors.textPrimary,
                           }}
                         >
-                          {el.label}
+                          {palette.label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: 10,
+                            color: studioColors.textMuted,
+                          }}
+                        >
+                          {palette.description}
                         </Typography>
                       </Box>
-                      <Typography
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Mood Tone */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Mood Tone
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    {MOOD_TONES.map((t) => (
+                      <Chip
+                        key={t.id}
+                        label={t.label}
+                        size="small"
+                        onClick={() => setTone(t.id)}
                         sx={{
-                          fontSize: studioTypography.fontSize.xs,
-                          color: studioColors.textTertiary,
-                          mt: 0.5,
+                          background: tone === t.id ? studioColors.accent : studioColors.surface2,
+                          color: tone === t.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          border: `1px solid ${tone === t.id ? studioColors.accent : studioColors.border}`,
+                          fontSize: 11,
+                          '&:hover': {
+                            background: tone === t.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
                         }}
-                      >
-                        {el.description}
-                      </Typography>
-                    </SurfaceCard>
-                  );
-                })}
+                      />
+                    ))}
+                  </Box>
+                </SurfaceCard>
+              </Box>
+
+              {/* Right Column */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Texture Emphasis */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Texture Emphasis
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {TEXTURE_OPTIONS.map((tex) => (
+                      <Chip
+                        key={tex.id}
+                        label={tex.label}
+                        onClick={() => setTextureEmphasis(tex.id)}
+                        sx={{
+                          background: textureEmphasis === tex.id ? studioColors.accent : studioColors.surface2,
+                          color: textureEmphasis === tex.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          border: `1px solid ${textureEmphasis === tex.id ? studioColors.accent : studioColors.border}`,
+                          '&:hover': {
+                            background: textureEmphasis === tex.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Composition Style */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Composition Style
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {COMPOSITION_STYLES.map((comp) => (
+                      <Chip
+                        key={comp.id}
+                        label={comp.label}
+                        onClick={() => setCompositionStyle(comp.id)}
+                        sx={{
+                          background: compositionStyle === comp.id ? studioColors.accent : studioColors.surface2,
+                          color: compositionStyle === comp.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          border: `1px solid ${compositionStyle === comp.id ? studioColors.accent : studioColors.border}`,
+                          '&:hover': {
+                            background: compositionStyle === comp.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Lighting Preference */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Lighting Preference
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {LIGHTING_OPTIONS.map((light) => (
+                      <Chip
+                        key={light.id}
+                        label={light.label}
+                        onClick={() => setLightingPreference(light.id)}
+                        sx={{
+                          background: lightingPreference === light.id ? studioColors.accent : studioColors.surface2,
+                          color: lightingPreference === light.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          border: `1px solid ${lightingPreference === light.id ? studioColors.accent : studioColors.border}`,
+                          '&:hover': {
+                            background: lightingPreference === light.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Element Types Selection */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <Typography
+                      sx={{
+                        fontSize: studioTypography.fontSize.sm,
+                        fontWeight: studioTypography.fontWeight.medium,
+                        color: studioColors.textSecondary,
+                      }}
+                    >
+                      Elements to Generate
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label={`${selectedElements.length} selected`}
+                      sx={{
+                        background: studioColors.accent,
+                        color: studioColors.textPrimary,
+                        height: 20,
+                        fontSize: 11,
+                      }}
+                    />
+                  </Box>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {ELEMENT_TYPES.map((el) => {
+                      const isSelected = selectedElements.includes(el.id);
+                      return (
+                        <Box
+                          key={el.id}
+                          onClick={() => toggleElement(el.id)}
+                          sx={{
+                            p: 1.5,
+                            borderRadius: `${studioRadii.sm}px`,
+                            textAlign: 'center',
+                            border: isSelected
+                              ? `2px solid ${studioColors.accent}`
+                              : `1px solid ${studioColors.border}`,
+                            background: isSelected ? studioColors.surface3 : studioColors.surface2,
+                            opacity: isSelected ? 1 : 0.7,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                            {isSelected && (
+                              <CheckCircleIcon sx={{ fontSize: 14, color: studioColors.accent }} />
+                            )}
+                            <Typography
+                              sx={{
+                                fontSize: studioTypography.fontSize.xs,
+                                fontWeight: studioTypography.fontWeight.medium,
+                                color: studioColors.textPrimary,
+                              }}
+                            >
+                              {el.label}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </SurfaceCard>
               </Box>
             </Box>
+
+            {/* Summary Card */}
+            <SurfaceCard sx={{ p: 2.5, background: studioColors.surface2 }}>
+              <Typography
+                sx={{
+                  fontSize: studioTypography.fontSize.xs,
+                  fontWeight: studioTypography.fontWeight.semibold,
+                  color: studioColors.textTertiary,
+                  textTransform: 'uppercase',
+                  mb: 1.5,
+                }}
+              >
+                Summary
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                <Chip size="small" label={MOODBOARD_STYLES.find(s => s.id === style)?.label} sx={{ background: studioColors.accent, color: '#fff', fontSize: 11 }} />
+                <Chip size="small" label={COLOR_PALETTES.find(p => p.id === colorPalette)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={MOOD_TONES.find(t => t.id === tone)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={TEXTURE_OPTIONS.find(t => t.id === textureEmphasis)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={COMPOSITION_STYLES.find(c => c.id === compositionStyle)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={LIGHTING_OPTIONS.find(l => l.id === lightingPreference)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={`${selectedElements.length} Elements`} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+              </Box>
+            </SurfaceCard>
           </Box>
         );
 

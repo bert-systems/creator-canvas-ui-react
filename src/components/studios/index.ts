@@ -32,3 +32,9 @@ export { SocialStudio } from './social/SocialStudio';
 
 // Moodboards Studio
 export { MoodboardsStudio } from './moodboards/MoodboardsStudio';
+
+// Interior Design Studio
+export { InteriorDesignStudio } from './interior/InteriorDesignStudio';
+
+// Storyteller Studio
+export { StorytellerStudio } from './storyteller/StorytellerStudio';

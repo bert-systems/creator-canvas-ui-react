@@ -7,6 +7,8 @@ import { PersonaSelector, WorkflowSelector } from './components/onboarding';
 import { FashionStudio } from './components/studios/fashion';
 import { SocialStudio } from './components/studios/social';
 import { MoodboardsStudio } from './components/studios/moodboards';
+import { InteriorDesignStudio } from './components/studios/interior';
+import { StorytellerStudio } from './components/studios/storyteller';
 import { AppNavigation } from './components/navigation';
 import { AssetLibraryPage, InspirationGalleryPage } from './components/asset-library';
 import {
@@ -200,6 +202,22 @@ function AppContent() {
           path="/studios/moodboards/*"
           element={
             <MoodboardsStudio
+              onBack={() => navigate('/')}
+            />
+          }
+        />
+        <Route
+          path="/studios/interior/*"
+          element={
+            <InteriorDesignStudio
+              onBack={() => navigate('/')}
+            />
+          }
+        />
+        <Route
+          path="/studios/storyteller/*"
+          element={
+            <StorytellerStudio
               onBack={() => navigate('/')}
             />
           }

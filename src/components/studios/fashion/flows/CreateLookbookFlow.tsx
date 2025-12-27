@@ -32,6 +32,13 @@ interface LookbookConfig {
   lookCount: number;
   colorPalette: string[];
   modelDiversity: boolean;
+  // Enhanced customization options
+  photographyStyle: string;
+  modelType: string;
+  setting: string;
+  season: string;
+  occasions: string[];
+  lighting: string;
 }
 
 interface GeneratedLook {
@@ -67,6 +74,68 @@ const colorPaletteOptions = [
   { id: 'pastels', label: 'Soft Pastels', colors: ['#E8D5D5', '#D5E8E8', '#E8E5D5', '#D5D5E8'] },
   { id: 'bold', label: 'Bold & Vibrant', colors: ['#E63946', '#2A9D8F', '#E9C46A', '#264653'] },
   { id: 'neutral', label: 'Neutral Palette', colors: ['#F5F5F5', '#E0E0E0', '#9E9E9E', '#424242'] },
+  { id: 'jewel', label: 'Jewel Tones', colors: ['#50C878', '#4169E1', '#9400D3', '#DC143C'] },
+  { id: 'muted', label: 'Muted Tones', colors: ['#8B8589', '#B5B0AC', '#A49E9A', '#C4BFC0'] },
+];
+
+// Photography styles
+const photographyStyles = [
+  { id: 'editorial', label: 'Editorial', description: 'High fashion magazine' },
+  { id: 'commercial', label: 'Commercial', description: 'Clean product focus' },
+  { id: 'lifestyle', label: 'Lifestyle', description: 'Natural, in-context' },
+  { id: 'street', label: 'Street Style', description: 'Urban, candid' },
+  { id: 'studio', label: 'Studio', description: 'Controlled lighting' },
+  { id: 'runway', label: 'Runway', description: 'Fashion show style' },
+];
+
+// Model types
+const modelTypes = [
+  { id: 'diverse', label: 'Diverse', description: 'Mixed representation' },
+  { id: 'female', label: 'Female', description: 'Women\'s fashion' },
+  { id: 'male', label: 'Male', description: 'Men\'s fashion' },
+  { id: 'androgynous', label: 'Androgynous', description: 'Gender-fluid' },
+  { id: 'plus', label: 'Plus Size', description: 'Size-inclusive' },
+  { id: 'mature', label: 'Mature', description: '40+ models' },
+];
+
+// Settings/Backdrops
+const settingOptions = [
+  { id: 'studio-white', label: 'White Studio' },
+  { id: 'studio-colored', label: 'Colored Backdrop' },
+  { id: 'urban', label: 'Urban/City' },
+  { id: 'nature', label: 'Nature/Outdoor' },
+  { id: 'interior', label: 'Interior/Home' },
+  { id: 'industrial', label: 'Industrial' },
+  { id: 'beach', label: 'Beach/Coastal' },
+  { id: 'abstract', label: 'Abstract/Artistic' },
+];
+
+// Seasons
+const seasonOptions = [
+  { id: 'spring', label: 'Spring/Summer' },
+  { id: 'fall', label: 'Fall/Winter' },
+  { id: 'resort', label: 'Resort/Cruise' },
+  { id: 'transitional', label: 'Transitional' },
+];
+
+// Occasions
+const occasionOptions = [
+  { id: 'casual', label: 'Casual' },
+  { id: 'formal', label: 'Formal' },
+  { id: 'business', label: 'Business' },
+  { id: 'evening', label: 'Evening/Event' },
+  { id: 'active', label: 'Activewear' },
+  { id: 'lounge', label: 'Loungewear' },
+];
+
+// Lighting styles
+const lightingOptions = [
+  { id: 'natural', label: 'Natural Light', icon: '☀️' },
+  { id: 'soft', label: 'Soft/Diffused', icon: '💡' },
+  { id: 'dramatic', label: 'Dramatic', icon: '🎭' },
+  { id: 'golden', label: 'Golden Hour', icon: '🌅' },
+  { id: 'flash', label: 'Flash/High Key', icon: '⚡' },
+  { id: 'moody', label: 'Moody/Low Key', icon: '🌙' },
 ];
 
 // Step 1: Concept
@@ -167,168 +236,319 @@ const ConceptStep: React.FC<{
   </Box>
 );
 
-// Step 2: Style
+// Step 2: Style - Enhanced with more customization options
 const StyleStep: React.FC<{
   aesthetic: string;
   colorPalette: string[];
   lookCount: number;
+  photographyStyle: string;
+  modelType: string;
+  setting: string;
+  season: string;
+  occasions: string[];
+  lighting: string;
   onAestheticChange: (aesthetic: string) => void;
   onColorPaletteChange: (colors: string[]) => void;
   onLookCountChange: (count: number) => void;
+  onPhotographyStyleChange: (style: string) => void;
+  onModelTypeChange: (type: string) => void;
+  onSettingChange: (setting: string) => void;
+  onSeasonChange: (season: string) => void;
+  onOccasionsChange: (occasions: string[]) => void;
+  onLightingChange: (lighting: string) => void;
 }> = ({
   aesthetic,
   colorPalette,
   lookCount,
+  photographyStyle,
+  modelType,
+  setting,
+  season,
+  occasions,
+  lighting,
   onAestheticChange,
   onColorPaletteChange,
   onLookCountChange,
+  onPhotographyStyleChange,
+  onModelTypeChange,
+  onSettingChange,
+  onSeasonChange,
+  onOccasionsChange,
+  onLightingChange,
 }) => (
-  <Box sx={{ maxWidth: 700, mx: 'auto' }}>
-    {/* Aesthetic selection */}
-    <Box sx={{ mb: 4 }}>
-      <Typography
-        sx={{
-          fontSize: studioTypography.fontSize.md,
-          fontWeight: studioTypography.fontWeight.medium,
-          color: studioColors.textPrimary,
-          mb: 2,
-        }}
-      >
-        Choose your aesthetic
-      </Typography>
-      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-        {aestheticOptions.map((option) => (
-          <SurfaceCard
-            key={option.id}
-            interactive
-            selected={aesthetic === option.id}
-            padding="md"
-            onClick={() => onAestheticChange(option.id)}
-            sx={{ flex: '1 1 calc(33.333% - 12px)', minWidth: 150 }}
-          >
-            <Typography
-              sx={{
-                fontSize: studioTypography.fontSize.md,
-                fontWeight: studioTypography.fontWeight.semibold,
-                color: aesthetic === option.id ? studioColors.textPrimary : studioColors.textSecondary,
-                mb: 0.5,
-              }}
-            >
-              {option.label}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: studioTypography.fontSize.sm,
-                color: studioColors.textTertiary,
-              }}
-            >
-              {option.description}
-            </Typography>
-          </SurfaceCard>
-        ))}
-      </Box>
-    </Box>
-
-    {/* Color palette selection */}
-    <Box sx={{ mb: 4 }}>
-      <Typography
-        sx={{
-          fontSize: studioTypography.fontSize.md,
-          fontWeight: studioTypography.fontWeight.medium,
-          color: studioColors.textPrimary,
-          mb: 2,
-        }}
-      >
-        Color palette
-      </Typography>
-      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-        {colorPaletteOptions.map((palette) => {
-          const isSelected = JSON.stringify(colorPalette) === JSON.stringify(palette.colors);
-          return (
-            <SurfaceCard
-              key={palette.id}
-              interactive
-              selected={isSelected}
-              padding="sm"
-              onClick={() => onColorPaletteChange(palette.colors)}
-              sx={{ flex: '1 1 calc(20% - 12px)', minWidth: 120 }}
-            >
-              <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
-                {palette.colors.map((color, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: 4,
-                      background: color,
-                      border: `1px solid ${studioColors.border}`,
-                    }}
-                  />
-                ))}
-              </Box>
-              <Typography
+  <Box sx={{ maxWidth: 1000, mx: 'auto', pb: 4 }}>
+    {/* Two-column layout */}
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+      {/* Left column */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {/* Aesthetic selection */}
+        <SurfaceCard sx={{ p: 2 }}>
+          <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textSecondary, mb: 1.5 }}>
+            Aesthetic
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+            {aestheticOptions.map((option) => (
+              <Box
+                key={option.id}
+                onClick={() => onAestheticChange(option.id)}
                 sx={{
-                  fontSize: studioTypography.fontSize.sm,
-                  color: isSelected ? studioColors.textPrimary : studioColors.textSecondary,
+                  p: 1.5,
+                  borderRadius: `${studioRadii.md}px`,
+                  cursor: 'pointer',
+                  border: aesthetic === option.id ? `2px solid ${studioColors.accent}` : `1px solid ${studioColors.border}`,
+                  background: aesthetic === option.id ? studioColors.surface2 : studioColors.surface1,
+                  transition: 'all 0.15s ease',
+                  '&:hover': { background: studioColors.surface2 },
                 }}
               >
-                {palette.label}
-              </Typography>
-            </SurfaceCard>
-          );
-        })}
+                <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textPrimary }}>
+                  {option.label}
+                </Typography>
+                <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textTertiary }}>
+                  {option.description}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </SurfaceCard>
+
+        {/* Color palette selection */}
+        <SurfaceCard sx={{ p: 2 }}>
+          <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textSecondary, mb: 1.5 }}>
+            Color Palette
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {colorPaletteOptions.map((palette) => {
+              const isSelected = JSON.stringify(colorPalette) === JSON.stringify(palette.colors);
+              return (
+                <Chip
+                  key={palette.id}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Box sx={{ display: 'flex', gap: 0.25 }}>
+                        {palette.colors.slice(0, 4).map((color, idx) => (
+                          <Box key={idx} sx={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
+                        ))}
+                      </Box>
+                      <span style={{ marginLeft: 4 }}>{palette.label}</span>
+                    </Box>
+                  }
+                  onClick={() => onColorPaletteChange(palette.colors)}
+                  sx={{
+                    background: isSelected ? studioColors.accent : studioColors.surface2,
+                    color: isSelected ? '#fff' : studioColors.textSecondary,
+                    border: `1px solid ${isSelected ? studioColors.accent : studioColors.border}`,
+                    '&:hover': { background: isSelected ? studioColors.accentMuted : studioColors.surface3 },
+                  }}
+                />
+              );
+            })}
+          </Box>
+        </SurfaceCard>
+
+        {/* Photography Style */}
+        <SurfaceCard sx={{ p: 2 }}>
+          <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textSecondary, mb: 1.5 }}>
+            Photography Style
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+            {photographyStyles.map((style) => (
+              <Box
+                key={style.id}
+                onClick={() => onPhotographyStyleChange(style.id)}
+                sx={{
+                  p: 1.5,
+                  borderRadius: `${studioRadii.md}px`,
+                  cursor: 'pointer',
+                  background: photographyStyle === style.id ? studioColors.accent : studioColors.surface2,
+                  border: `1px solid ${photographyStyle === style.id ? studioColors.accent : studioColors.border}`,
+                  '&:hover': { background: photographyStyle === style.id ? studioColors.accentMuted : studioColors.surface3 },
+                }}
+              >
+                <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: photographyStyle === style.id ? '#fff' : studioColors.textPrimary }}>
+                  {style.label}
+                </Typography>
+                <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: photographyStyle === style.id ? 'rgba(255,255,255,0.7)' : studioColors.textMuted }}>
+                  {style.description}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </SurfaceCard>
+
+        {/* Model Type */}
+        <SurfaceCard sx={{ p: 2 }}>
+          <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textSecondary, mb: 1.5 }}>
+            Model Type
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {modelTypes.map((type) => (
+              <Chip
+                key={type.id}
+                label={type.label}
+                onClick={() => onModelTypeChange(type.id)}
+                sx={{
+                  background: modelType === type.id ? studioColors.accent : studioColors.surface2,
+                  color: modelType === type.id ? '#fff' : studioColors.textSecondary,
+                  border: `1px solid ${modelType === type.id ? studioColors.accent : studioColors.border}`,
+                  '&:hover': { background: modelType === type.id ? studioColors.accentMuted : studioColors.surface3 },
+                }}
+              />
+            ))}
+          </Box>
+        </SurfaceCard>
+      </Box>
+
+      {/* Right column */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {/* Look count */}
+        <SurfaceCard sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textSecondary }}>
+              Number of Looks
+            </Typography>
+            <Typography sx={{ fontSize: studioTypography.fontSize.sm, color: studioColors.accent, fontWeight: studioTypography.fontWeight.semibold }}>
+              {lookCount}
+            </Typography>
+          </Box>
+          <Slider
+            value={lookCount}
+            onChange={(_, value) => onLookCountChange(value as number)}
+            min={3}
+            max={12}
+            step={1}
+            marks={[{ value: 3, label: '3' }, { value: 6, label: '6' }, { value: 9, label: '9' }, { value: 12, label: '12' }]}
+            sx={{
+              color: studioColors.accent,
+              '& .MuiSlider-track': { background: studioColors.accent },
+              '& .MuiSlider-rail': { background: studioColors.border },
+              '& .MuiSlider-thumb': { background: studioColors.accent },
+              '& .MuiSlider-mark': { background: studioColors.border },
+              '& .MuiSlider-markLabel': { color: studioColors.textTertiary, fontSize: studioTypography.fontSize.xs },
+            }}
+          />
+        </SurfaceCard>
+
+        {/* Setting/Backdrop */}
+        <SurfaceCard sx={{ p: 2 }}>
+          <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textSecondary, mb: 1.5 }}>
+            Setting / Backdrop
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {settingOptions.map((opt) => (
+              <Chip
+                key={opt.id}
+                label={opt.label}
+                onClick={() => onSettingChange(opt.id)}
+                sx={{
+                  background: setting === opt.id ? studioColors.accent : studioColors.surface2,
+                  color: setting === opt.id ? '#fff' : studioColors.textSecondary,
+                  border: `1px solid ${setting === opt.id ? studioColors.accent : studioColors.border}`,
+                  '&:hover': { background: setting === opt.id ? studioColors.accentMuted : studioColors.surface3 },
+                }}
+              />
+            ))}
+          </Box>
+        </SurfaceCard>
+
+        {/* Season */}
+        <SurfaceCard sx={{ p: 2 }}>
+          <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textSecondary, mb: 1.5 }}>
+            Season
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {seasonOptions.map((opt) => (
+              <Chip
+                key={opt.id}
+                label={opt.label}
+                onClick={() => onSeasonChange(opt.id)}
+                sx={{
+                  background: season === opt.id ? studioColors.accent : studioColors.surface2,
+                  color: season === opt.id ? '#fff' : studioColors.textSecondary,
+                  border: `1px solid ${season === opt.id ? studioColors.accent : studioColors.border}`,
+                  '&:hover': { background: season === opt.id ? studioColors.accentMuted : studioColors.surface3 },
+                }}
+              />
+            ))}
+          </Box>
+        </SurfaceCard>
+
+        {/* Occasions (multi-select) */}
+        <SurfaceCard sx={{ p: 2 }}>
+          <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textSecondary, mb: 0.5 }}>
+            Occasions
+          </Typography>
+          <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textMuted, mb: 1.5 }}>
+            Select multiple
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {occasionOptions.map((opt) => {
+              const isSelected = occasions.includes(opt.id);
+              return (
+                <Chip
+                  key={opt.id}
+                  label={opt.label}
+                  onClick={() => {
+                    if (isSelected) {
+                      onOccasionsChange(occasions.filter(o => o !== opt.id));
+                    } else {
+                      onOccasionsChange([...occasions, opt.id]);
+                    }
+                  }}
+                  sx={{
+                    background: isSelected ? studioColors.accent : studioColors.surface2,
+                    color: isSelected ? '#fff' : studioColors.textSecondary,
+                    border: `1px solid ${isSelected ? studioColors.accent : studioColors.border}`,
+                    '&:hover': { background: isSelected ? studioColors.accentMuted : studioColors.surface3 },
+                  }}
+                />
+              );
+            })}
+          </Box>
+        </SurfaceCard>
+
+        {/* Lighting */}
+        <SurfaceCard sx={{ p: 2 }}>
+          <Typography sx={{ fontSize: studioTypography.fontSize.sm, fontWeight: studioTypography.fontWeight.medium, color: studioColors.textSecondary, mb: 1.5 }}>
+            Lighting
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {lightingOptions.map((opt) => (
+              <Chip
+                key={opt.id}
+                label={`${opt.icon} ${opt.label}`}
+                onClick={() => onLightingChange(opt.id)}
+                sx={{
+                  background: lighting === opt.id ? studioColors.accent : studioColors.surface2,
+                  color: lighting === opt.id ? '#fff' : studioColors.textSecondary,
+                  border: `1px solid ${lighting === opt.id ? studioColors.accent : studioColors.border}`,
+                  '&:hover': { background: lighting === opt.id ? studioColors.accentMuted : studioColors.surface3 },
+                }}
+              />
+            ))}
+          </Box>
+        </SurfaceCard>
       </Box>
     </Box>
 
-    {/* Look count */}
-    <Box>
-      <Typography
-        sx={{
-          fontSize: studioTypography.fontSize.md,
-          fontWeight: studioTypography.fontWeight.medium,
-          color: studioColors.textPrimary,
-          mb: 2,
-        }}
-      >
-        Number of looks: {lookCount}
+    {/* Summary */}
+    <SurfaceCard sx={{ p: 2, mt: 3 }}>
+      <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textTertiary, textTransform: 'uppercase', mb: 1 }}>
+        Summary
       </Typography>
-      <Slider
-        value={lookCount}
-        onChange={(_, value) => onLookCountChange(value as number)}
-        min={3}
-        max={12}
-        step={1}
-        marks={[
-          { value: 3, label: '3' },
-          { value: 6, label: '6' },
-          { value: 9, label: '9' },
-          { value: 12, label: '12' },
-        ]}
-        sx={{
-          color: studioColors.accent,
-          '& .MuiSlider-track': {
-            background: studioColors.accent,
-          },
-          '& .MuiSlider-rail': {
-            background: studioColors.border,
-          },
-          '& .MuiSlider-thumb': {
-            background: studioColors.accent,
-            '&:hover': {
-              boxShadow: `0 0 0 8px ${studioColors.accentSubtle}`,
-            },
-          },
-          '& .MuiSlider-mark': {
-            background: studioColors.border,
-          },
-          '& .MuiSlider-markLabel': {
-            color: studioColors.textTertiary,
-            fontSize: studioTypography.fontSize.sm,
-          },
-        }}
-      />
-    </Box>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Chip label={aestheticOptions.find(a => a.id === aesthetic)?.label || aesthetic} size="small" sx={{ background: studioColors.accent, color: '#fff' }} />
+        <Chip label={`${lookCount} looks`} size="small" sx={{ background: studioColors.surface3 }} />
+        <Chip label={photographyStyles.find(p => p.id === photographyStyle)?.label || photographyStyle} size="small" sx={{ background: studioColors.surface3 }} />
+        <Chip label={modelTypes.find(m => m.id === modelType)?.label || modelType} size="small" sx={{ background: studioColors.surface3 }} />
+        <Chip label={settingOptions.find(s => s.id === setting)?.label || setting} size="small" sx={{ background: studioColors.surface3 }} />
+        <Chip label={seasonOptions.find(s => s.id === season)?.label || season} size="small" sx={{ background: studioColors.surface3 }} />
+        <Chip label={lightingOptions.find(l => l.id === lighting)?.label || lighting} size="small" sx={{ background: studioColors.surface3 }} />
+        {occasions.map(o => (
+          <Chip key={o} label={occasionOptions.find(opt => opt.id === o)?.label} size="small" sx={{ background: studioColors.blue, color: '#fff' }} />
+        ))}
+      </Box>
+    </SurfaceCard>
   </Box>
 );
 
@@ -610,10 +830,17 @@ export const CreateLookbookFlow: React.FC<CreateLookbookFlowProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [config, setConfig] = useState<LookbookConfig>({
     concept: '',
-    aesthetic: '',
+    aesthetic: 'modern',
     colorPalette: [],
     lookCount: 6,
     modelDiversity: true,
+    // Enhanced defaults
+    photographyStyle: 'editorial',
+    modelType: 'diverse',
+    setting: 'studio-white',
+    season: 'spring',
+    occasions: [],
+    lighting: 'natural',
   });
   const [looks, setLooks] = useState<GeneratedLook[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -792,9 +1019,21 @@ export const CreateLookbookFlow: React.FC<CreateLookbookFlowProps> = ({
             aesthetic={config.aesthetic}
             colorPalette={config.colorPalette}
             lookCount={config.lookCount}
+            photographyStyle={config.photographyStyle}
+            modelType={config.modelType}
+            setting={config.setting}
+            season={config.season}
+            occasions={config.occasions}
+            lighting={config.lighting}
             onAestheticChange={(aesthetic) => setConfig((prev) => ({ ...prev, aesthetic }))}
             onColorPaletteChange={(colorPalette) => setConfig((prev) => ({ ...prev, colorPalette }))}
             onLookCountChange={(lookCount) => setConfig((prev) => ({ ...prev, lookCount }))}
+            onPhotographyStyleChange={(photographyStyle) => setConfig((prev) => ({ ...prev, photographyStyle }))}
+            onModelTypeChange={(modelType) => setConfig((prev) => ({ ...prev, modelType }))}
+            onSettingChange={(setting) => setConfig((prev) => ({ ...prev, setting }))}
+            onSeasonChange={(season) => setConfig((prev) => ({ ...prev, season }))}
+            onOccasionsChange={(occasions) => setConfig((prev) => ({ ...prev, occasions }))}
+            onLightingChange={(lighting) => setConfig((prev) => ({ ...prev, lighting }))}
           />
         );
       case 2:

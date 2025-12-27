@@ -67,11 +67,50 @@ const CAROUSEL_TYPES: { id: CarouselType; label: string; description: string }[]
 
 // Visual styles
 const VISUAL_STYLES = [
-  { id: 'modern', label: 'Modern' },
-  { id: 'minimal', label: 'Minimal' },
-  { id: 'bold', label: 'Bold' },
-  { id: 'elegant', label: 'Elegant' },
-  { id: 'playful', label: 'Playful' },
+  { id: 'modern', label: 'Modern', description: 'Clean contemporary look' },
+  { id: 'minimal', label: 'Minimal', description: 'Simple, focused design' },
+  { id: 'bold', label: 'Bold', description: 'High impact, vibrant' },
+  { id: 'elegant', label: 'Elegant', description: 'Refined, sophisticated' },
+  { id: 'playful', label: 'Playful', description: 'Fun, energetic feel' },
+  { id: 'editorial', label: 'Editorial', description: 'Magazine-style layout' },
+];
+
+// Color schemes
+const COLOR_SCHEMES = [
+  { id: 'brand', label: 'Brand Colors', colors: ['#3B9B94', '#2D7A74', '#1E5A55'] },
+  { id: 'vibrant', label: 'Vibrant', colors: ['#FF6B6B', '#4ECDC4', '#FFE66D'] },
+  { id: 'pastel', label: 'Pastel', colors: ['#F8B4D9', '#A7D8DE', '#FFEAA7'] },
+  { id: 'monochrome', label: 'Monochrome', colors: ['#2D3436', '#636E72', '#B2BEC3'] },
+  { id: 'warm', label: 'Warm', colors: ['#E17055', '#FDCB6E', '#FAB1A0'] },
+  { id: 'cool', label: 'Cool', colors: ['#74B9FF', '#81ECEC', '#A29BFE'] },
+];
+
+// Text overlay styles
+const TEXT_OVERLAY_STYLES = [
+  { id: 'centered', label: 'Centered', description: 'Text in the center' },
+  { id: 'top', label: 'Top Banner', description: 'Header at the top' },
+  { id: 'bottom', label: 'Bottom Strip', description: 'Footer caption style' },
+  { id: 'split', label: 'Split Screen', description: 'Text on one side' },
+  { id: 'minimal', label: 'Minimal', description: 'Small, subtle text' },
+];
+
+// Background styles
+const BACKGROUND_STYLES = [
+  { id: 'solid', label: 'Solid Color', description: 'Clean solid background' },
+  { id: 'gradient', label: 'Gradient', description: 'Smooth color blend' },
+  { id: 'photo', label: 'Photo', description: 'Full background image' },
+  { id: 'pattern', label: 'Pattern', description: 'Textured pattern' },
+  { id: 'blur', label: 'Blur Effect', description: 'Blurred background' },
+];
+
+// CTA types for carousel
+const CTA_TYPES = [
+  { id: 'none', label: 'No CTA', description: 'Informational only' },
+  { id: 'swipe', label: 'Swipe for More', description: 'Encourage engagement' },
+  { id: 'link', label: 'Link in Bio', description: 'Drive traffic' },
+  { id: 'shop', label: 'Shop Now', description: 'E-commerce focused' },
+  { id: 'learn', label: 'Learn More', description: 'Educational content' },
+  { id: 'save', label: 'Save This', description: 'Encourage saves' },
 ];
 
 interface CreateCarouselFlowProps {
@@ -88,6 +127,10 @@ export const CreateCarouselFlow: React.FC<CreateCarouselFlowProps> = ({ onCancel
   const [slideCount, setSlideCount] = useState(5);
   const [carouselType, setCarouselType] = useState<CarouselType>('educational');
   const [visualStyle, setVisualStyle] = useState('modern');
+  const [colorScheme, setColorScheme] = useState('brand');
+  const [textOverlay, setTextOverlay] = useState('centered');
+  const [backgroundStyle, setBackgroundStyle] = useState('gradient');
+  const [ctaType, setCtaType] = useState('swipe');
 
   // Progress tracking state
   const [planningComplete, setPlanningComplete] = useState(false);
@@ -302,78 +345,288 @@ export const CreateCarouselFlow: React.FC<CreateCarouselFlowProps> = ({ onCancel
 
       case 1:
         return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 600, mx: 'auto' }}>
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: studioTypography.fontSize.sm,
-                  fontWeight: studioTypography.fontWeight.medium,
-                  color: studioColors.textSecondary,
-                  mb: 2,
-                }}
-              >
-                Number of Slides: {slideCount}
-              </Typography>
-              <Slider
-                value={slideCount}
-                onChange={(_, value) => setSlideCount(value as number)}
-                min={3}
-                max={10}
-                step={1}
-                marks
-                sx={{
-                  color: studioColors.accent,
-                  '& .MuiSlider-mark': { background: studioColors.border },
-                  '& .MuiSlider-rail': { background: studioColors.surface3 },
-                }}
-              />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textMuted }}>3</Typography>
-                <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textMuted }}>10</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 900, mx: 'auto' }}>
+            {/* Two-column layout for options */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+              {/* Left Column */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Slide Count */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 2,
+                    }}
+                  >
+                    Number of Slides: <strong style={{ color: studioColors.accent }}>{slideCount}</strong>
+                  </Typography>
+                  <Slider
+                    value={slideCount}
+                    onChange={(_, value) => setSlideCount(value as number)}
+                    min={3}
+                    max={10}
+                    step={1}
+                    marks
+                    sx={{
+                      color: studioColors.accent,
+                      '& .MuiSlider-mark': { background: studioColors.border },
+                      '& .MuiSlider-rail': { background: studioColors.surface3 },
+                    }}
+                  />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                    <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textMuted }}>3</Typography>
+                    <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textMuted }}>10</Typography>
+                  </Box>
+                </SurfaceCard>
+
+                {/* Visual Style */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Visual Style
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {VISUAL_STYLES.map((style) => (
+                      <Box
+                        key={style.id}
+                        onClick={() => setVisualStyle(style.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: `${studioRadii.sm}px`,
+                          background: visualStyle === style.id ? studioColors.accent : studioColors.surface2,
+                          border: `1px solid ${visualStyle === style.id ? studioColors.accent : studioColors.border}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            background: visualStyle === style.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.sm,
+                            fontWeight: studioTypography.fontWeight.medium,
+                            color: visualStyle === style.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          }}
+                        >
+                          {style.label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            color: visualStyle === style.id ? 'rgba(255,255,255,0.7)' : studioColors.textMuted,
+                          }}
+                        >
+                          {style.description}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Color Scheme */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Color Scheme
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {COLOR_SCHEMES.map((scheme) => (
+                      <Box
+                        key={scheme.id}
+                        onClick={() => setColorScheme(scheme.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: `${studioRadii.sm}px`,
+                          background: colorScheme === scheme.id ? studioColors.surface3 : studioColors.surface2,
+                          border: `2px solid ${colorScheme === scheme.id ? studioColors.accent : 'transparent'}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
+                          {scheme.colors.map((color, i) => (
+                            <Box
+                              key={i}
+                              sx={{
+                                width: 20,
+                                height: 20,
+                                borderRadius: '4px',
+                                background: color,
+                                border: '1px solid rgba(255,255,255,0.2)',
+                              }}
+                            />
+                          ))}
+                        </Box>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            fontWeight: studioTypography.fontWeight.medium,
+                            color: studioColors.textPrimary,
+                          }}
+                        >
+                          {scheme.label}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </SurfaceCard>
+              </Box>
+
+              {/* Right Column */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Text Overlay Style */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Text Placement
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {TEXT_OVERLAY_STYLES.map((style) => (
+                      <Chip
+                        key={style.id}
+                        label={style.label}
+                        onClick={() => setTextOverlay(style.id)}
+                        sx={{
+                          background: textOverlay === style.id ? studioColors.accent : studioColors.surface2,
+                          color: textOverlay === style.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          border: `1px solid ${textOverlay === style.id ? studioColors.accent : studioColors.border}`,
+                          '&:hover': {
+                            background: textOverlay === style.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* Background Style */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Background Style
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {BACKGROUND_STYLES.map((style) => (
+                      <Chip
+                        key={style.id}
+                        label={style.label}
+                        onClick={() => setBackgroundStyle(style.id)}
+                        sx={{
+                          background: backgroundStyle === style.id ? studioColors.accent : studioColors.surface2,
+                          color: backgroundStyle === style.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          border: `1px solid ${backgroundStyle === style.id ? studioColors.accent : studioColors.border}`,
+                          '&:hover': {
+                            background: backgroundStyle === style.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </SurfaceCard>
+
+                {/* CTA Type */}
+                <SurfaceCard sx={{ p: 2.5 }}>
+                  <Typography
+                    sx={{
+                      fontSize: studioTypography.fontSize.sm,
+                      fontWeight: studioTypography.fontWeight.medium,
+                      color: studioColors.textSecondary,
+                      mb: 1.5,
+                    }}
+                  >
+                    Call-to-Action Style
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+                    {CTA_TYPES.map((cta) => (
+                      <Box
+                        key={cta.id}
+                        onClick={() => setCtaType(cta.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: `${studioRadii.sm}px`,
+                          background: ctaType === cta.id ? studioColors.accent : studioColors.surface2,
+                          border: `1px solid ${ctaType === cta.id ? studioColors.accent : studioColors.border}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            background: ctaType === cta.id ? studioColors.accentMuted : studioColors.surface3,
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.sm,
+                            fontWeight: studioTypography.fontWeight.medium,
+                            color: ctaType === cta.id ? studioColors.textPrimary : studioColors.textSecondary,
+                          }}
+                        >
+                          {cta.label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            color: ctaType === cta.id ? 'rgba(255,255,255,0.7)' : studioColors.textMuted,
+                          }}
+                        >
+                          {cta.description}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </SurfaceCard>
               </Box>
             </Box>
 
-            <Box>
+            {/* Summary Card */}
+            <SurfaceCard sx={{ p: 2.5, background: studioColors.surface2 }}>
               <Typography
                 sx={{
-                  fontSize: studioTypography.fontSize.sm,
-                  fontWeight: studioTypography.fontWeight.medium,
-                  color: studioColors.textSecondary,
+                  fontSize: studioTypography.fontSize.xs,
+                  fontWeight: studioTypography.fontWeight.semibold,
+                  color: studioColors.textTertiary,
+                  textTransform: 'uppercase',
                   mb: 1.5,
                 }}
               >
-                Visual Style
+                Summary
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {VISUAL_STYLES.map((style) => (
-                  <Chip
-                    key={style.id}
-                    label={style.label}
-                    onClick={() => setVisualStyle(style.id)}
-                    sx={{
-                      background: visualStyle === style.id ? studioColors.accent : studioColors.surface2,
-                      color: visualStyle === style.id ? studioColors.textPrimary : studioColors.textSecondary,
-                      border: `1px solid ${visualStyle === style.id ? studioColors.accent : studioColors.border}`,
-                      '&:hover': {
-                        background: visualStyle === style.id ? studioColors.accentMuted : studioColors.surface3,
-                      },
-                    }}
-                  />
-                ))}
+                <Chip size="small" label={`${slideCount} Slides`} sx={{ background: studioColors.accent, color: '#fff', fontSize: 11 }} />
+                <Chip size="small" label={VISUAL_STYLES.find(s => s.id === visualStyle)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={COLOR_SCHEMES.find(s => s.id === colorScheme)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={TEXT_OVERLAY_STYLES.find(s => s.id === textOverlay)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                <Chip size="small" label={BACKGROUND_STYLES.find(s => s.id === backgroundStyle)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                {ctaType !== 'none' && (
+                  <Chip size="small" label={CTA_TYPES.find(s => s.id === ctaType)?.label} sx={{ background: studioColors.surface3, color: studioColors.textPrimary, fontSize: 11 }} />
+                )}
               </Box>
-            </Box>
-
-            <SurfaceCard sx={{ p: 3 }}>
-              <Typography
-                sx={{
-                  fontSize: studioTypography.fontSize.sm,
-                  color: studioColors.textSecondary,
-                  textAlign: 'center',
-                }}
-              >
-                Your carousel will have <strong style={{ color: studioColors.textPrimary }}>{slideCount}</strong> slides
-                in a <strong style={{ color: studioColors.accent }}>{visualStyle}</strong> style
-              </Typography>
             </SurfaceCard>
           </Box>
         );

@@ -33,6 +33,8 @@ import HistoryIcon from '@mui/icons-material/History';
 import FolderIcon from '@mui/icons-material/Folder';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import ExploreIcon from '@mui/icons-material/Explore';
+import HomeIcon from '@mui/icons-material/Home';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import {
   studioColors,
   studioRadii,
@@ -87,6 +89,8 @@ const categoryColors: Record<string, string> = {
   fashion: '#E91E63',
   social: '#2196F3',
   moodboards: '#9C27B0',
+  interior: '#FF9800',
+  storyteller: '#8D6E63',
   canvas: studioColors.accent,
 };
 
@@ -94,6 +98,8 @@ const categoryIcons: Record<string, React.ReactNode> = {
   fashion: <CheckroomIcon fontSize="small" />,
   social: <ShareIcon fontSize="small" />,
   moodboards: <ColorLensIcon fontSize="small" />,
+  interior: <HomeIcon fontSize="small" />,
+  storyteller: <AutoStoriesIcon fontSize="small" />,
   canvas: <GridViewIcon fontSize="small" />,
 };
 
@@ -309,6 +315,8 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
         { id: 'fashion', label: 'Fashion', icon: <CheckroomIcon />, path: '/studios/fashion' },
         { id: 'social', label: 'Social Media', icon: <ShareIcon />, path: '/studios/social' },
         { id: 'moodboards', label: 'Moodboards', icon: <ColorLensIcon />, path: '/studios/moodboards' },
+        { id: 'interior', label: 'Interior Design', icon: <HomeIcon />, path: '/studios/interior' },
+        { id: 'storyteller', label: 'Storyteller', icon: <AutoStoriesIcon />, path: '/studios/storyteller' },
       ],
     },
     {

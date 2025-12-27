@@ -18,3 +18,6 @@ export type { AIPromptBarProps } from './AIPromptBar';
 
 export { CollaborationPresence, LiveCursor, ActivityIndicator } from './CollaborationPresence';
 export type { CollaborationPresenceProps, LiveCursorProps, ActivityIndicatorProps, Collaborator } from './CollaborationPresence';
+
+export { BeforeAfterSlider } from './BeforeAfterSlider';
+export type { default as BeforeAfterSliderProps } from './BeforeAfterSlider';
