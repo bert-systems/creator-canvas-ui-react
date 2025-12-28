@@ -97,6 +97,39 @@ export interface CarouselSlide {
   isCallToAction: boolean;
 }
 
+// ===== Parallel Carousel Generation Types =====
+
+/**
+ * Style seed for ensuring visual consistency across carousel slides
+ */
+export interface CarouselStyleSeed {
+  colorPalette?: string[];
+  styleKeywords?: string[];
+  typographyStyle?: string;
+  mood?: string;
+  visualElements?: string;
+}
+
+/**
+ * Content for a single carousel slide (from plan endpoint)
+ */
+export interface CarouselSlideContent {
+  slideNumber: number;
+  slideType?: string;
+  headline?: string;
+  bodyText?: string;
+  imagePromptHint?: string;
+  isCallToAction: boolean;
+}
+
+/**
+ * Image dimensions for carousel slides
+ */
+export interface ImageDimensions {
+  width: number;
+  height: number;
+}
+
 export interface ContentQueueItem {
   id: string;
   type: 'image' | 'carousel' | 'video' | 'story';
@@ -168,6 +201,10 @@ export interface SocialPostRequest {
   includeCaption: boolean;
   includeHashtags: boolean;
   hashtagCount?: number;
+  /** Override the default image generation model (e.g., 'flux-pro', 'nano-banana-pro') */
+  imageModel?: string;
+  /** Override the default LLM model (e.g., 'gemini-2.5-flash', 'gemini-2.0-flash') */
+  llmModel?: string;
 }
 
 export interface CarouselRequest {
@@ -179,6 +216,10 @@ export interface CarouselRequest {
   carouselType: CarouselType;
   visualStyle: SocialVisualStyle;
   includeCaption: boolean;
+  /** Override the default image generation model for carousel slides */
+  imageModel?: string;
+  /** Override the default LLM model for carousel content */
+  llmModel?: string;
 }
 
 export interface CaptionRequest {
@@ -192,6 +233,8 @@ export interface CaptionRequest {
   includeCTA: boolean;
   hashtagCount: number;
   hashtagStrategy?: HashtagStrategy;
+  /** Override the default LLM model for caption generation */
+  llmModel?: string;
 }
 
 export interface StoryCreateRequest {
@@ -204,6 +247,8 @@ export interface StoryCreateRequest {
   includeMusic: boolean;
   includeTextOverlays: boolean;
   musicMood?: MusicMood;
+  /** Override the default video generation model for story/reel creation */
+  videoModel?: string;
 }
 
 export interface TemplateCustomizeRequest {
@@ -213,6 +258,8 @@ export interface TemplateCustomizeRequest {
   featureImage?: string;
   platform: SocialPlatform;
   generateVariations: boolean;
+  /** Override the default image generation model for template customization */
+  imageModel?: string;
 }
 
 export interface ContentScheduleRequest {
@@ -223,6 +270,79 @@ export interface ContentScheduleRequest {
   optimizeTimings: boolean;
   timezone: string;
   audienceData?: AudienceInsights;
+  /** Override the default LLM model for content scheduling optimization */
+  llmModel?: string;
+}
+
+// ===== Parallel Carousel Request/Response Interfaces =====
+
+/**
+ * Request for carousel planning (LLM-only, fast)
+ * POST /api/social/carousel/plan
+ */
+export interface CarouselPlanRequest {
+  topic: string;
+  brandKit?: string;
+  platform: 'instagram' | 'linkedin' | 'facebook';
+  slideCount: number;
+  carouselType: CarouselType;
+  visualStyle: SocialVisualStyle;
+  /** Override LLM model */
+  llmModel?: string;
+}
+
+/**
+ * Response from carousel planning
+ */
+export interface CarouselPlanResponse {
+  success: boolean;
+  styleSeed?: CarouselStyleSeed;
+  slides?: CarouselSlideContent[];
+  dimensions?: ImageDimensions;
+  platform?: string;
+  cost: number;
+  errors?: string[];
+  processingTimeMs: number;
+}
+
+/**
+ * Request for generating a single carousel slide
+ * POST /api/social/carousel/slide/generate
+ */
+export interface CarouselSlideGenerateRequest {
+  topic: string;
+  slideContent: CarouselSlideContent;
+  styleSeed: CarouselStyleSeed;
+  totalSlides: number;
+  platform: 'instagram' | 'linkedin' | 'facebook';
+  dimensions?: ImageDimensions;
+  /** Override image generation model */
+  imageModel?: string;
+}
+
+/**
+ * Response from generating a single slide
+ */
+export interface CarouselSlideGenerateResponse {
+  success: boolean;
+  slide?: CarouselSlide;
+  cost: number;
+  errors?: string[];
+  processingTimeMs: number;
+  generationId?: string;
+  assetId?: string;
+}
+
+/**
+ * Aggregated result from parallel carousel generation
+ */
+export interface ParallelCarouselResult {
+  plan?: CarouselPlanResponse;
+  slides: CarouselSlide[];
+  caption?: Caption;
+  totalTimeMs: number;
+  totalCost: number;
+  errors: string[];
 }
 
 // ===== Response Interfaces =====
@@ -313,7 +433,7 @@ export const socialMediaService = {
   // ===== Carousel Generation =====
 
   /**
-   * Create multi-slide carousel posts
+   * Create multi-slide carousel posts (sequential - slower)
    * POST /api/social/carousel/generate
    */
   async generateCarousel(request: CarouselRequest): Promise<CarouselResponse> {
@@ -327,6 +447,150 @@ export const socialMediaService = {
       apiRequest
     );
     return response.data;
+  },
+
+  // ===== Parallel Carousel Generation =====
+
+  /**
+   * Plan carousel content and get style seed (LLM-only, fast ~3-5s)
+   * POST /api/social/carousel/plan
+   */
+  async planCarousel(request: CarouselPlanRequest): Promise<CarouselPlanResponse> {
+    const apiRequest = {
+      ...request,
+      platform: mapEnum(request.platform, socialPlatformMap),
+      carouselType: mapEnum(request.carouselType, carouselTypeMap),
+    };
+    const response = await api.post<CarouselPlanResponse>(
+      `${SOCIAL_API_BASE}/carousel/plan`,
+      apiRequest
+    );
+    return response.data;
+  },
+
+  /**
+   * Generate a single carousel slide image (~15-20s)
+   * POST /api/social/carousel/slide/generate
+   */
+  async generateSlide(request: CarouselSlideGenerateRequest): Promise<CarouselSlideGenerateResponse> {
+    const apiRequest = {
+      ...request,
+      platform: mapEnum(request.platform, socialPlatformMap),
+    };
+    const response = await api.post<CarouselSlideGenerateResponse>(
+      `${SOCIAL_API_BASE}/carousel/slide/generate`,
+      apiRequest
+    );
+    return response.data;
+  },
+
+  /**
+   * Generate carousel with parallel slide generation
+   * 1. Call /plan to get style seed + content for each slide (~3-5s)
+   * 2. Call /slide/generate for all slides IN PARALLEL (~15-20s)
+   * Total time: ~20-25s instead of 75-200s sequential
+   *
+   * @param onSlideComplete - Optional callback fired when each slide completes
+   */
+  async generateCarouselParallel(
+    request: CarouselRequest,
+    onSlideComplete?: (slideNumber: number, slide: CarouselSlide) => void
+  ): Promise<ParallelCarouselResult> {
+    const startTime = Date.now();
+    const errors: string[] = [];
+    let totalCost = 0;
+
+    // Step 1: Plan the carousel
+    let plan: CarouselPlanResponse | undefined;
+    try {
+      plan = await this.planCarousel({
+        topic: request.topic,
+        brandKit: request.brandKit,
+        platform: request.platform,
+        slideCount: request.slideCount,
+        carouselType: request.carouselType,
+        visualStyle: request.visualStyle,
+      });
+      totalCost += plan.cost;
+
+      if (!plan.success || !plan.slides || !plan.styleSeed) {
+        throw new Error(plan.errors?.join(', ') || 'Planning failed');
+      }
+    } catch (err) {
+      errors.push(`Planning: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      return {
+        plan: undefined,
+        slides: [],
+        caption: undefined,
+        totalTimeMs: Date.now() - startTime,
+        totalCost,
+        errors,
+      };
+    }
+
+    // Step 2: Generate all slides in parallel
+    const slidePromises = plan.slides.map(async (slideContent) => {
+      try {
+        const result = await this.generateSlide({
+          topic: request.topic,
+          slideContent,
+          styleSeed: plan!.styleSeed!,
+          totalSlides: request.slideCount,
+          platform: request.platform,
+          dimensions: plan!.dimensions,
+        });
+
+        if (result.success && result.slide) {
+          totalCost += result.cost;
+          if (onSlideComplete) {
+            onSlideComplete(slideContent.slideNumber, result.slide);
+          }
+          return result.slide;
+        } else {
+          errors.push(`Slide ${slideContent.slideNumber}: ${result.errors?.join(', ') || 'Generation failed'}`);
+          return null;
+        }
+      } catch (err) {
+        errors.push(`Slide ${slideContent.slideNumber}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        return null;
+      }
+    });
+
+    const slideResults = await Promise.all(slidePromises);
+    const slides = slideResults.filter((s): s is CarouselSlide => s !== null);
+
+    // Sort slides by slideNumber
+    slides.sort((a, b) => a.slideNumber - b.slideNumber);
+
+    // Step 3: Optionally generate caption (can be done after slides for better context)
+    let caption: Caption | undefined;
+    if (request.includeCaption && slides.length > 0) {
+      try {
+        const captionResult = await this.generateCaption({
+          context: `Carousel about: ${request.topic}. Slides: ${slides.map(s => s.headline).filter(Boolean).join(', ')}`,
+          platform: request.platform === 'linkedin' ? 'linkedin' : 'instagram',
+          tone: 'casual',
+          length: 'medium',
+          includeEmojis: true,
+          includeCTA: true,
+          hashtagCount: 10,
+          hashtagStrategy: 'mixed',
+        });
+        caption = captionResult.caption;
+        totalCost += 0.01; // Approximate caption cost
+      } catch {
+        // Caption is optional, don't fail the whole operation
+      }
+    }
+
+    return {
+      plan,
+      slides,
+      caption,
+      totalTimeMs: Date.now() - startTime,
+      totalCost,
+      errors,
+    };
   },
 
   // ===== Caption Generation =====

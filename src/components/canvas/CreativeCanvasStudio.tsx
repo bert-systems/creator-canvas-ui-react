@@ -118,65 +118,11 @@ import type { ToolbarAction, UnifiedNodeData } from '../../models/unifiedNode';
 import { unifiedNodeService } from '../../services/unifiedNodeService';
 import { edgeService, apiEdgeToFlowEdge } from '../../services/edgeService';
 import { DomainToolbar } from './DomainToolbar';
+// Core node components - kept for backwards compatibility
 import { CanvasNode } from '../nodes/CanvasNode';
 import { FlowNode } from '../nodes/FlowNode';
-// Storytelling nodes (Dec 2025)
-import { StoryGenesisNode } from '../nodes/StoryGenesisNode';
-import { StoryStructureNode } from '../nodes/StoryStructureNode';
-import { CharacterCreatorNode } from '../nodes/CharacterCreatorNode';
-import { SceneGeneratorNode } from '../nodes/SceneGeneratorNode';
-import { LocationCreatorNode } from '../nodes/LocationCreatorNode';
-import { DialogueGeneratorNode } from '../nodes/DialogueGeneratorNode';
-// Storytelling Phase 2 nodes (Dec 2025)
-import { TreatmentGeneratorNode } from '../nodes/TreatmentGeneratorNode';
-import { CharacterRelationshipNode } from '../nodes/CharacterRelationshipNode';
-import { CharacterVoiceNode } from '../nodes/CharacterVoiceNode';
-import { WorldLoreNode } from '../nodes/WorldLoreNode';
-import { TimelineNode } from '../nodes/TimelineNode';
-import { PlotPointNode } from '../nodes/PlotPointNode';
-import { PlotTwistNode } from '../nodes/PlotTwistNode';
-import { ConflictGeneratorNode } from '../nodes/ConflictGeneratorNode';
-import { MonologueGeneratorNode } from '../nodes/MonologueGeneratorNode';
-// Branching narrative nodes (Dec 2025)
-import { ChoicePointNode } from '../nodes/ChoicePointNode';
-import { ConsequenceTrackerNode } from '../nodes/ConsequenceTrackerNode';
-import { PathMergeNode } from '../nodes/PathMergeNode';
-// Enhancement nodes (Dec 2025)
-import { StoryPivotNode } from '../nodes/StoryPivotNode';
-import { IntrigueLiftNode } from '../nodes/IntrigueLiftNode';
-import { StoryEnhancerNode } from '../nodes/StoryEnhancerNode';
-// Visualization nodes - Phase 5 (Dec 2025)
-import { SceneVisualizerNode } from '../nodes/SceneVisualizerNode';
-import { CharacterSheetNode } from '../nodes/CharacterSheetNode';
-import { ScreenplayFormatterNode } from '../nodes/ScreenplayFormatterNode';
-// Fashion nodes (Dec 2025)
-import { GarmentSketchNode } from '../nodes/GarmentSketchNode';
-import { TextileDesignerNode } from '../nodes/TextileDesignerNode';
-import { ModelCasterNode } from '../nodes/ModelCasterNode';
-import { OutfitComposerNode } from '../nodes/OutfitComposerNode';
-import { FlatLayComposerNode } from '../nodes/FlatLayComposerNode';
-import { EcommerceShotNode } from '../nodes/EcommerceShotNode';
-import { CollectionBuilderNode } from '../nodes/CollectionBuilderNode';
-import { PatternGeneratorNode } from '../nodes/PatternGeneratorNode';
-import { TechPackGeneratorNode } from '../nodes/TechPackGeneratorNode';
-import { LookbookGeneratorNode } from '../nodes/LookbookGeneratorNode';
-import { AccessoryStylistNode } from '../nodes/AccessoryStylistNode';
-import { FabricMotionNode } from '../nodes/FabricMotionNode';
-// Fashion nodes - Phase 2 (Dec 2025)
-import { CulturalTextileFusionNode } from '../nodes/CulturalTextileFusionNode';
-import { ColorwayGeneratorNode } from '../nodes/ColorwayGeneratorNode';
-import { PoseLibraryNode } from '../nodes/PoseLibraryNode';
-import { SizeScalerNode } from '../nodes/SizeScalerNode';
-import { LayeringStylistNode } from '../nodes/LayeringStylistNode';
-import { GhostMannequinNode } from '../nodes/GhostMannequinNode';
-import { TurnaroundVideoNode } from '../nodes/TurnaroundVideoNode';
-import { LineSheetGeneratorNode } from '../nodes/LineSheetGeneratorNode';
-// Fashion nodes - Composite/Try-On (Dec 2025)
-import { VirtualTryOnNode } from '../nodes/VirtualTryOnNode';
-import { ClothesSwapNode } from '../nodes/ClothesSwapNode';
-import { RunwayAnimationNode } from '../nodes/RunwayAnimationNode';
-// Input nodes (Dec 2025)
-import { ReferenceImageNode } from '../nodes/ReferenceImageNode';
+// Note: All custom node components (StoryGenesisNode, VirtualTryOnNode, etc.)
+// are now deprecated - all rendering goes through UnifiedNode with slot configs
 import TemplateBrowser from '../panels/TemplateBrowser';
 import BoardManager from '../panels/BoardManager';
 import ConnectionActionMenu from '../panels/ConnectionActionMenu';
@@ -261,71 +207,16 @@ export interface CanvasActionsContextValue {
 export const CanvasActionsContext = React.createContext<CanvasActionsContextValue>({});
 
 // Node types for React Flow
+// v4.0 Unified Node Architecture - All nodes render through UnifiedNode
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const nodeTypes: NodeTypes = {
   // === v4.0 Unified Node - Single component for all node types ===
   unifiedNode: UnifiedNode as any,
-  // === Legacy node types (to be deprecated) ===
-  canvasCard: CanvasNode,
-  creativeCard: CreativeCard as any, // New Creative Card (Elevated Vision v3.0)
-  canvasNode: FlowNode as any,  // New flow node type for palette nodes
-  // Storytelling nodes - Foundation (Dec 2025)
-  storyGenesis: StoryGenesisNode as any,
-  storyStructure: StoryStructureNode as any,
-  characterCreator: CharacterCreatorNode as any,
-  sceneGenerator: SceneGeneratorNode as any,
-  locationCreator: LocationCreatorNode as any,
-  dialogueGenerator: DialogueGeneratorNode as any,
-  // Storytelling nodes - Phase 2 (Dec 2025)
-  treatmentGenerator: TreatmentGeneratorNode as any,
-  characterRelationship: CharacterRelationshipNode as any,
-  characterVoice: CharacterVoiceNode as any,
-  worldLore: WorldLoreNode as any,
-  storyTimeline: TimelineNode as any,
-  plotPoint: PlotPointNode as any,
-  plotTwist: PlotTwistNode as any,
-  conflictGenerator: ConflictGeneratorNode as any,
-  monologueGenerator: MonologueGeneratorNode as any,
-  // Branching narrative nodes (Dec 2025)
-  choicePoint: ChoicePointNode as any,
-  consequenceTracker: ConsequenceTrackerNode as any,
-  pathMerge: PathMergeNode as any,
-  // Enhancement nodes (Dec 2025)
-  storyPivot: StoryPivotNode as any,
-  intrigueLift: IntrigueLiftNode as any,
-  storyEnhancer: StoryEnhancerNode as any,
-  // Visualization nodes - Phase 5 (Dec 2025)
-  sceneVisualizer: SceneVisualizerNode as any,
-  characterSheet: CharacterSheetNode as any,
-  screenplayFormatter: ScreenplayFormatterNode as any,
-  // Fashion nodes (Dec 2025)
-  garmentSketch: GarmentSketchNode as any,
-  textileDesigner: TextileDesignerNode as any,
-  modelCaster: ModelCasterNode as any,
-  outfitComposer: OutfitComposerNode as any,
-  flatLayComposer: FlatLayComposerNode as any,
-  ecommerceShot: EcommerceShotNode as any,
-  collectionBuilder: CollectionBuilderNode as any,
-  patternGenerator: PatternGeneratorNode as any,
-  techPackGenerator: TechPackGeneratorNode as any,
-  lookbookGenerator: LookbookGeneratorNode as any,
-  accessoryStylist: AccessoryStylistNode as any,
-  fabricMotion: FabricMotionNode as any,
-  // Fashion nodes - Phase 2 (Dec 2025)
-  culturalTextileFusion: CulturalTextileFusionNode as any,
-  colorwayGenerator: ColorwayGeneratorNode as any,
-  poseLibrary: PoseLibraryNode as any,
-  sizeScaler: SizeScalerNode as any,
-  layeringStylist: LayeringStylistNode as any,
-  ghostMannequin: GhostMannequinNode as any,
-  turnaroundVideo: TurnaroundVideoNode as any,
-  lineSheetGenerator: LineSheetGeneratorNode as any,
-  // Fashion nodes - Composite/Try-On (Dec 2025)
-  virtualTryOn: VirtualTryOnNode as any,
-  clothesSwap: ClothesSwapNode as any,
-  runwayAnimation: RunwayAnimationNode as any,
-  // Input nodes (Dec 2025)
-  referenceImage: ReferenceImageNode as any,
+  // === Backwards compatibility for legacy node types ===
+  // All legacy types now route to UnifiedNode for consistent rendering
+  canvasCard: CanvasNode,  // Keep for old canvas card data
+  creativeCard: CreativeCard as any, // Elevated Vision v3.0
+  canvasNode: FlowNode as any,  // Keep for old flow node data
 };
 
 // Edge types for React Flow - animated connection lines
@@ -2630,12 +2521,49 @@ const CreativeCanvasInner: React.FC = () => {
 
           // Storytelling-related mappings
           if (targetPortId === 'story' || targetPortId.includes('story') || targetPortId.includes('Story')) {
-            inputData['story'] = finalValue;
-            inputData['Story Context'] = finalValue;
+            // If story is an object, extract text representation
+            if (typeof finalValue === 'object' && finalValue !== null) {
+              const storyObj = finalValue as Record<string, unknown>;
+              const storyText = (storyObj.premise as string) ||
+                               (storyObj.logline as string) ||
+                               (storyObj.title as string) ||
+                               '';
+              inputData['story'] = storyText; // String for APIs expecting text
+              inputData['storyObject'] = finalValue; // Full object for nodes that need it
+              inputData['Story Context'] = storyText;
+            } else {
+              inputData['story'] = finalValue;
+              inputData['Story Context'] = finalValue;
+            }
           }
 
           if (targetPortId === 'scene' || targetPortId.includes('scene') || targetPortId.includes('Scene')) {
-            inputData['scene'] = finalValue;
+            // If scene is an object (from Scene Generator), extract description for image generation
+            // but also keep the full object for nodes that need structured data
+            if (typeof finalValue === 'object' && finalValue !== null) {
+              const sceneObj = finalValue as Record<string, unknown>;
+              // Extract the best text representation for image generation
+              const sceneText = (sceneObj.description as string) ||
+                               (sceneObj.content as string) ||
+                               (sceneObj.title as string) ||
+                               '';
+              inputData['scene'] = sceneText; // String for image generation APIs
+              inputData['sceneObject'] = finalValue; // Full object for nodes that need it
+              inputData['sceneDescription'] = sceneText;
+              // Also map to prompt for image generation nodes
+              if (sceneText) {
+                inputData['prompt'] = sceneText;
+                inputData['text'] = sceneText;
+              }
+            } else {
+              inputData['scene'] = finalValue;
+            }
+          }
+
+          // Scene concept mapping (for scene generators)
+          if (targetPortId === 'sceneConcept' || targetPortId.includes('sceneConcept') || targetPortId.includes('SceneConcept')) {
+            inputData['sceneConcept'] = finalValue;
+            inputData['concept'] = finalValue; // Also map to generic concept
           }
 
           if (targetPortId === 'dialogue' || targetPortId.includes('dialogue') || targetPortId.includes('Dialogue')) {
@@ -2868,7 +2796,9 @@ const CreativeCanvasInner: React.FC = () => {
       } else if (nodeType === 'storyStructure') {
         // Story Structure - Apply story framework
         console.log('[handleNodeExecute] Processing Story Structure');
-        const storyInput = inputData.story as Record<string, unknown>;
+        // Use storyObject (full object) or fallback to story if it's already an object
+        const storyInput = (inputData.storyObject as Record<string, unknown>) ||
+                          (typeof inputData.story === 'object' ? inputData.story as Record<string, unknown> : null);
 
         if (!storyInput) {
           throw new Error('Story Structure requires a story concept. Connect the Story input.');
@@ -2956,17 +2886,35 @@ const CreativeCanvasInner: React.FC = () => {
       } else if (nodeType === 'sceneGenerator') {
         // Scene Generator - Generate a complete scene
         console.log('[handleNodeExecute] Processing Scene Generator');
-        const concept = (inputData.concept as string) || (nodeData?.parameters?.concept as string);
+        // Check multiple possible input keys for scene concept
+        const concept = (inputData.sceneConcept as string) ||
+                       (inputData.concept as string) ||
+                       (inputData.scene as string) ||
+                       (nodeData?.parameters?.concept as string) ||
+                       (nodeData?.parameters?.sceneConcept as string);
 
         if (!concept) {
-          throw new Error('Scene Writer requires a scene concept.');
+          console.error('[handleNodeExecute] Scene Generator - No concept found. inputData:', inputData, 'parameters:', nodeData?.parameters);
+          throw new Error('Scene Writer requires a scene concept. Connect a Text Input to the sceneConcept port.');
+        }
+
+        // Handle characters - can be an array or a single character object
+        let characters: any[] = [];
+        if (inputData.characters) {
+          characters = Array.isArray(inputData.characters)
+            ? inputData.characters
+            : [inputData.characters];
+        } else if (inputData.character) {
+          characters = Array.isArray(inputData.character)
+            ? inputData.character
+            : [inputData.character];
         }
 
         const sceneResponse = await storyGenerationService.generateScene({
           storyId: 'temp-story',
           storyContext: (inputData.story as any) || {},
           concept,
-          characters: (inputData.characters as any[]) || [],
+          characters,
           location: inputData.location as any,
           format: (nodeData?.parameters?.format as SceneFormat) || 'prose',
           pov: (nodeData?.parameters?.pov as POV) || 'third-limited',
@@ -3018,7 +2966,19 @@ const CreativeCanvasInner: React.FC = () => {
       } else if (nodeType === 'dialogueGenerator') {
         // Dialogue Generator - Generate dialogue between characters
         console.log('[handleNodeExecute] Processing Dialogue Generator');
-        const characters = (inputData.characters as any[]) || [];
+
+        // Handle characters - can be array or single character
+        let characters: any[] = [];
+        if (inputData.characters) {
+          characters = Array.isArray(inputData.characters)
+            ? inputData.characters
+            : [inputData.characters];
+        } else if (inputData.character) {
+          characters = Array.isArray(inputData.character)
+            ? inputData.character
+            : [inputData.character];
+        }
+
         const situation = (inputData.situation as string) || (nodeData?.parameters?.situation as string);
 
         if (characters.length < 2) {
@@ -3061,16 +3021,30 @@ const CreativeCanvasInner: React.FC = () => {
       } else if (nodeType === 'plotTwist') {
         // Plot Twist - Generate a plot twist
         console.log('[handleNodeExecute] Processing Plot Twist');
-        const storyInput = inputData.story as Record<string, unknown>;
+        // Use storyObject (full object) or fallback to story if it's already an object
+        const storyInput = (inputData.storyObject as Record<string, unknown>) ||
+                          (typeof inputData.story === 'object' ? inputData.story as Record<string, unknown> : null);
 
         if (!storyInput) {
           throw new Error('Plot Twist requires a story context. Connect the Story input.');
         }
 
+        // Handle characters - can be array or single character
+        let twistCharacters: any[] = [];
+        if (inputData.characters) {
+          twistCharacters = Array.isArray(inputData.characters)
+            ? inputData.characters
+            : [inputData.characters];
+        } else if (inputData.character) {
+          twistCharacters = Array.isArray(inputData.character)
+            ? inputData.character
+            : [inputData.character];
+        }
+
         const twistResponse = await storyGenerationService.generatePlotTwist({
           storyId: (storyInput.id as string) || 'temp-story',
           storyContext: storyInput as any,
-          characters: (inputData.characters as any[]) || [],
+          characters: twistCharacters,
           twistType: (nodeData?.parameters?.twistType as TwistType) || 'betrayal',
           impactLevel: (nodeData?.parameters?.impactLevel as 'minor' | 'moderate' | 'major' | 'story-changing') || 'major',
           generateForeshadowing: (nodeData?.parameters?.generateForeshadowing as boolean) ?? true,
@@ -3117,11 +3091,54 @@ const CreativeCanvasInner: React.FC = () => {
         // Story Synthesizer - Compile and export story elements
         console.log('[handleNodeExecute] Processing Story Synthesizer');
 
-        const storyInput = inputData.story as Record<string, unknown>;
-        const characters = inputData.characters as Array<Record<string, unknown>> | undefined;
+        // Use storyObject (full object) or fallback to story if it's already an object
+        const storyInput = (inputData.storyObject as Record<string, unknown>) ||
+                          (typeof inputData.story === 'object' ? inputData.story as Record<string, unknown> : null);
+
+        // Handle characters - can be array or single character
+        let characters: Array<Record<string, unknown>> = [];
+        if (inputData.characters) {
+          characters = Array.isArray(inputData.characters)
+            ? inputData.characters
+            : [inputData.characters];
+        } else if (inputData.character) {
+          characters = Array.isArray(inputData.character)
+            ? inputData.character
+            : [inputData.character];
+        }
+
+        // Handle scenes - can be array or single scene
+        // Use sceneObject (full object) since inputData.scene is now a string
+        let scenes: Array<Record<string, unknown>> = [];
+        if (inputData.scenes) {
+          scenes = Array.isArray(inputData.scenes)
+            ? inputData.scenes
+            : [inputData.scenes];
+        } else if (inputData.sceneObject) {
+          // sceneObject is the full scene data object
+          scenes = Array.isArray(inputData.sceneObject)
+            ? inputData.sceneObject as Array<Record<string, unknown>>
+            : [inputData.sceneObject as Record<string, unknown>];
+        } else if (typeof inputData.scene === 'object' && inputData.scene !== null) {
+          // Fallback for direct object input
+          scenes = Array.isArray(inputData.scene)
+            ? inputData.scene
+            : [inputData.scene];
+        }
+
+        // Handle locations - can be array or single location
+        let locations: Array<Record<string, unknown>> = [];
+        if (inputData.locations) {
+          locations = Array.isArray(inputData.locations)
+            ? inputData.locations
+            : [inputData.locations];
+        } else if (inputData.location) {
+          locations = Array.isArray(inputData.location)
+            ? inputData.location
+            : [inputData.location];
+        }
+
         const outline = inputData.outline as Record<string, unknown> | undefined;
-        const scenes = inputData.scenes as Array<Record<string, unknown>> | undefined;
-        const locations = inputData.locations as Array<Record<string, unknown>> | undefined;
         const treatment = inputData.treatment as Record<string, unknown> | undefined;
 
         if (!storyInput) {

@@ -622,6 +622,52 @@ export interface BranchGenerateRequest {
   format: SceneFormat;
 }
 
+// Consequence Tracking (swagger v18)
+export interface ConsequenceTrackRequest {
+  storyId: string;
+  previousChoices: { choiceId: string; pathTaken: string }[];
+  storyContext: string;
+  characters: string[];
+}
+
+export interface ConsequenceTrackResponse {
+  accumulatedConsequences: {
+    worldState: string[];
+    characterChanges: { character: string; changes: string[] }[];
+    relationshipChanges: string[];
+  };
+  narrativeMomentum: string;
+}
+
+// Path Merging (swagger v18)
+export interface PathMergeRequest {
+  storyId: string;
+  paths: { pathId: string; summary: string; keyEvents: string[] }[];
+  storyContext: string;
+  mergePoint: string;
+}
+
+export interface PathMergeResponse {
+  mergedScene: string;
+  pathVariations: { pathId: string; uniqueElements: string[] }[];
+  unifiedOutcome: string;
+}
+
+// Scene Visualization (swagger v18)
+export interface SceneVisualizeRequest {
+  scene: string;
+  characters: { name: string; description: string }[];
+  location: string;
+  style: 'cinematic' | 'illustrated' | 'concept_art' | 'storyboard';
+  aspectRatio: '16:9' | '1:1' | '9:16';
+}
+
+export interface SceneVisualizeResponse {
+  imageUrl: string;
+  prompt: string;
+  model: string;
+}
+
 export interface CharacterGenerateRequest {
   storyId?: string;
   concept: string;
@@ -1067,13 +1113,30 @@ class StoryGenerationService {
     return response.data;
   }
 
+  /**
+   * Generate a choice point with multiple path options
+   * POST /api/storytelling/branch/choice (swagger v18)
+   */
   async generateChoicePoint(request: ChoicePointRequest): Promise<ChoicePointResponse> {
-    const response = await api.post<ChoicePointResponse>('/api/storytelling/generate-choice', request);
+    const response = await api.post<ChoicePointResponse>('/api/storytelling/branch/choice', request);
     return response.data;
   }
 
-  async generateBranch(request: BranchGenerateRequest): Promise<BranchGenerateResponse> {
-    const response = await api.post<BranchGenerateResponse>('/api/storytelling/generate-branch', request);
+  /**
+   * Track accumulated consequences across choices
+   * POST /api/storytelling/branch/consequence (swagger v18)
+   */
+  async trackConsequences(request: ConsequenceTrackRequest): Promise<ConsequenceTrackResponse> {
+    const response = await api.post<ConsequenceTrackResponse>('/api/storytelling/branch/consequence', request);
+    return response.data;
+  }
+
+  /**
+   * Merge divergent paths back into single narrative
+   * POST /api/storytelling/branch/merge (swagger v18)
+   */
+  async mergePaths(request: PathMergeRequest): Promise<PathMergeResponse> {
+    const response = await api.post<PathMergeResponse>('/api/storytelling/branch/merge', request);
     return response.data;
   }
 
@@ -1084,13 +1147,21 @@ class StoryGenerationService {
     return response.data;
   }
 
+  /**
+   * Generate character voice profile with speech patterns & sample dialogue
+   * POST /api/storytelling/character/voice (swagger v18)
+   */
   async generateVoiceProfile(request: VoiceProfileRequest): Promise<VoiceProfileResponse> {
-    const response = await api.post<VoiceProfileResponse>('/api/agent/character/voice-profile', request);
+    const response = await api.post<VoiceProfileResponse>('/api/storytelling/character/voice', request);
     return response.data;
   }
 
+  /**
+   * Generate relationship dynamics between two characters
+   * POST /api/storytelling/character/relationship (swagger v18)
+   */
   async generateRelationship(request: RelationshipRequest): Promise<RelationshipResponse> {
-    const response = await api.post<RelationshipResponse>('/api/agent/character/relationship', request);
+    const response = await api.post<RelationshipResponse>('/api/storytelling/character/relationship', request);
     return response.data;
   }
 
@@ -1133,13 +1204,21 @@ class StoryGenerationService {
     return response.data;
   }
 
+  /**
+   * Generate world lore, history, cultures, factions
+   * POST /api/storytelling/world/lore (swagger v18)
+   */
   async generateLore(request: WorldLoreRequest): Promise<WorldLoreResponse> {
-    const response = await api.post<WorldLoreResponse>('/api/agent/world/generate-lore', request);
+    const response = await api.post<WorldLoreResponse>('/api/storytelling/world/lore', request);
     return response.data;
   }
 
+  /**
+   * Generate story event timeline with character arcs
+   * POST /api/storytelling/world/timeline (swagger v18)
+   */
   async generateTimeline(request: TimelineRequest): Promise<TimelineResponse> {
-    const response = await api.post<TimelineResponse>('/api/agent/world/timeline', request);
+    const response = await api.post<TimelineResponse>('/api/storytelling/world/timeline', request);
     return response.data;
   }
 
@@ -1198,6 +1277,15 @@ class StoryGenerationService {
   }
 
   // ----- Visualization -----
+
+  /**
+   * Generate scene visualization prompts
+   * POST /api/storytelling/visualize/scene (swagger v18)
+   */
+  async visualizeScene(request: SceneVisualizeRequest): Promise<SceneVisualizeResponse> {
+    const response = await api.post<SceneVisualizeResponse>('/api/storytelling/visualize/scene', request);
+    return response.data;
+  }
 
   async sceneToVisuals(request: SceneToVisualsRequest): Promise<SceneToVisualsResponse> {
     const response = await api.post<SceneToVisualsResponse>('/api/agent/prompt/scene-to-visuals', request);
@@ -1290,6 +1378,10 @@ class StoryGenerationService {
 
   // ----- Export -----
 
+  /**
+   * Export story as manuscript document
+   * POST /api/storytelling/format/manuscript (swagger v18)
+   */
   async exportManuscript(
     storyId: string,
     scenes: SceneData[],
@@ -1301,7 +1393,7 @@ class StoryGenerationService {
       contactInfo?: string;
     }
   ): Promise<{ downloadUrl: string; format: string; wordCount: number; pageCount: number }> {
-    const response = await api.post('/api/export/manuscript', {
+    const response = await api.post('/api/storytelling/format/manuscript', {
       storyId,
       scenes,
       format,
@@ -1310,6 +1402,10 @@ class StoryGenerationService {
     return response.data;
   }
 
+  /**
+   * Export story as screenplay
+   * POST /api/storytelling/format/screenplay (swagger v18)
+   */
   async exportScreenplay(
     storyId: string,
     scenes: SceneData[],
@@ -1320,7 +1416,7 @@ class StoryGenerationService {
       basedOn?: string;
     }
   ): Promise<{ downloadUrl: string; format: string; pageCount: number; estimatedRuntime: string }> {
-    const response = await api.post('/api/export/screenplay', {
+    const response = await api.post('/api/storytelling/format/screenplay', {
       storyId,
       scenes,
       format,
@@ -1420,6 +1516,119 @@ class StoryGenerationService {
     return response.data;
   }
 
+  // ----- Full Story Generation (API v21) -----
+
+  /**
+   * Start async full story generation with optional images
+   * POST /api/storytelling/generate-full
+   *
+   * Starts a background job to generate complete story content with:
+   * - Chapter text generation
+   * - Cover art (optional)
+   * - Chapter header images (optional)
+   * - Scene illustrations (optional)
+   * - Character portraits (optional)
+   *
+   * @returns Job ID for polling status
+   */
+  async startFullStoryGeneration(
+    request: FullStoryGenerationRequest
+  ): Promise<FullStoryGenerationStartResponse> {
+    const response = await api.post<FullStoryGenerationStartResponse>(
+      '/api/storytelling/generate-full',
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Get status and results of full story generation job
+   * GET /api/storytelling/generate-full/{jobId}
+   *
+   * Poll this endpoint to track progress and get final results.
+   * Status values: pending, processing, completed, failed, cancelled
+   */
+  async getFullStoryGenerationStatus(
+    jobId: string
+  ): Promise<FullStoryGenerationStatusResponse> {
+    const response = await api.get<FullStoryGenerationStatusResponse>(
+      `/api/storytelling/generate-full/${jobId}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Cancel a pending or processing full story generation job
+   * DELETE /api/storytelling/generate-full/{jobId}
+   *
+   * Only pending and processing jobs can be cancelled.
+   */
+  async cancelFullStoryGeneration(jobId: string): Promise<void> {
+    await api.delete(`/api/storytelling/generate-full/${jobId}`);
+  }
+
+  /**
+   * Generate images for a specific chapter
+   * POST /api/storytelling/generate-chapter-images
+   *
+   * Starts a background job to generate images for chapter scenes.
+   * Returns a job ID for polling status.
+   */
+  async generateChapterImages(
+    request: ChapterImageGenerationRequest
+  ): Promise<FullStoryGenerationStartResponse> {
+    const response = await api.post<FullStoryGenerationStartResponse>(
+      '/api/storytelling/generate-chapter-images',
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Helper method to poll full story generation until complete
+   * Automatically handles polling with configurable interval
+   *
+   * @param jobId - Job ID from startFullStoryGeneration
+   * @param onProgress - Callback for progress updates
+   * @param pollInterval - Polling interval in ms (default: 3000)
+   * @param maxAttempts - Maximum poll attempts (default: 200, ~10 min)
+   * @returns Final generation result
+   */
+  async pollFullStoryGeneration(
+    jobId: string,
+    onProgress?: (progress: GenerationProgress, status: string) => void,
+    pollInterval = 3000,
+    maxAttempts = 200
+  ): Promise<FullStoryGenerationResult> {
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      const status = await this.getFullStoryGenerationStatus(jobId);
+
+      if (onProgress && status.progress) {
+        onProgress(status.progress, status.status || 'unknown');
+      }
+
+      if (status.status === 'completed' && status.result) {
+        return status.result;
+      }
+
+      if (status.status === 'failed') {
+        throw new Error(status.error || 'Story generation failed');
+      }
+
+      if (status.status === 'cancelled') {
+        throw new Error('Story generation was cancelled');
+      }
+
+      // Wait before next poll
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      attempts++;
+    }
+
+    throw new Error('Story generation timed out');
+  }
+
   // ----- Health Check -----
 
   /**
@@ -1443,6 +1652,156 @@ export interface AudioChapter {
   title: string;
   startTime: number;
   endTime: number;
+}
+
+// ===== Full Story Generation Types (API v21) =====
+
+/**
+ * Options for full story generation with images
+ */
+export interface FullStoryGenerationOptions {
+  /** Generate chapter header images */
+  generateChapterImages?: boolean;
+  /** Number of images per chapter (default: 1) */
+  imagesPerChapter?: number;
+  /** Visual style for generated images */
+  imageStyle?: string;
+  /** Generate cover art for the story */
+  generateCoverArt?: boolean;
+  /** Include character portrait images */
+  includeCharacterPortraits?: boolean;
+  /** Image generation model to use */
+  model?: string;
+}
+
+/**
+ * Request to start full story generation job
+ */
+export interface FullStoryGenerationRequest {
+  /** Story ID to generate content for */
+  storyId: string;
+  /** Generation options */
+  options?: FullStoryGenerationOptions;
+}
+
+/**
+ * Progress tracking for generation job
+ */
+export interface GenerationProgress {
+  /** Current phase (e.g., 'generating_chapters', 'generating_images') */
+  phase?: string;
+  /** Current chapter being processed */
+  currentChapter?: number;
+  /** Total chapters to process */
+  totalChapters?: number;
+  /** Overall completion percentage (0-100) */
+  percentage: number;
+}
+
+/**
+ * Generated scene image data
+ */
+export interface GeneratedSceneImage {
+  /** Scene identifier */
+  sceneId?: string;
+  /** URL of the generated image */
+  imageUrl?: string;
+  /** Prompt used to generate the image */
+  prompt?: string;
+  /** Image caption/description */
+  caption?: string;
+}
+
+/**
+ * Generated chapter with content and images
+ */
+export interface GeneratedChapter {
+  /** Chapter number (1-based) */
+  chapterNumber: number;
+  /** Chapter title */
+  title?: string;
+  /** Full chapter content/prose */
+  content?: string;
+  /** Word count for this chapter */
+  wordCount: number;
+  /** Chapter header image URL */
+  headerImageUrl?: string;
+  /** Scene illustrations within the chapter */
+  sceneImages?: GeneratedSceneImage[];
+}
+
+/**
+ * Complete result of full story generation
+ */
+export interface FullStoryGenerationResult {
+  /** Story ID */
+  storyId: string;
+  /** Cover art image URL */
+  coverArtUrl?: string;
+  /** Generated chapters with content and images */
+  chapters?: GeneratedChapter[];
+  /** Character ID to portrait URL mapping */
+  characterPortraits?: Record<string, string>;
+  /** Total word count across all chapters */
+  totalWordCount: number;
+  /** Total images generated */
+  totalImages: number;
+}
+
+/**
+ * Response when starting a full story generation job
+ */
+export interface FullStoryGenerationStartResponse {
+  /** Whether the job was started successfully */
+  success: boolean;
+  /** Job ID for tracking progress */
+  jobId?: string;
+  /** Initial job status */
+  status?: string;
+  /** Estimated duration in seconds */
+  estimatedDuration: number;
+  /** Job creation timestamp */
+  createdAt: string;
+  /** Error message if failed to start */
+  error?: string;
+}
+
+/**
+ * Response when checking full story generation job status
+ */
+export interface FullStoryGenerationStatusResponse {
+  /** Whether the status check was successful */
+  success: boolean;
+  /** Job ID */
+  jobId: string;
+  /** Current job status (pending, processing, completed, failed, cancelled) */
+  status?: string;
+  /** Detailed progress information */
+  progress?: GenerationProgress;
+  /** Final result (only present when completed) */
+  result?: FullStoryGenerationResult;
+  /** Job start timestamp */
+  startedAt?: string;
+  /** Job completion timestamp */
+  completedAt?: string;
+  /** Error message if failed */
+  error?: string;
+}
+
+/**
+ * Request to generate images for a specific chapter
+ */
+export interface ChapterImageGenerationRequest {
+  /** Story ID */
+  storyId: string;
+  /** Optional chapter ID (generates for all chapters if not specified) */
+  chapterId?: string;
+  /** Number of images to generate */
+  imageCount: number;
+  /** Visual style for images */
+  style?: string;
+  /** Specific scenes to visualize */
+  scenes?: string[];
 }
 
 // Export singleton instance

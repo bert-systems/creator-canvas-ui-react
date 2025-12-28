@@ -204,6 +204,12 @@ export const videoGenNodes: NodeDefinition[] = [
       { id: 'enableAudio', name: 'Generate Audio', type: 'boolean', default: true },
       { id: 'audioPrompt', name: 'Audio Direction', type: 'text', default: '' },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['duration', 'aspectRatio'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true, showCost: true },
+    },
   },
   {
     type: 'sora2Pro',
@@ -244,6 +250,12 @@ export const videoGenNodes: NodeDefinition[] = [
       { id: 'audioPrompt', name: 'Audio Direction', type: 'text', default: '' },
       { id: 'multiShot', name: 'Multi-shot Mode', type: 'boolean', default: false },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['duration', 'aspectRatio', 'multiShot'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true, showCost: true },
+    },
   },
   {
     type: 'kling26Pro',
@@ -286,6 +298,12 @@ export const videoGenNodes: NodeDefinition[] = [
         { label: 'Auto-detect', value: 'auto' },
       ]},
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['duration', 'aspectRatio', 'audioLanguage'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true, showCost: true },
+    },
   },
   {
     type: 'ltx2',
@@ -324,6 +342,12 @@ export const videoGenNodes: NodeDefinition[] = [
       ]},
       { id: 'enableAudio', name: 'Generate Audio', type: 'boolean', default: true },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['duration', 'resolution', 'fps'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true, showCost: true },
+    },
   },
   {
     type: 'wan26',
@@ -358,6 +382,12 @@ export const videoGenNodes: NodeDefinition[] = [
       ]},
       { id: 'enableAudio', name: 'Generate Audio', type: 'boolean', default: true },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9', showFullscreen: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['numShots', 'duration', 'transitionStyle'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
 
   // 3D GENERATION NODES
@@ -383,6 +413,12 @@ export const videoGenNodes: NodeDefinition[] = [
       ]},
       { id: 'generatePBR', name: 'Generate PBR', type: 'boolean', default: true },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: '3d', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['targetPolycount', 'generatePBR'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'tripoV25',
@@ -405,6 +441,12 @@ export const videoGenNodes: NodeDefinition[] = [
         { label: 'OBJ', value: 'obj' },
       ]},
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: '3d', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['format'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
 
   // CHARACTER CONSISTENCY NODES
@@ -426,6 +468,12 @@ export const videoGenNodes: NodeDefinition[] = [
       { id: 'preserveStrength', name: 'Identity Preservation', type: 'slider', default: 0.8, min: 0, max: 1, step: 0.05 },
       { id: 'extractTraits', name: 'Auto-Extract Traits', type: 'boolean', default: true },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '3:4', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['characterName', 'preserveStrength'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'faceMemory',
@@ -447,6 +495,12 @@ export const videoGenNodes: NodeDefinition[] = [
       { id: 'slot4Name', name: 'Face 4 Name', type: 'text', default: 'Face 4' },
       { id: 'slot5Name', name: 'Face 5 Name', type: 'text', default: 'Face 5' },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['slot1Name', 'slot2Name', 'slot3Name'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'elementLibrary',
@@ -477,5 +531,11 @@ export const videoGenNodes: NodeDefinition[] = [
         { label: '10 seconds', value: 10 },
       ]},
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: 'auto', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['libraryName', 'elementType', 'duration'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
 ];

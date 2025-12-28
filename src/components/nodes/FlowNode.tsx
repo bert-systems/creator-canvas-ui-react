@@ -80,7 +80,7 @@ import {
   Share as PlatformIcon,
 } from '@mui/icons-material';
 import type { CanvasNodeData, Port, PortType } from '@/models/canvas';
-import { PORT_COLORS } from './portColors';
+import { portColors as PORT_COLORS } from '@/theme';
 import { nodeCategories, getNodeDefinition } from '@/config/nodeDefinitions';
 import { brandColors, darkNeutrals, creativeCardTokens, agentStateColors } from '@/theme';
 

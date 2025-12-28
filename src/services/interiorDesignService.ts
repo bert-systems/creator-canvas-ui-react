@@ -42,7 +42,26 @@ export type LightingType = 'natural' | 'evening' | 'studio' | 'dramatic';
 
 export type BudgetLevel = 'budget' | 'mid' | 'premium' | 'luxury';
 
-export type TargetAudience = 'luxury' | 'family' | 'youngProfessional' | 'retiree';
+export type TargetAudience = 'luxury' | 'family' | 'youngProfessional' | 'retiree' | 'firstTimeBuyer';
+
+// New enhancement types for more customization
+export type ColorPalette = 'warm' | 'cool' | 'neutral' | 'monochromatic' | 'vibrant' | 'earthTones' | 'pastels';
+
+export type LightingPreference = 'natural' | 'ambient' | 'dramatic' | 'bright' | 'cozy' | 'layered';
+
+export type DesignMood = 'relaxing' | 'energizing' | 'sophisticated' | 'playful' | 'romantic' | 'productive' | 'cozy' | 'minimalist';
+
+export type DesignEra = 'contemporary' | 'midCentury' | 'artDeco' | 'victorian' | 'rustic' | 'futuristic' | 'vintage' | 'eclectic';
+
+export type MaterialType = 'wood' | 'metal' | 'glass' | 'stone' | 'leather' | 'fabric' | 'rattan' | 'marble' | 'concrete' | 'velvet' | 'linen' | 'ceramic';
+
+export type FocusArea = 'seating' | 'storage' | 'lighting' | 'decor' | 'plants' | 'textiles' | 'artwork' | 'entertainment';
+
+export type FocalPoint = 'fireplace' | 'windows' | 'entertainment' | 'dining' | 'bed' | 'kitchen' | 'artwork' | 'view';
+
+export type AccessoryType = 'art' | 'plants' | 'books' | 'textiles' | 'lighting' | 'mirrors' | 'sculptures' | 'vases';
+
+export type PhotographyStyle = 'realEstate' | 'editorial' | 'lifestyle' | 'twilight' | 'architectural';
 
 export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
@@ -139,6 +158,13 @@ export interface RoomRedesignRequest {
   preserveStructure: boolean;
   intensity: number;
   customPrompt?: string;
+  // Enhanced customization options
+  colorPalette?: ColorPalette;
+  lightingPreference?: LightingPreference;
+  materialPreferences?: MaterialType[];
+  mood?: DesignMood;
+  era?: DesignEra;
+  focusAreas?: FocusArea[];
 }
 
 export interface VirtualStagingRequest {
@@ -148,6 +174,12 @@ export interface VirtualStagingRequest {
   furnishingLevel: FurnishingLevel;
   targetAudience?: TargetAudience;
   budgetTier?: BudgetLevel;
+  // Enhanced customization options
+  colorScheme?: ColorPalette;
+  focalPoint?: FocalPoint;
+  lightingStyle?: LightingPreference;
+  accessories?: AccessoryType[];
+  photographyStyle?: PhotographyStyle;
 }
 
 export interface FloorPlanRequest {

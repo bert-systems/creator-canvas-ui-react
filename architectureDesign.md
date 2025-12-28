@@ -1,6 +1,6 @@
 # Architecture Design - Creative Canvas Studio
 
-**Last Updated:** December 20, 2025
+**Last Updated:** December 28, 2025
 
 ## Overview
 
@@ -8,11 +8,109 @@ Creative Canvas Studio is a standalone React application providing an infinity-b
 
 ---
 
+## Studio Library Integration - December 27, 2025
+
+> **Status:** ✅ COMPLETE - All 4 Studios Integrated with Persistent Storage
+
+### Overview
+
+All 4 creative studios now have persistent storage for user-created content via dedicated Zustand stores connected to backend APIs. Content created in Flow mode is automatically saved and accessible in Workspace mode.
+
+### Zustand Stores Created
+
+| Store | File | APIs |
+|-------|------|------|
+| `useSocialStore` | `src/stores/socialStore.ts` | `/api/social/posts`, `/api/social/carousels` |
+| `useMoodboardStore` | `src/stores/moodboardStore.ts` | `/api/moodboard/library`, `/api/moodboard/brand-kits` |
+| `useFashionStore` | `src/stores/fashionStore.ts` | `/api/fashion/lookbooks`, garments, colorways, outfits |
+| `useInteriorStore` | `src/stores/interiorStore.ts` | `/api/interior-design/redesigns`, stagings, furniture |
+
+### Studio Integrations
+
+| Studio | Store | Content Types |
+|--------|-------|---------------|
+| SocialStudio | `useSocialStore` | Posts, Carousels |
+| MoodboardsStudio | `useMoodboardStore` | Moodboards, Brand Kits |
+| FashionStudio | `useFashionStore` | Lookbooks, Garments, Colorways, Outfits |
+| InteriorDesignStudio | `useInteriorStore` | Room Redesigns, Virtual Stagings, Furniture |
+
+### Key Features
+
+- **Auto-fetch on mount:** Each studio fetches existing content when the component mounts
+- **Flow → Store → API:** Content created in flows is saved to the store and persisted to the backend
+- **Loading states:** All studios show loading indicators while fetching from the API
+- **Workspace view:** Shows all saved content with search and filtering
+- **Recent content:** Flow mode shows a preview of recent work
+
+### Database Migrations (Backend)
+
+The API team implemented the following migrations for studio library support:
+- `014_AddSocialPostsTable.cs`
+- `015_AddMoodboardLibraryTable.cs`
+- `016_AddFashionLookbooksTable.cs`
+- `017_AddInteriorDesignRedesignsTable.cs`
+
+---
+
+## Node Execution Persistence - December 28, 2025
+
+> **Status:** ✅ COMPLETE - Node previews now persist across page reloads
+
+### Problem
+
+Node execution results (images, generated content, scene data, character data) were lost on page reload because the backend wasn't persisting `cachedOutput`.
+
+### Solution
+
+**Frontend (already implemented):**
+- `CreativeCanvasStudio.tsx:3346` - Stores execution results in `cachedOutput`
+- `CreativeCanvasStudio.tsx:3397-3406` - Persists `cachedOutput` via `nodeService.update()`
+- `CreativeCanvasStudio.tsx:897` - Loads `cachedOutput` when restoring nodes
+
+**Backend (fixed Dec 28):**
+- `CanvasNodeModels.cs:578-585` - Added `CachedOutput`, `Status`, `LastExecution` to `UpdateNodeRequest`
+- `CreativeCanvasService.cs:3613-3627` - Added persistence logic for `cached_output` column
+
+### Node Input/Output Key Mapping Fixes
+
+Fixed array normalization for nodes that accept character/scene/location inputs:
+
+| Node | File:Line | Fix |
+|------|-----------|-----|
+| `sceneGenerator` | `CreativeCanvasStudio.tsx:2858-2872` | Handle both `characters` and `character` as array or single object |
+| `plotTwist` | `CreativeCanvasStudio.tsx:2985-2995` | Handle both `characters` and `character` as array or single object |
+| `dialogueGenerator` | `CreativeCanvasStudio.tsx:2937-2947` | Handle both `characters` and `character` as array or single object |
+| `storySynthesizer` | `CreativeCanvasStudio.tsx:3061-3095` | Handle characters, scenes, locations as array or single object |
+
+### "Moment of Delight" Rich Previews
+
+Added rich preview rendering for storytelling nodes:
+
+| Node Type | File:Line | Features |
+|-----------|-----------|----------|
+| `storyGenesis` | `PreviewSlot.tsx:550-865` | Title, logline, themes, collapsible characters/outline |
+| `characterCreator` | `PreviewSlot.tsx:868-1415` | Avatar, traits, personality, backstory, arc, voice profile |
+| `sceneGenerator` | `PreviewSlot.tsx:1417-1726` | Title, slugline, location, mood, characters, content, dialogue |
+
+---
+
 ## Unified Node Architecture (v4.0) - December 2025
 
-> **Status:** ✅ IMPLEMENTATION COMPLETE - Testing Phase
+> **Status:** ✅ MIGRATION COMPLETE - Legacy Components Removed (Dec 27, 2025)
 > **Strategy:** `docs/UNIFIED_NODE_ARCHITECTURE_STRATEGY.md`
 > **API Requirements:** `docs/UNIFIED_NODE_API_REQUIREMENTS.md`
+
+### Legacy Cleanup Completed (Dec 27, 2025)
+
+- **Removed 54 legacy node component files** from `src/components/nodes/`
+- **Updated nodeTypes registration** in `CreativeCanvasStudio.tsx` to use only UnifiedNode
+- **Added slot configs** to all 25 storytelling nodes in `storytellingNodes.ts`
+- **Added missing port colors** to theme.ts (all port types now have colors)
+- **Remaining node files:**
+  - `UnifiedNode.tsx` - Main unified node component (v4.0)
+  - `CanvasNode.tsx` - Backwards compatibility only
+  - `FlowNode.tsx` - Backwards compatibility only
+  - `slots/` - Slot components (PreviewSlot, ParameterSlot, ActionSlot)
 
 ### Implemented Components (Dec 20, 2025)
 
@@ -358,6 +456,89 @@ Redesigned creative palette with intent-based organization replacing the technic
   - **Character Lock** - Create/update/delete character profiles with up to 7 reference images
   - **Face Memory** - 5-slot face memory system for multi-character scenes
   - **Element Library** - Kling O1 integration for video element consistency
+
+---
+
+## Studios Architecture (v5.0) - December 2025
+
+> **Status:** ✅ IMPLEMENTATION COMPLETE
+> **Documentation:** `todo.md` (Phases 1-5)
+
+### Overview
+
+Studios provide category-specific UX surfaces that offer guided creation flows as an alternative to the freeform node canvas. Each studio is tailored to its domain with specialized tools and workflows.
+
+### Studio Directory Structure
+
+```
+src/components/studios/
+├── shared/
+│   ├── studioTokens.ts           # Design system tokens
+│   ├── SurfaceCard.tsx           # Card component
+│   ├── AIPromptBar.tsx           # AI prompt input
+│   ├── StatusIndicator.tsx       # Status states
+│   ├── CollaborationPresence.tsx # Collaboration UI
+│   └── index.ts
+├── modes/
+│   ├── FlowMode.tsx              # Step-by-step wizard
+│   ├── WorkspaceMode.tsx         # Panel-based layout
+│   ├── TimelineMode.tsx          # Project management
+│   └── index.ts
+├── StudioShell.tsx               # Container with mode switching
+├── StudioCommandPalette.tsx      # ⌘K command interface
+├── fashion/
+│   ├── FashionStudio.tsx
+│   └── flows/CreateLookbookFlow.tsx
+├── social/
+│   ├── SocialStudio.tsx
+│   └── flows/{CreatePostFlow,CreateCarouselFlow}.tsx
+├── moodboards/
+│   ├── MoodboardsStudio.tsx
+│   └── flows/{CreateMoodboardFlow,CreateBrandKitFlow}.tsx
+└── index.ts
+```
+
+### Three Studio Modes
+
+| Mode | Purpose | Component |
+|------|---------|-----------|
+| **Flow** | Step-by-step wizard for guided creation | `FlowMode.tsx` |
+| **Workspace** | Panel-based layout with gallery | `WorkspaceMode.tsx` |
+| **Timeline** | Project management with status tracking | `TimelineMode.tsx` |
+
+### Design System Tokens
+
+```typescript
+// Color Philosophy: Neutral-first (90% grayscale)
+studioColors = {
+  carbon: '#09090B',      // App background
+  surface: '#18181B',     // Cards, panels
+  surface2: '#1F1F23',    // Elevated surfaces
+  border: '#27272A',      // Subtle separators
+  accent: '#3B9B94',      // Primary actions (muted teal)
+  success: '#22C55E',     // Success states
+  warning: '#F59E0B',     // Warning states
+  error: '#EF4444',       // Error states
+}
+```
+
+### Supporting Services
+
+- **`src/stores/userStore.ts`** - Zustand user state with preferences
+- **`src/services/assetLibraryService.ts`** - Asset/project/collection CRUD
+- **`src/services/downloadService.ts`** - Export images, JSON, CSS
+
+### Routing
+
+```typescript
+// App.tsx routes
+'/studios/fashion/*'    → FashionStudio
+'/studios/social/*'     → SocialStudio
+'/studios/moodboards/*' → MoodboardsStudio
+'/canvas'               → Advanced canvas
+```
+
+---
 
 ## Data Models
 
@@ -802,6 +983,49 @@ const executeClothesSwap = async (params) => {
 | `/api/stories/{id}` | PUT | Update a saved story | Dec 21, 2025 | ✅ Implemented |
 | `/api/stories/{id}` | DELETE | Delete a saved story | Dec 21, 2025 | ✅ Implemented |
 | `/api/stories/{id}/share` | POST | Share story with collaborators | Dec 21, 2025 | ✅ Implemented |
+| `/api/stories/public` | GET | List public/published stories (discovery) | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/featured` | GET | Get featured stories for showcase | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/trending` | GET | Get trending stories | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/{id}/publish` | POST | Publish story to community | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/{id}/unpublish` | POST | Unpublish story | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/{id}/like` | POST/DELETE | Like/unlike a public story | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/{storyId}/characters` | GET/POST | List/Create story characters | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/{storyId}/characters/{id}` | GET/PUT/DELETE | CRUD story characters | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/{storyId}/scenes` | GET/POST | List/Create story scenes | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/{storyId}/scenes/{id}` | GET/PUT/DELETE | CRUD story scenes | Dec 27, 2025 | ✅ Implemented |
+| `/api/stories/{storyId}/scenes/reorder` | POST | Reorder scenes within story | Dec 27, 2025 | ✅ Implemented |
+| `/api/storytelling/generate-full` | POST | Start async full story generation job | Dec 28, 2025 | ✅ Implemented |
+| `/api/storytelling/generate-full/{jobId}` | GET | Get job status and results | Dec 28, 2025 | ✅ Implemented |
+| `/api/storytelling/generate-full/{jobId}` | DELETE | Cancel pending job | Dec 28, 2025 | ✅ Implemented |
+| `/api/storytelling/generate-chapter-images` | POST | Generate images for a chapter | Dec 28, 2025 | ✅ Implemented |
+| `/api/social/posts` | GET/POST | List/Save user's social posts | Dec 27, 2025 | ✅ Implemented |
+| `/api/social/posts/{id}` | GET/PATCH/DELETE | CRUD for social posts | Dec 27, 2025 | ✅ Implemented |
+| `/api/social/carousels` | GET/POST | List/Save user's carousels | Dec 27, 2025 | ✅ Implemented |
+| `/api/social/carousels/{id}` | GET/PATCH/DELETE | CRUD for carousels | Dec 27, 2025 | ✅ Implemented |
+| `/api/moodboard/library` | GET/POST | List/Save user's moodboards | Dec 27, 2025 | ✅ Implemented |
+| `/api/moodboard/library/{id}` | GET/PATCH/DELETE | CRUD for moodboards | Dec 27, 2025 | ✅ Implemented |
+| `/api/moodboard/brand-kits` | GET/POST | List/Save brand kits | Dec 27, 2025 | ✅ Implemented |
+| `/api/moodboard/brand-kits/{id}` | GET/PATCH/DELETE | CRUD for brand kits | Dec 27, 2025 | ✅ Implemented |
+| `/api/characters` | GET | List user's standalone characters (not tied to story) | Dec 27, 2025 | ✅ Implemented |
+| `/api/characters` | POST | Create standalone character | Dec 27, 2025 | ✅ Implemented |
+| `/api/characters/{id}` | GET | Get a standalone character | Dec 27, 2025 | ✅ Implemented |
+| `/api/characters/{id}` | PUT | Update a standalone character | Dec 27, 2025 | ✅ Implemented |
+| `/api/characters/{id}` | DELETE | Delete a standalone character | Dec 27, 2025 | ✅ Implemented |
+| `/api/characters/{id}/stories` | GET | List stories linked to a character | Dec 27, 2025 | ✅ Implemented |
+| `/api/characters/{id}/stories/{storyId}` | POST | Link character to story | Dec 27, 2025 | ✅ Implemented |
+| `/api/characters/{id}/stories/{storyId}` | DELETE | Unlink character from story | Dec 27, 2025 | ✅ Implemented |
+| `/api/fashion/lookbooks` | GET/POST | List/Save user's lookbooks | Dec 27, 2025 | ✅ Implemented |
+| `/api/fashion/lookbooks/{id}` | GET/PATCH/DELETE | CRUD for lookbooks | Dec 27, 2025 | ✅ Implemented |
+| `/api/fashion/lookbooks/{id}/garments` | GET/POST | List/Add garments to lookbook | Dec 27, 2025 | ✅ Implemented |
+| `/api/fashion/lookbooks/{id}/colorways` | GET/POST | List/Add colorways to lookbook | Dec 27, 2025 | ✅ Implemented |
+| `/api/fashion/lookbooks/{id}/outfits` | GET/POST | List/Add outfits to lookbook | Dec 27, 2025 | ✅ Implemented |
+| `/api/interior-design/redesigns` | GET/POST | List/Save room redesigns | Dec 27, 2025 | ✅ Implemented |
+| `/api/interior-design/redesigns/{id}` | GET/PATCH/DELETE | CRUD for redesigns | Dec 27, 2025 | ✅ Implemented |
+| `/api/interior-design/redesigns/{id}/furniture` | GET/POST | List/Add furniture to redesign | Dec 27, 2025 | ✅ Implemented |
+| `/api/interior-design/stagings` | GET/POST | List/Save virtual stagings | Dec 27, 2025 | ✅ Implemented |
+| `/api/interior-design/stagings/{id}` | GET/PATCH/DELETE | CRUD for stagings | Dec 27, 2025 | ✅ Implemented |
+
+**Full requirements document:** `docs/STUDIO_LIBRARY_API_REQUIREMENTS.md`
 
 **How to Add New Requirements:**
 1. Add the endpoint to this table with ⏳ Pending status
@@ -835,6 +1059,139 @@ The backend resolves frontend `nodeType` values to internal `templateId` values 
 | `inspirationCurator`, `moodboardInspiration` | `moodboard-inspiration` |
 
 **⚠️ Breaking Change (Dec 21, 2025):** Nodes without `AgentBinding` now **FAIL** with descriptive error instead of silent passthrough. Existing nodes may need to be recreated.
+
+---
+
+## Story Library & Publishing System (December 2025)
+
+> **Status:** ✅ Backend Complete, UI Integrated (Dec 27, 2025)
+> **Strategy:** `docs/STORY_LIBRARY_PUBLISHING_STRATEGY.md`
+> **API Requirements:** `docs/STORY_LIBRARY_API_REQUIREMENTS.md`
+
+### Overview
+
+The Story Library system provides persistence, organization, and publishing capabilities for stories created in the Storyteller Studio.
+
+### Key Features
+
+1. **Story Persistence**
+   - Auto-save with debouncing (2s delay)
+   - Version history for undo/redo
+   - Sync across devices
+
+2. **Story Library Page**
+   - Browsable library similar to Asset Library
+   - Tabs: All Stories, Characters, Treatments, Scenes
+   - Search, filter, sort capabilities
+
+3. **Publishing System**
+   - Visibility levels: Private → Shared → Public
+   - Community showcase (like Inspiration Gallery)
+   - Like/comment engagement
+
+4. **Full Story Generation** ✅ (Completed Dec 28, 2025)
+   - Generate complete chapters with AI text
+   - Generate chapter header images
+   - Generate scene illustrations
+   - Character portrait generation
+   - Cover art generation
+   - Async job processing with progress polling
+   - Export to PDF/manuscript formats
+
+### Full Story Generation API Integration (Dec 28, 2025)
+
+**New Endpoints Integrated:**
+- `POST /api/storytelling/generate-full` - Start async story generation job
+- `GET /api/storytelling/generate-full/{jobId}` - Poll job status and get results
+- `DELETE /api/storytelling/generate-full/{jobId}` - Cancel pending job
+- `POST /api/storytelling/generate-chapter-images` - Generate chapter images
+
+**Frontend Changes:**
+- `src/services/storyGenerationService.ts` - Added new types and methods for async job handling
+- `src/components/studios/storyteller/flows/CreateStoryFlow.tsx` - Updated to use backend async API
+- Progress polling with live status updates
+- Cancel button for in-progress jobs
+- Display of generated chapters, character portraits, and images
+
+### API Integration Testing (Dec 28, 2025) ✅ ALL TESTS PASSED
+
+All full story generation endpoints verified working:
+- **Job Creation**: POST returns jobId, status "pending", estimatedDuration
+- **Status Tracking**: GET returns phase, percentage, and completed results
+- **Cancel Validation**: DELETE correctly rejects invalid cancel requests
+- **Image Generation**: Images generated and uploaded to GCS (`smartai-ssgp-v2-assets` bucket)
+
+### Backend Stub Audit (Dec 28, 2025)
+
+**Fixed - Now Properly Implemented:**
+| Service | Method | Fix |
+|---------|--------|-----|
+| StoryGenerationService | GetStoryAsync | Removed error-swallowing try-catch |
+| StoryGenerationService | UpdateStoryWithResultsAsync | Proper error propagation + logging |
+| CreativeCanvasService | RemoveAssetsFromLibraryAsync | Full DB implementation |
+| CreativeCanvasService | GetAssetAsync | Full DB implementation with access control |
+| CreativeCanvasService | GetAssetsForCardAsync | Full DB implementation |
+| CreativeCanvasService | GetTemplateCategoriesAsync | Fixed async warning |
+
+**Converted to NotImplementedException (not used by frontend):**
+- Content Pack Operations (4 methods) - Feature not yet implemented
+- Marketplace Operations (11 methods) - Should use IMarketplaceService
+- Reviews & Favorites (5 methods) - Should use IMarketplaceService
+- Analytics (2 methods) - Should use IGenerationTrackingService
+- Asset Upload (1 method) - Use AddAssetsToLibraryAsync with URL/base64
+
+### UI Enhancements (Implemented Dec 27, 2025)
+
+- **Scrollable Output:** FlowMode content area now properly scrolls with custom scrollbar styling
+- **Action Buttons:** Added "Generate Full Story with Images", "Save to Library", "Generate Cover Art" buttons to Create Story flow
+- **Info Panel:** Added informational note about full story generation capabilities
+
+### Backend Integration (Completed Dec 27, 2025)
+
+**New Files:**
+- `src/stores/storyStore.ts` - Zustand store for story state management
+- Updated `src/services/storyLibraryService.ts` - Full API integration with 35+ methods
+
+**Frontend Integration:**
+- StorytellerStudio now fetches stories from backend on mount
+- CreateStoryFlow saves stories to backend on completion
+- Workspace mode displays stories from backend with loading states
+- Character creation integrated with backend persistence
+
+**API Endpoints Tested:**
+- Story CRUD: Create, List, Get, Update, Delete
+- Character CRUD: Create, List, Get, Update, Delete
+- Scene CRUD: Create, List, Get, Update, Delete, Reorder
+- Publishing: Publish, Unpublish, Like, Unlike
+- Discovery: Public, Featured, Trending
+
+### Data Flow
+
+```
+StorytellerStudio
+    ↓
+CreateStoryFlow → storyGenerationService (AI generation)
+    ↓
+storyLibraryService → API (persistence)
+    ↓
+StoryLibraryPage (browsing) / StoryShowcasePage (public)
+```
+
+### Zustand Store (Planned)
+
+```typescript
+// src/stores/storyStore.ts (to be implemented)
+interface StoryStore {
+  stories: StoryResponse[];
+  currentStory: StoryResponse | null;
+  loading: boolean;
+
+  fetchStories: (params?: ListStoriesParams) => Promise<void>;
+  createStory: (request: CreateStoryRequest) => Promise<StoryResponse>;
+  updateStory: (id: string, request: UpdateStoryRequest) => Promise<void>;
+  publishStory: (id: string, visibility: 'public' | 'private') => Promise<void>;
+}
+```
 
 ---
 

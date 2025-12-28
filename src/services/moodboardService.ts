@@ -62,6 +62,11 @@ export type AnalysisDepth = 'quick' | 'standard' | 'deep';
 
 export type AspectRatio = '4:3' | '16:9' | '1:1' | 'pinterest';
 
+// Moodboard element types for parallel generation
+export type MoodboardElementType =
+  | 'Texture' | 'Lifestyle' | 'Product' | 'ColorSwatch'
+  | 'Pattern' | 'Atmosphere' | 'Typography' | 'Material';
+
 // ===== Interfaces =====
 
 export interface ColorSwatch {
@@ -186,6 +191,10 @@ export interface MoodboardRequest {
   includeColorPalette: boolean;
   aspectRatio?: AspectRatio;
   outputFormat?: 'collage' | 'grid' | 'scattered';
+  /** Override the default image generation model (e.g., 'flux-pro', 'nano-banana-pro') */
+  imageModel?: string;
+  /** Override the default LLM model (e.g., 'gemini-2.5-flash', 'gemini-2.0-flash') */
+  llmModel?: string;
 }
 
 export interface ColorPaletteExtractRequest {
@@ -194,6 +203,8 @@ export interface ColorPaletteExtractRequest {
   paletteType: PaletteType;
   includeNeutrals: boolean;
   generateVariations: boolean;
+  /** Override the default LLM model for color analysis */
+  llmModel?: string;
 }
 
 export interface BrandKitRequest {
@@ -205,6 +216,10 @@ export interface BrandKitRequest {
   includePatterns: boolean;
   includeIconography: boolean;
   colorPreferences?: string[];
+  /** Override the default image generation model for brand visuals */
+  imageModel?: string;
+  /** Override the default LLM model for brand kit generation */
+  llmModel?: string;
 }
 
 export interface TypographySuggestRequest {
@@ -213,6 +228,8 @@ export interface TypographySuggestRequest {
   style: TypographyStyle;
   useCase: TypographyUseCase;
   mood?: string;
+  /** Override the default LLM model for typography suggestions */
+  llmModel?: string;
 }
 
 export interface AestheticAnalyzeRequest {
@@ -220,6 +237,8 @@ export interface AestheticAnalyzeRequest {
   analysisDepth: AnalysisDepth;
   compareToTrends: boolean;
   extractStyles: boolean;
+  /** Override the default LLM model for aesthetic analysis */
+  llmModel?: string;
 }
 
 export interface TextureGenerateRequest {
@@ -230,6 +249,8 @@ export interface TextureGenerateRequest {
   seamless: boolean;
   resolution: '512' | '1024' | '2048' | '4096';
   colorOverride?: string;
+  /** Override the default image generation model for texture creation */
+  imageModel?: string;
 }
 
 // ===== Response Interfaces =====
@@ -273,6 +294,75 @@ export interface TextureGenerateResponse {
   seamlessTile?: string;
   normalMap?: string;
   metadata: TextureMetadata;
+}
+
+// ===== New Split API Request/Response Interfaces =====
+
+/**
+ * Request for generating individual moodboard elements
+ * POST /api/moodboard/element/generate
+ */
+export interface MoodboardElementRequest {
+  theme: string;
+  elementType: MoodboardElementType;
+  moodboardStyle?: MoodboardStyle;
+  mood?: MoodTone;
+  width?: number;
+  height?: number;
+  /** Override the default image generation model */
+  imageModel?: string;
+}
+
+/**
+ * Response from generating individual moodboard elements
+ */
+export interface MoodboardElementResponse {
+  success: boolean;
+  imageUrl?: string;
+  elementType?: string;
+  cost?: number;
+  errors?: string[];
+  generationId?: string;
+  assetId?: string;
+  processingTimeMs?: number;
+}
+
+/**
+ * Request for LLM-based moodboard analysis
+ * POST /api/moodboard/analyze
+ */
+export interface MoodboardAnalysisRequest {
+  theme: string;
+  moodboardStyle?: MoodboardStyle;
+  mood?: MoodTone;
+  industry?: string;
+  /** Override the default LLM model */
+  llmModel?: string;
+}
+
+/**
+ * Response from LLM-based moodboard analysis
+ */
+export interface MoodboardAnalysisResponse {
+  success: boolean;
+  colorPalette?: ColorPalette;
+  typography?: TypographySystem;
+  keywords?: string[];
+  aiNotes?: string;
+  cost?: number;
+  errors?: string[];
+  processingTimeMs?: number;
+}
+
+/**
+ * Aggregated result from parallel moodboard generation
+ */
+export interface ParallelMoodboardResult {
+  moodboard?: MoodboardResponse;
+  analysis?: MoodboardAnalysisResponse;
+  elements: MoodboardElementResponse[];
+  totalTimeMs: number;
+  errors: string[];
 }
 
 // ==================== API SERVICE ====================
@@ -380,6 +470,119 @@ export const moodboardService = {
       apiRequest
     );
     return response.data;
+  },
+
+  // ===== Split API Endpoints for Parallel Generation =====
+
+  /**
+   * Generate a single moodboard element
+   * POST /api/moodboard/element/generate
+   * Fast endpoint (~15-20s) for generating individual elements
+   */
+  async generateElement(request: MoodboardElementRequest): Promise<MoodboardElementResponse> {
+    const apiRequest = {
+      ...request,
+      moodboardStyle: request.moodboardStyle ? mapEnum(request.moodboardStyle, moodboardStyleMap) : undefined,
+      mood: request.mood ? mapEnum(request.mood, moodToneMap) : undefined,
+    };
+    const response = await api.post<MoodboardElementResponse>(
+      `${MOODBOARD_API_BASE}/element/generate`,
+      apiRequest
+    );
+    return response.data;
+  },
+
+  /**
+   * Analyze theme to get colors, typography, and keywords
+   * POST /api/moodboard/analyze
+   * Fast LLM-only endpoint (~5-7s) for extracting design attributes
+   */
+  async analyze(request: MoodboardAnalysisRequest): Promise<MoodboardAnalysisResponse> {
+    const apiRequest = {
+      ...request,
+      moodboardStyle: request.moodboardStyle ? mapEnum(request.moodboardStyle, moodboardStyleMap) : undefined,
+      mood: request.mood ? mapEnum(request.mood, moodToneMap) : undefined,
+    };
+    const response = await api.post<MoodboardAnalysisResponse>(
+      `${MOODBOARD_API_BASE}/analyze`,
+      apiRequest
+    );
+    return response.data;
+  },
+
+  /**
+   * Generate moodboard with parallel API calls
+   * Orchestrates: /generate, /analyze, and multiple /element/generate calls
+   * Total time: ~20-30s instead of 2+ minutes
+   *
+   * @param theme - The moodboard theme description
+   * @param style - Layout style (collage, pinterest, etc.)
+   * @param mood - Mood tone (light, dark, warm, etc.)
+   * @param elementTypes - Which element types to generate in parallel
+   */
+  async generateParallel(
+    theme: string,
+    style: MoodboardStyle,
+    mood: MoodTone,
+    elementTypes: MoodboardElementType[] = ['Texture', 'Lifestyle', 'Product']
+  ): Promise<ParallelMoodboardResult> {
+    const startTime = Date.now();
+    const errors: string[] = [];
+
+    // Build all promises to run in parallel
+    const promises: Promise<unknown>[] = [];
+
+    // 1. Main moodboard generation
+    const moodboardPromise = this.generateMoodboard({
+      theme,
+      moodboardStyle: style,
+      mood,
+      imageCount: 1,
+      includeTypography: false,
+      includeColorPalette: false,
+    }).catch(err => {
+      errors.push(`Moodboard: ${err.message}`);
+      return null;
+    });
+    promises.push(moodboardPromise);
+
+    // 2. LLM analysis (colors, typography, keywords)
+    const analysisPromise = this.analyze({
+      theme,
+      moodboardStyle: style,
+      mood,
+    }).catch(err => {
+      errors.push(`Analysis: ${err.message}`);
+      return null;
+    });
+    promises.push(analysisPromise);
+
+    // 3. Element generation (parallel for each type)
+    const elementPromises = elementTypes.map(elementType =>
+      this.generateElement({
+        theme,
+        elementType,
+        moodboardStyle: style,
+        mood,
+      }).catch(err => {
+        errors.push(`${elementType}: ${err.message}`);
+        return null;
+      })
+    );
+    promises.push(...elementPromises);
+
+    // Wait for all to complete
+    const results = await Promise.all(promises);
+
+    const totalTimeMs = Date.now() - startTime;
+
+    return {
+      moodboard: results[0] as MoodboardResponse | undefined,
+      analysis: results[1] as MoodboardAnalysisResponse | undefined,
+      elements: results.slice(2).filter(Boolean) as MoodboardElementResponse[],
+      totalTimeMs,
+      errors,
+    };
   },
 
   // ===== Helper Functions =====

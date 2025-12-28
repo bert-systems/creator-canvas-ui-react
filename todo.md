@@ -1,6 +1,845 @@
 # TODO - Creative Canvas Studio
 
-**Last Updated:** December 22, 2025
+**Last Updated:** December 28, 2025
+
+---
+
+## Full Story Generation API Integration - Dec 28, 2025 ✅ COMPLETE
+
+### Summary
+Integrated the new async full story generation API endpoints into the frontend. The API team implemented background job processing for generating complete stories with chapters, images, and character portraits.
+
+### API Endpoints Integrated
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/storytelling/generate-full` | POST | Start async story generation job |
+| `/api/storytelling/generate-full/{jobId}` | GET | Poll job status and get results |
+| `/api/storytelling/generate-full/{jobId}` | DELETE | Cancel pending job |
+| `/api/storytelling/generate-chapter-images` | POST | Generate images for chapters |
+
+### Work Completed
+- [x] Added new types to `storyGenerationService.ts` (FullStoryGenerationRequest, GenerationProgress, etc.)
+- [x] Added new service methods (startFullStoryGeneration, getFullStoryGenerationStatus, cancelFullStoryGeneration, generateChapterImages, pollFullStoryGeneration)
+- [x] Updated CreateStoryFlow.tsx to use backend async API
+- [x] Added progress polling with live status updates
+- [x] Added cancel button for in-progress jobs
+- [x] Added display for generated chapters, character portraits, and images
+- [x] Updated architectureDesign.md with new endpoint documentation
+- [x] Build verified successful
+
+### Build Status
+✅ Build successful (Dec 28, 2025) - 12,340 modules, 1,956KB bundle
+
+### GCS Download CORS Fallback (Dec 28, 2025) ✅ FRONTEND FIXED
+
+**Problem:** Downloading images from GCS (storage.googleapis.com) fails with CORS error:
+```
+Access to fetch at 'https://storage.googleapis.com/...' has been blocked by CORS policy
+```
+
+**Frontend Workaround Applied:**
+- Updated `downloadService.ts` to catch CORS errors
+- Falls back to opening image in new tab when direct download fails
+- User can then right-click → Save Image As
+- Returns `{ success: true, method: 'newTab' }` to indicate fallback was used
+
+**Preferred Backend Fix (API Team):**
+Configure CORS on GCS bucket `smartai-ssgp-v2-assets`:
+```bash
+gsutil cors set cors.json gs://smartai-ssgp-v2-assets
+```
+
+With `cors.json`:
+```json
+[{
+  "origin": ["http://localhost:3001", "https://your-domain.com"],
+  "method": ["GET", "HEAD"],
+  "responseHeader": ["Content-Type"],
+  "maxAgeSeconds": 3600
+}]
+```
+
+### Node Input Key Mapping Audit (Dec 28, 2025)
+
+**Audit Results - Input Port → Handler Key Mismatches:**
+
+| Node Type | Input Port | Handler Expects | Status |
+|-----------|------------|-----------------|--------|
+| sceneGenerator | `sceneConcept` | `concept` | ✅ Fixed |
+| sceneGenerator | `characters` | array | ✅ Fixed (handles single/array) |
+| plotTwist | `characters` | array | ⚠️ Needs fix |
+| dialogueGenerator | `characters` | array (min 2) | ⚠️ Needs fix |
+| storySynthesizer | `characters` | array | ⚠️ Needs fix |
+
+**Missing Execution Handlers (nodes without handlers):**
+- treatmentGenerator, plotPoint, conflictGenerator, storyPivot
+- intrigueLift, characterRelationship, characterVoice, characterSheet
+- worldLore, storyTimeline, monologueGenerator
+- choicePoint, consequenceTracker, pathMerge
+- sceneVisualizer, screenplayFormatter
+
+**Recommended Fixes:**
+1. Apply array normalization pattern to all character inputs
+2. Add `sceneConcept` to the port mapping aliases at line 2522
+
+### Story Save API - Archetype Mapping Fix (Dec 28, 2025) ✅ FRONTEND FIXED
+
+**Problem:** POST /api/stories failed with two errors:
+1. `"request": ["The request field is required."]` - Backend model binding issue
+2. `"$.characters[0].archetype"` - Invalid enum value "The Innocent Genius/Underdog"
+
+**Frontend Fixes Applied:**
+- Added `mapToValidArchetype()` function to map free-form archetypes to valid enum values:
+  - "The Innocent Genius/Underdog" → "Innocent"
+  - "The Tyrant/Bully" → "Shadow"
+  - "The Wise Guide" → "Mentor"
+  - etc.
+- Added `cleanCharacterName()` to remove markdown formatting (e.g., `**Pippin**` → `Pippin`)
+- Updated `saveFromNodeOutput()` to apply both fixes
+
+**Backend Issue (API Team Action Required):**
+The `"request field is required"` error indicates the backend controller may expect a wrapper:
+- Current: `POST { title, description, ... }`
+- Expected: `POST { request: { title, description, ... } }`
+
+Check `StoryLibraryController.CreateStory()` method parameter binding.
+
+### Character Creator Node - Moment of Delight Preview (Dec 28, 2025) ✅ COMPLETE
+
+Added rich preview display for Character Creator node when generation completes:
+- **Header**: Character name, full name, avatar with role/archetype/age/gender chips
+- **Core Info**: Motivation, Goal with styled quotes
+- **Quick View**: Fear, Flaw, Strength chips with emoji icons
+- **Collapsible Sections**:
+  - Personality: Traits, strengths, weaknesses, MBTI type
+  - Appearance: Height, build, eyes, hair, style, features
+  - Backstory: Full character background
+  - Character Arc: Starting state → Trigger → Ending state → Lesson learned
+  - Voice Profile: Speech pattern, tone, favorite expressions
+- **Portrait Prompt**: Ready-to-use prompt for image generation
+
+**Files Modified:**
+- `src/components/nodes/slots/PreviewSlot.tsx` - Added ~500 lines of character preview rendering
+
+### API Integration Testing (Dec 28, 2025) ✅ ALL TESTS PASSED
+
+| Endpoint | Test | Result |
+|----------|------|--------|
+| POST /api/storytelling/generate-full | Job creation | ✅ Pass |
+| GET /api/storytelling/generate-full/{jobId} | Status tracking | ✅ Pass |
+| DELETE /api/storytelling/generate-full/{jobId} | Cancel validation | ✅ Pass |
+| POST /api/storytelling/generate-chapter-images | Image gen + GCS upload | ✅ Pass |
+
+**Verified Working:**
+- Background job processing (async queue)
+- Progress tracking (phase + percentage)
+- GCS image upload to `smartai-ssgp-v2-assets` bucket
+- Proper error handling for invalid operations
+
+### Backend Stub Audit (Dec 28, 2025)
+API team fixed critical stub implementations:
+- **StoryGenerationService**: Fixed error-swallowing try-catch, proper error propagation
+- **CreativeCanvasService**: Full DB implementation for RemoveAssetsFromLibrary, GetAsset, GetAssetsForCard
+- **Not used by frontend** (converted to NotImplementedException): Content Packs, Marketplace (use IMarketplaceService), Reviews/Favorites, Analytics (use IGenerationTrackingService)
+
+---
+
+## Story Library & Publishing System - Dec 27, 2025 ✅ STRATEGY COMPLETE
+
+### Summary
+Created comprehensive strategy and API requirements for Story Library, Publishing System, and Full Story Generation with images.
+
+### Work Completed
+
+#### 1. Strategy & API Requirements Documents Created
+- `docs/STORY_LIBRARY_PUBLISHING_STRATEGY.md` - Comprehensive 5-phase strategy
+- `docs/STORY_LIBRARY_API_REQUIREMENTS.md` - Complete API specification
+
+#### 2. Story Persistence Strategy
+- Zustand store design (`storyStore.ts` planned)
+- Auto-save with debouncing
+- Version history for undo/redo
+- Connection to `storyLibraryService.ts`
+
+#### 3. Story Library Page Design
+- Browsable interface similar to Asset Library
+- Tabs: All Stories, Characters, Treatments, Scenes, Collections
+- Search, filter, sort capabilities
+- Story card component designs
+
+#### 4. Publishing System Design
+- Visibility levels: Private → Shared → Public
+- Story Showcase (community gallery)
+- Like/comment engagement
+- Collaboration features
+
+#### 5. Full Story Generation with Images
+- Generate complete chapters with AI text
+- Generate chapter header images
+- Generate scene illustrations
+- Export to PDF/manuscript formats
+
+#### 6. UI Enhancements Implemented
+- **Scrollable Output:** FlowMode content area now properly scrolls with custom scrollbar styling
+- **Action Buttons:** Added "Generate Full Story with Images", "Save to Library", "Generate Cover Art" buttons
+- **Info Panel:** Added informational note about full story generation capabilities
+
+### API Endpoints Requested (Backend Pending)
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/stories/public` | List public stories |
+| `GET /api/stories/featured` | Featured stories |
+| `POST /api/stories/{id}/publish` | Publish story |
+| `POST /api/storytelling/generate-full` | Full story generation |
+| `POST /api/storytelling/generate-chapter-images` | Chapter image generation |
+
+### Build Status
+✅ Build successful (Dec 27, 2025) - 12,332 modules, 1,910KB bundle
+
+### Backend Integration Complete (Dec 27, 2025)
+- [x] Backend API implemented (15 new endpoints)
+- [x] Migration applied to database
+- [x] All endpoints tested and verified
+- [x] `storyLibraryService.ts` updated with 35+ methods
+- [x] `storyStore.ts` Zustand store created
+- [x] StorytellerStudio connected to persistence
+- [x] CreateStoryFlow saves stories on completion
+- [x] Workspace mode displays stories from backend
+
+### Next Steps
+- [ ] Create `StoryLibraryPage.tsx` component (dedicated browsing page)
+- [ ] Create `StoryShowcasePage.tsx` (community gallery for public stories)
+- [ ] Add Story Library to main navigation
+- [x] Implement full story generation with images (async job processing) ✅ Dec 28, 2025
+
+---
+
+## Legacy Node Cleanup - Dec 27, 2025 ✅ COMPLETE
+
+### Summary
+Completed Phase 5c cleanup: removed legacy node components and completed slot configs for remaining nodes.
+
+### Work Completed
+
+#### 1. Removed Legacy Node Components (54 files)
+All custom node components (StoryGenesisNode, VirtualTryOnNode, CharacterCreatorNode, etc.) have been removed from `src/components/nodes/`. These were redundant implementations that are now handled by the UnifiedNode slot system.
+
+**Remaining files:**
+- `UnifiedNode.tsx` - Main unified node component (v4.0)
+- `CanvasNode.tsx` - Backwards compatibility only
+- `FlowNode.tsx` - Backwards compatibility only
+- `slots/` - Slot components (PreviewSlot, ParameterSlot, ActionSlot)
+
+#### 2. Updated nodeTypes Registration
+Simplified `CreativeCanvasStudio.tsx` nodeTypes from 60+ entries to just 4:
+- `unifiedNode: UnifiedNode` - Main component for all node types
+- `canvasCard: CanvasNode` - Legacy compatibility
+- `creativeCard: CreativeCard` - Elevated Vision v3.0
+- `canvasNode: FlowNode` - Legacy compatibility
+
+#### 3. Added Slot Configs to Storytelling Nodes
+All 25 storytelling nodes in `storytellingNodes.ts` now have complete slot configurations:
+- `preview`: type (text/gallery), aspectRatio
+- `parameters`: layout (accordion), visibleInModes, priorityParams
+- `actions`: primary (execute/download), showProgress
+
+#### 4. Added Missing Port Colors
+Extended `portColors` in theme.ts to include all PortType values:
+- Interior Design: room, floorPlan, material, furniture, designStyle, roomLayout
+- Moodboard: moodboard, colorPalette, brandKit, typography, texture, aesthetic
+- Social Media: post, carousel, caption, template, platform
+- Fashion: fabric, pattern, techPack, lookbook
+
+### Build Status
+✅ Build successful (Dec 27, 2025)
+
+#### 5. Completed Slot Configs for All Node Files
+All node definition files now have complete slot configurations:
+- `styleNodes.ts` - 8 nodes (styleDNA, styleTransfer, loraTraining, virtualTryOn, clothesSwap, runwayAnimation, storyboardAutopilot, collectionSlideshow)
+- `outputNodes.ts` - 21 nodes (preview, export, 13 multiframe nodes, upscaleImage, enhancePrompt)
+- `imageGenNodes.ts` - 8 nodes (flux2Pro, flux2Dev, nanoBananaPro, fluxKontext, flux2Max, recraftV3, gptImage, zImageTurbo)
+- `videoGenNodes.ts` - 15 nodes (kling26T2V, kling26I2V, veo31, sora2, kling26Pro, ltx2, wan26, meshy6, tripoV25, characterLock, faceMemory, elementLibrary, etc.)
+- `inputNodes.ts` - 5 nodes (all had slots)
+- `interiorDesignNodes.ts` - 6 nodes (all had slots)
+- `moodboardNodes.ts` - 10 nodes (all had slots)
+- `socialMediaNodes.ts` - 12 nodes (all had slots)
+- `audioNodes.ts` - 8 nodes (all had slots)
+
+### Build Status
+✅ Build successful (Dec 27, 2025) - 12,331 modules, 1,899KB bundle
+
+### Remaining Work
+- [ ] Performance testing with 100+ nodes
+- [ ] Integration testing for all node types
+
+---
+
+## Storyteller & Interior Design Studios - Dec 26, 2025 ✅ BOTH COMPLETE
+
+### Summary
+Designed strategy and API requirements for two new Studios, then implemented both Interior Design Studio and Storyteller Studio.
+
+### Audit Results
+
+#### Storytelling Implementation
+| Component | Status |
+|-----------|--------|
+| Nodes Defined | 28 nodes across 6 categories |
+| API Endpoints (Swagger) | 9 defined |
+| Service Implementation | 4/9 working (URL mismatches for 5) |
+| Production Ready | Partial - needs service URL corrections |
+
+#### Interior Design Implementation
+| Component | Status |
+|-----------|--------|
+| Nodes Defined | 6 nodes |
+| API Endpoints | 6/6 fully implemented |
+| Service Implementation | 100% complete |
+| Production Ready | **YES** |
+
+### Documents Created
+- `docs/STORYTELLER_INTERIOR_STUDIO_STRATEGY.md` - Full design strategy
+- `docs/STORYTELLER_STUDIO_API_REQUIREMENTS.md` - API requirements addendum
+
+### Interior Design Studio Implementation ✅ COMPLETED
+
+#### Components Created
+```
+src/components/studios/interior/
+├── InteriorDesignStudio.tsx      # Main studio container with Flow/Workspace modes
+├── flows/
+│   ├── RedesignRoomFlow.tsx      # 5-step room redesign wizard
+│   ├── VirtualStagingFlow.tsx    # 5-step virtual staging wizard
+│   └── index.ts
+└── index.ts
+
+src/components/studios/shared/
+└── BeforeAfterSlider.tsx         # Draggable comparison component
+```
+
+#### Features Implemented
+- **Redesign Room Flow**: Upload → Style → Customize → Generate → Compare
+  - 8 room types, 10 design styles
+  - Intensity slider (10-100%)
+  - Preserve structure toggle
+  - Custom prompt support
+  - Before/after comparison with BeforeAfterSlider
+
+- **Virtual Staging Flow**: Upload → Room Type → Style → Generate → Export
+  - 5 room types, 8 staging styles
+  - Furnishing levels (minimal, standard, full, luxury)
+  - Budget tiers (budget, mid, premium, luxury)
+  - Furniture list display
+  - Estimated staging cost
+
+- **BeforeAfterSlider**: Interactive comparison component
+  - Draggable slider handle
+  - Touch support for mobile
+  - Dynamic labels that hide near edges
+
+#### Integration Updates
+- StudioShell: Added 'interior' and 'storyteller' category types
+- AppNavigation: Added Interior Design entry with HomeIcon
+- App.tsx: Added `/studios/interior/*` route
+- downloadService: Added 'interior' and 'staging' filename types
+
+### Build Status
+✅ Build successful (Dec 26, 2025)
+
+### Storyteller Studio Implementation ✅ COMPLETED
+
+#### API Updates
+- Updated storyGenerationService.ts with correct swagger v18 endpoints
+- Fixed all URL mismatches for character voice, relationship, world lore, timeline, branches, formatting, and scene visualization
+- Added new interfaces: ConsequenceTrackRequest/Response, PathMergeRequest/Response, SceneVisualizeRequest/Response
+
+#### Components Created
+```
+src/components/studios/storyteller/
+├── StorytellerStudio.tsx         # Main studio container with Flow/Workspace/Timeline modes
+├── flows/
+│   ├── CreateStoryFlow.tsx       # 5-step story creation wizard
+│   ├── CreateCharacterFlow.tsx   # 5-step character creation wizard
+│   └── index.ts
+└── index.ts
+```
+
+#### Features Implemented
+- **CreateStoryFlow**: Concept → Details → Structure → Generate → Refine
+  - 12 genres, 8 tones, 6 audiences, 5 lengths
+  - 7 story frameworks (Three-Act, Hero's Journey, Save the Cat, etc.)
+  - AI-powered story generation via storyGenerationService.startStory()
+
+- **CreateCharacterFlow**: Concept → Role → Traits → Generate → Review
+  - 8 character roles, 16 archetypes
+  - 25 personality traits with multi-select
+  - 4 depth levels (sketch to detailed)
+  - AI-powered character generation via storyGenerationService.generateCharacter()
+
+- **StorytellerStudio**: Main container with mode switching
+  - Flow mode for guided wizards
+  - Workspace mode with saved stories/characters panels
+  - Timeline mode (coming soon)
+  - Command palette with keyboard shortcuts
+
+#### Integration Updates
+- AppNavigation: Added Storyteller entry with AutoStoriesIcon (color: #8D6E63)
+- App.tsx: Added `/studios/storyteller/*` route
+- studios/index.ts: Added StorytellerStudio export
+
+---
+
+## Studios Implementation Phase 1 - Dec 22, 2025 ✅ COMPLETED
+
+### Summary
+Implemented the foundational Studios infrastructure including design tokens, shared components, core shell, and Fashion Studio MVP.
+
+### Components Created
+
+#### Foundation (`src/components/studios/`)
+```
+studios/
+├── shared/
+│   ├── studioTokens.ts      # Refined professional design system
+│   ├── SurfaceCard.tsx      # Clean card component
+│   ├── AIPromptBar.tsx      # AI prompt input with enhancement
+│   ├── StatusIndicator.tsx  # Minimal status states
+│   └── index.ts
+├── StudioShell.tsx          # Main container with mode switching
+├── StudioCommandPalette.tsx # ⌘K command interface
+├── fashion/
+│   ├── FashionStudio.tsx    # Fashion Studio MVP
+│   └── index.ts
+└── index.ts
+```
+
+#### Routing Added (`src/App.tsx`)
+- `/studios/fashion/*` - Fashion Studio
+- `/studios/social/*` - Placeholder
+- `/studios/moodboards/*` - Placeholder
+- `/canvas` - Advanced canvas (alternative route)
+
+### Design System: Refined Professional Aesthetic
+
+**Color Philosophy:** Neutral-first (90% grayscale), color used sparingly for meaning only.
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| Background | `#09090B` | App background |
+| Surface | `#18181B` | Cards, panels |
+| Surface hover | `#1F1F23` | Subtle interaction |
+| Border | `#27272A` | Subtle separators |
+| Text primary | `#FAFAFA` | Headings |
+| Text secondary | `#A1A1AA` | Body text |
+| Accent | `#3B9B94` | Primary buttons only (muted teal) |
+
+### Build Status
+✅ Build successful
+
+### Next Steps (Phase 2) ✅ COMPLETED
+- [x] Implement Flow modes (CreateLookbookFlow, etc.)
+- [x] Add Workspace mode panel layout
+- [ ] Create Social Studio shell
+- [x] Integrate with existing generation APIs
+
+---
+
+## Studios Implementation Phase 2 - Dec 22, 2025 ✅ COMPLETED
+
+### Summary
+Implemented Flow and Workspace modes for Studios with full image generation integration.
+
+### Components Created
+
+#### Modes (`src/components/studios/modes/`)
+```
+modes/
+├── FlowMode.tsx          # Step-by-step wizard base component
+├── WorkspaceMode.tsx     # Panel-based layout with Gallery
+└── index.ts
+```
+
+#### Fashion Flows (`src/components/studios/fashion/flows/`)
+```
+flows/
+├── CreateLookbookFlow.tsx  # 4-step lookbook creation wizard
+└── index.ts
+```
+
+### FlowMode Features
+- Step navigation with progress indicator
+- Clickable completed steps for back-navigation
+- Configurable step definitions (id, label, description, optional)
+- Next/Back/Cancel navigation
+- Progress bar visualization
+- Processing state support
+
+### CreateLookbookFlow (4 Steps)
+1. **Concept** - Text prompt for collection vision
+2. **Style** - Mood selection (Editorial, Streetwear, Minimalist, Avant-Garde)
+3. **Generate** - AI generates 4 looks with imageGenerationService
+4. **Refine** - Gallery view with selection and export options
+
+### WorkspaceMode Features
+- Collapsible left/right panel sidebars
+- Panel header with icon and title
+- Gallery component for image display
+- Customizable panel widths and minimum widths
+
+### Integration Points
+- `imageGenerationService.generate()` for look generation
+- Proper response handling: `result.images?.[0]?.url`
+- Width/height specification (768x1024 portrait)
+- FLUX 2 Pro model targeting
+
+### Build Status
+✅ Build successful (32.71s)
+
+### Next Steps (Phase 3) ✅ COMPLETED
+- [x] Create Social Studio shell
+- [x] Create Moodboards Studio shell
+- [ ] Implement Timeline mode for project view
+- [ ] Add image export/download functionality
+- [ ] Integrate with additional generation services
+
+---
+
+## Studios Implementation Phase 3 - Dec 22, 2025 ✅ COMPLETED
+
+### Summary
+Implemented Social Media Studio and Moodboards Studio with guided creation flows.
+
+### Social Studio (`src/components/studios/social/`)
+```
+social/
+├── SocialStudio.tsx         # Main container with flow/workspace modes
+├── flows/
+│   ├── CreatePostFlow.tsx   # 4-step social post creation wizard
+│   ├── CreateCarouselFlow.tsx # 4-step carousel creation wizard
+│   └── index.ts
+└── index.ts
+```
+
+#### CreatePostFlow Steps
+1. **Platform** - Select target platform (Instagram, Facebook, LinkedIn, Twitter, Pinterest)
+2. **Content** - Enter topic, content type, and tone
+3. **Generate** - AI creates post via `socialMediaService.generatePost()`
+4. **Publish** - Review image, caption, hashtags with copy/download
+
+#### CreateCarouselFlow Steps
+1. **Topic** - Describe carousel content and select type
+2. **Slides** - Configure slide count (3-10) and visual style
+3. **Generate** - AI creates slides via `socialMediaService.generateCarousel()`
+4. **Review** - Slide viewer with navigation, caption display
+
+### Moodboards Studio (`src/components/studios/moodboards/`)
+```
+moodboards/
+├── MoodboardsStudio.tsx      # Main container with flow/workspace modes
+├── flows/
+│   ├── CreateMoodboardFlow.tsx  # 4-step moodboard creation wizard
+│   ├── CreateBrandKitFlow.tsx   # 4-step brand kit creation wizard
+│   └── index.ts
+└── index.ts
+```
+
+#### CreateMoodboardFlow Steps
+1. **Theme** - Describe moodboard vision and keywords
+2. **Style** - Select layout style and mood tone
+3. **Generate** - AI creates moodboard via `moodboardService.generateMoodboard()`
+4. **Refine** - View moodboard, extracted colors, keywords
+
+#### CreateBrandKitFlow Steps
+1. **Brand** - Enter brand name, description, industry
+2. **Personality** - Select brand personality and target audience
+3. **Generate** - AI creates kit via `moodboardService.generateBrandKit()`
+4. **Export** - View color palette, typography, voice & tone
+
+### Routing Updated (`src/App.tsx`)
+- `/studios/social/*` - Social Studio
+- `/studios/moodboards/*` - Moodboards Studio
+
+### Build Status
+✅ Build successful (46.50s)
+
+### Next Steps (Phase 4) ✅ COMPLETED
+- [x] Implement Timeline mode for project view
+- [x] Add image export/download functionality
+- [ ] Add authentication/user context
+- [ ] Implement asset library persistence
+
+---
+
+## Studios Implementation Phase 4 - Dec 22, 2025 ✅ COMPLETED
+
+### Summary
+Implemented Timeline mode for project management and download service for exporting assets.
+
+### Timeline Mode (`src/components/studios/modes/TimelineMode.tsx`)
+
+A project management view with:
+- **Project cards** - Display project info with thumbnail, status, and tags
+- **Status grouping** - Projects organized by status (In Progress, Draft, Review, Completed, Archived)
+- **Milestone timeline** - Visual track with milestone points and completion indicators
+- **Scroll navigation** - Horizontal scrolling through projects
+
+#### Project Card Features
+- Thumbnail preview
+- Status chip with color coding
+- Asset count
+- Tag display
+- Hover animations
+
+#### Status Types
+| Status | Color | Usage |
+|--------|-------|-------|
+| `draft` | Muted | Initial state |
+| `in_progress` | Warning/amber | Active work |
+| `review` | Blue | Awaiting feedback |
+| `completed` | Success/green | Finished |
+| `archived` | Tertiary | No longer active |
+
+### Download Service (`src/services/downloadService.ts`)
+
+A comprehensive utility service for exporting assets:
+
+#### Core Methods
+| Method | Purpose |
+|--------|---------|
+| `downloadImage()` | Download single image from URL |
+| `downloadCanvas()` | Export canvas element to image |
+| `downloadMultiple()` | Batch download with delay |
+| `downloadJSON()` | Export data as JSON file |
+| `downloadText()` | Export text content |
+| `copyImageToClipboard()` | Copy image to clipboard |
+| `copyTextToClipboard()` | Copy text to clipboard |
+
+#### Studio-Specific Exports
+| Method | Purpose |
+|--------|---------|
+| `exportLookbook()` | Download all lookbook images + metadata |
+| `exportCarousel()` | Download carousel slides + content JSON |
+| `exportBrandKit()` | Export brand kit JSON + CSS variables |
+
+#### Integration Points
+- **CreateLookbookFlow** - Export all generated looks
+- **CreatePostFlow** - Download post image
+- **CreateCarouselFlow** - Download all slides
+- **CreateMoodboardFlow** - Download moodboard image
+- **CreateBrandKitFlow** - Export brand kit files
+
+### Build Status
+✅ Build successful (34.28s)
+
+### Next Steps (Phase 5) ✅ COMPLETED
+- [x] Add authentication/user context
+- [x] Implement asset library persistence
+- [x] Add project CRUD operations
+- [x] Implement real-time collaboration indicators
+
+---
+
+## Studios Implementation Phase 5 - Dec 22, 2025 ✅ COMPLETED
+
+### Summary
+Implemented user state management, asset library persistence, and collaboration presence indicators.
+
+### User Store (`src/stores/userStore.ts`)
+
+Zustand-based user state management with localStorage persistence:
+
+#### User State
+```typescript
+interface User {
+  id: string;
+  email: string;
+  displayName: string;
+  avatarUrl?: string;
+  role: 'user' | 'pro' | 'admin';
+}
+```
+
+#### User Preferences
+| Setting | Type | Default |
+|---------|------|---------|
+| `defaultStudio` | fashion/social/moodboards/canvas | fashion |
+| `defaultMode` | flow/workspace/timeline | flow |
+| `theme` | dark/light/system | dark |
+| `showTips` | boolean | true |
+| `autoSaveInterval` | number (seconds) | 30 |
+| `keyboardShortcuts` | boolean | true |
+
+#### Actions
+- `login(user, session)` - Set authenticated user
+- `logout()` - Clear user state
+- `updatePreferences(updates)` - Partial preference update
+- `resetPreferences()` - Reset to defaults
+
+### Asset Library Service (`src/services/assetLibraryService.ts`)
+
+Comprehensive asset management with localStorage persistence:
+
+#### Asset Structure
+```typescript
+interface Asset {
+  id: string;
+  type: 'image' | 'video' | 'carousel' | 'moodboard' | 'brandkit' | 'lookbook';
+  name: string;
+  thumbnailUrl: string;
+  metadata: Record<string, unknown>;
+  tags: string[];
+  source: 'fashion' | 'social' | 'moodboards' | 'canvas';
+  projectId?: string;
+  isFavorite: boolean;
+}
+```
+
+#### Asset Operations
+| Method | Purpose |
+|--------|---------|
+| `createAsset()` | Create new asset |
+| `getAsset(id)` | Get single asset |
+| `updateAsset(id, updates)` | Update asset |
+| `deleteAsset(id)` | Delete asset |
+| `queryAssets(filter, sort)` | Filter/sort assets |
+
+#### Project Operations
+| Method | Purpose |
+|--------|---------|
+| `createProject()` | Create new project |
+| `getProject(id)` | Get single project |
+| `updateProject(id, updates)` | Update project |
+| `deleteProject(id)` | Delete project |
+| `addAssetToProject()` | Link asset to project |
+| `getProjectAssets(id)` | Get all project assets |
+
+#### Collection Operations
+- `createCollection()` / `updateCollection()` / `deleteCollection()`
+- Collections can contain multiple assets and projects
+
+#### Utility Features
+- **Recent Assets**: Last 50 accessed assets
+- **Favorites**: Toggle favorite status
+- **Import/Export**: Full library JSON export
+- **Stats**: Asset counts by type/source
+
+### Collaboration Presence (`src/components/studios/shared/CollaborationPresence.tsx`)
+
+Real-time collaboration UI components:
+
+#### CollaborationPresence
+- Avatar stack showing active collaborators
+- Status indicators (viewing/editing/idle)
+- Tooltip with details on hover
+- Compact and full modes
+
+#### LiveCursor
+- Cursor pointer with user color
+- Name label following cursor
+- Smooth position transitions
+
+#### ActivityIndicator
+- Pulsing dot for active status
+- Optional label
+
+#### Collaborator Types
+```typescript
+interface Collaborator {
+  id: string;
+  displayName: string;
+  avatarUrl?: string;
+  status: 'viewing' | 'editing' | 'idle' | 'offline';
+  color: string;
+  cursorPosition?: { x: number; y: number };
+}
+```
+
+### Future API Requirements
+
+When implementing backend integration, these endpoints would be needed:
+
+#### User API
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/auth/login` | POST | User authentication |
+| `/api/auth/logout` | POST | Session termination |
+| `/api/auth/refresh` | POST | Token refresh |
+| `/api/users/me` | GET | Current user profile |
+| `/api/users/preferences` | PUT | Update preferences |
+
+#### Asset Library API
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/assets` | GET | List assets (with filters) |
+| `/api/assets` | POST | Create asset |
+| `/api/assets/{id}` | GET/PUT/DELETE | Asset CRUD |
+| `/api/projects` | GET/POST | Project list/create |
+| `/api/projects/{id}` | GET/PUT/DELETE | Project CRUD |
+| `/api/collections` | GET/POST | Collection list/create |
+
+#### Collaboration API (WebSocket)
+| Event | Direction | Purpose |
+|-------|-----------|---------|
+| `presence:join` | Client→Server | Join project room |
+| `presence:leave` | Client→Server | Leave project room |
+| `presence:update` | Bidirectional | Update cursor/status |
+| `collaborator:joined` | Server→Client | New collaborator |
+| `collaborator:left` | Server→Client | Collaborator left |
+
+### Build Status
+✅ Build successful (34.27s)
+
+### Studios Implementation Complete
+
+All 5 phases of the Studios implementation have been completed:
+
+| Phase | Status | Components |
+|-------|--------|------------|
+| Phase 1 | ✅ | Foundation, tokens, StudioShell, FashionStudio |
+| Phase 2 | ✅ | FlowMode, WorkspaceMode, CreateLookbookFlow |
+| Phase 3 | ✅ | SocialStudio, MoodboardsStudio, flows |
+| Phase 4 | ✅ | TimelineMode, downloadService |
+| Phase 5 | ✅ | userStore, assetLibraryService, CollaborationPresence |
+
+---
+
+## App Navigation - Dec 22, 2025 ✅ COMPLETED
+
+### Summary
+Implemented a collapsible left navigation sidebar for navigating between Studios and Boards.
+
+### Files Created
+
+#### `src/components/navigation/AppNavigation.tsx`
+Main navigation component with:
+- **Studios Section**: Fashion, Social Media, Moodboards links
+- **Boards Section**: Canvas, New Board actions
+- **My Boards Section**: Dynamic list from canvas store (up to 5 boards)
+- **Collapsible**: Expands to 240px, collapses to 64px icon-only mode
+- **Persisted State**: Collapse preference saved to localStorage
+
+#### `src/components/navigation/index.ts`
+Module exports
+
+### Features
+| Feature | Description |
+|---------|-------------|
+| Collapsible sidebar | Toggle between expanded (240px) and collapsed (64px) modes |
+| Category icons | Color-coded icons for each studio/board category |
+| Active state | Highlights current route with accent border |
+| Section headers | "Studios", "Boards", "My Boards" sections |
+| Tooltips | Icon-only tooltips when collapsed |
+| Board integration | Fetches boards from canvas store |
+| Hidden on onboarding | Nav hidden during `/welcome` routes |
+
+### Integration
+Updated `src/App.tsx`:
+- Added flex layout with navigation on left
+- Content area fills remaining space
+- Navigation hidden during onboarding flow
+
+### Build Status
+✅ Build successful (33.58s)
 
 ---
 
@@ -2222,6 +3061,110 @@ A comprehensive node-based fashion design system enabling designers, brands, and
 
 ---
 
+## Asset Library & Marketplace System - Dec 24, 2025 ✅ COMPLETED
+
+### Summary
+Implemented comprehensive Asset Library enhancements and full Marketplace system for creator economy features (without payment integration).
+
+### Components Created
+
+#### Asset Library Enhancements (`src/components/asset-library/`)
+| Component | Description |
+|-----------|-------------|
+| `AssetDetailModal.tsx` | Full-screen modal for viewing/editing asset details with navigation |
+| `AssetLibraryPage.tsx` | Enhanced with batch operations toolbar, collection view, dialogs |
+| `InspirationGalleryPage.tsx` | Enhanced with curated home view, category cards, sections |
+
+#### Batch Operations Features
+- Multi-select assets with visual selection indicators
+- Download, add tags, add to collection, share, delete selected
+
+#### Marketplace System (`src/components/marketplace/`)
+| Component | Description |
+|-----------|-------------|
+| `MarketplaceBrowsePage.tsx` | Browse/discover assets with curated home, search, filtering |
+| `ListingCreator.tsx` | 4-step flow wizard for creating listings |
+| `CreatorStorefront.tsx` | Public creator profile page with stats, listings, about |
+| `SellerDashboard.tsx` | Analytics dashboard with charts, tables, quick actions |
+
+#### Model Extensions (`src/models/assetSystem.ts`)
+- LicenseType, ListingStatus, ListingCategory types
+- MarketplaceListing, CreatorProfile, SellerStats models
+- CreateListingParams, UpdateListingParams, MarketplaceSearchParams
+
+### Build Status
+✅ Build successful
+
+---
+
+## API Performance Optimization - Dec 25, 2025 ✅ COMPLETED
+
+### Summary
+Implemented parallel API orchestration for moodboard and carousel generation flows, reducing generation time from 2+ minutes to ~20-30 seconds. Also fixed UI rendering issues.
+
+### Moodboard Parallel Generation
+
+#### New API Endpoints (Split from Monolithic)
+| Endpoint | Purpose | Time |
+|----------|---------|------|
+| `POST /api/moodboard/generate` | Primary moodboard image | ~15-20s |
+| `POST /api/moodboard/element/generate` | Single element (Texture, Pattern, etc.) | ~15-20s |
+| `POST /api/moodboard/analyze` | LLM theme analysis | ~5s |
+
+#### Service Updates (`src/services/moodboardService.ts`)
+- Added `MoodboardElementType` type (8 element types)
+- Added `generateElement()` for single element generation
+- Added `analyze()` for LLM theme analysis
+- Added `generateParallel()` orchestrator using Promise.all()
+
+#### Flow Updates (`CreateMoodboardFlow.tsx`)
+- Element type selection chips (Texture, Lifestyle, Product, ColorSwatch, Pattern, Atmosphere, Typography, Material)
+- Parallel generation with live progress tracking
+- Progress bar showing individual task status
+- Elements appear in grid as they complete
+
+### Carousel Parallel Generation
+
+#### New API Endpoints (Split from Monolithic)
+| Endpoint | Purpose | Time |
+|----------|---------|------|
+| `POST /api/social/carousel/plan` | LLM planning (style seed, content) | ~3-5s |
+| `POST /api/social/carousel/slide/generate` | Single slide image | ~15-20s each |
+
+#### Service Updates (`src/services/socialMediaService.ts`)
+- Added `CarouselStyleSeed`, `CarouselPlanRequest`, `CarouselSlideGenerateRequest` types
+- Added `planCarousel()` for LLM planning
+- Added `generateSlide()` for single slide generation
+- Added `generateCarouselParallel()` orchestrator with callback for live updates
+
+#### Flow Updates (`CreateCarouselFlow.tsx`)
+- Parallel slide generation with live preview grid
+- Progress bar showing planning vs generation phases
+- Slides appear in grid as they complete
+
+### Bug Fixes
+
+#### AssetCard formatCount Error (`src/components/asset-library/AssetCard.tsx`)
+- Fixed `formatCount` function failing on undefined values
+- Added null check: `if (count == null) return '0';`
+
+#### Moodboard Node Preview (`src/components/nodes/slots/PreviewSlot.tsx`)
+- Fixed moodboard images not rendering in node preview
+- Added handlers for: `moodboard`, `moodboardUrl`, `texture` fields in API response
+
+#### Brand Kit UI (`src/components/studios/moodboards/flows/CreateBrandKitFlow.tsx`)
+- Beautiful presentation UI for brand kit generation results
+- Hero moodboard section with gradient overlay
+- Color palette swatches with copy-to-clipboard
+- Typography preview with font stacks
+- Voice & tone cards
+- Usage guidelines accordion
+
+### Build Status
+✅ Build successful (47.69s)
+
+---
+
 ## Notes
 
 ### Strategy Document
@@ -2262,6 +3205,7 @@ Backend API specs for video, 3D, try-on, character APIs are documented in strate
 | Dec 11, 2025 | Phase 2 Video: VideoGenNode, VEOVideoNode, TalkingHeadNode, VideoPreviewPlayer |
 | Dec 11, 2025 | Phase 1 Foundation: FlowNode, connectionValidation, NodePalette, NodeInspector |
 | Dec 19, 2025 | **Domain-Specific Quick-Action Toolbars**: Implemented context-aware toolbars that show domain-specific quick actions based on board category. Fashion boards show Try-On, Clothes Swap, Runway Animation, Colorway, Pattern, E-commerce, Lookbook, Collection icons. Storytelling boards show Story Genesis, Character Creator, Scene, Location, Dialogue, Plot Twist, World Lore, Timeline icons. Interior boards show Room, Lighting, Materials, 3D Room icons. Stock boards show FLUX Pro/Dev, Recraft, Video, 3D, Enhance icons. Created `src/components/canvas/DomainToolbar.tsx` component integrated into top toolbar. |
+| Dec 25, 2025 | **API PARALLEL ORCHESTRATION**: Implemented parallel API orchestration for moodboard and carousel generation. Moodboard split into `/moodboard/generate`, `/moodboard/element/generate`, `/moodboard/analyze`. Carousel split into `/carousel/plan`, `/carousel/slide/generate`. Added Promise.all() orchestrators with live progress tracking. Fixed AssetCard formatCount undefined error. Fixed PreviewSlot to handle moodboard/texture URL fields. Created beautiful brand kit presentation UI. Build verified. |
 | Dec 19, 2025 | **Fashion Node Image Display Fix**: Fixed Virtual Try-On and Clothes Swap nodes not displaying generated images. Root cause: Specialized nodes (VirtualTryOnNode) use `data.resultImageUrl` property, but generic result handler only set `data.result.url`. Added `resultImageUrl` property to node data for specialized nodes. Also fixed Clothes Swap node definition - it was missing the garment image input (had text prompt instead), now aligned with Swagger v3 API schema. |
 | Dec 11, 2025 | Context init, created 4 doc artifacts |
 | Nov 2025 | Initial Creative Canvas implementation (v1.0 strategy) |
