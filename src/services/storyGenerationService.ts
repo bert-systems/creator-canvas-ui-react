@@ -1516,6 +1516,119 @@ class StoryGenerationService {
     return response.data;
   }
 
+  // ----- Full Story Generation (API v21) -----
+
+  /**
+   * Start async full story generation with optional images
+   * POST /api/storytelling/generate-full
+   *
+   * Starts a background job to generate complete story content with:
+   * - Chapter text generation
+   * - Cover art (optional)
+   * - Chapter header images (optional)
+   * - Scene illustrations (optional)
+   * - Character portraits (optional)
+   *
+   * @returns Job ID for polling status
+   */
+  async startFullStoryGeneration(
+    request: FullStoryGenerationRequest
+  ): Promise<FullStoryGenerationStartResponse> {
+    const response = await api.post<FullStoryGenerationStartResponse>(
+      '/api/storytelling/generate-full',
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Get status and results of full story generation job
+   * GET /api/storytelling/generate-full/{jobId}
+   *
+   * Poll this endpoint to track progress and get final results.
+   * Status values: pending, processing, completed, failed, cancelled
+   */
+  async getFullStoryGenerationStatus(
+    jobId: string
+  ): Promise<FullStoryGenerationStatusResponse> {
+    const response = await api.get<FullStoryGenerationStatusResponse>(
+      `/api/storytelling/generate-full/${jobId}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Cancel a pending or processing full story generation job
+   * DELETE /api/storytelling/generate-full/{jobId}
+   *
+   * Only pending and processing jobs can be cancelled.
+   */
+  async cancelFullStoryGeneration(jobId: string): Promise<void> {
+    await api.delete(`/api/storytelling/generate-full/${jobId}`);
+  }
+
+  /**
+   * Generate images for a specific chapter
+   * POST /api/storytelling/generate-chapter-images
+   *
+   * Starts a background job to generate images for chapter scenes.
+   * Returns a job ID for polling status.
+   */
+  async generateChapterImages(
+    request: ChapterImageGenerationRequest
+  ): Promise<FullStoryGenerationStartResponse> {
+    const response = await api.post<FullStoryGenerationStartResponse>(
+      '/api/storytelling/generate-chapter-images',
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Helper method to poll full story generation until complete
+   * Automatically handles polling with configurable interval
+   *
+   * @param jobId - Job ID from startFullStoryGeneration
+   * @param onProgress - Callback for progress updates
+   * @param pollInterval - Polling interval in ms (default: 3000)
+   * @param maxAttempts - Maximum poll attempts (default: 200, ~10 min)
+   * @returns Final generation result
+   */
+  async pollFullStoryGeneration(
+    jobId: string,
+    onProgress?: (progress: GenerationProgress, status: string) => void,
+    pollInterval = 3000,
+    maxAttempts = 200
+  ): Promise<FullStoryGenerationResult> {
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      const status = await this.getFullStoryGenerationStatus(jobId);
+
+      if (onProgress && status.progress) {
+        onProgress(status.progress, status.status || 'unknown');
+      }
+
+      if (status.status === 'completed' && status.result) {
+        return status.result;
+      }
+
+      if (status.status === 'failed') {
+        throw new Error(status.error || 'Story generation failed');
+      }
+
+      if (status.status === 'cancelled') {
+        throw new Error('Story generation was cancelled');
+      }
+
+      // Wait before next poll
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      attempts++;
+    }
+
+    throw new Error('Story generation timed out');
+  }
+
   // ----- Health Check -----
 
   /**
@@ -1539,6 +1652,156 @@ export interface AudioChapter {
   title: string;
   startTime: number;
   endTime: number;
+}
+
+// ===== Full Story Generation Types (API v21) =====
+
+/**
+ * Options for full story generation with images
+ */
+export interface FullStoryGenerationOptions {
+  /** Generate chapter header images */
+  generateChapterImages?: boolean;
+  /** Number of images per chapter (default: 1) */
+  imagesPerChapter?: number;
+  /** Visual style for generated images */
+  imageStyle?: string;
+  /** Generate cover art for the story */
+  generateCoverArt?: boolean;
+  /** Include character portrait images */
+  includeCharacterPortraits?: boolean;
+  /** Image generation model to use */
+  model?: string;
+}
+
+/**
+ * Request to start full story generation job
+ */
+export interface FullStoryGenerationRequest {
+  /** Story ID to generate content for */
+  storyId: string;
+  /** Generation options */
+  options?: FullStoryGenerationOptions;
+}
+
+/**
+ * Progress tracking for generation job
+ */
+export interface GenerationProgress {
+  /** Current phase (e.g., 'generating_chapters', 'generating_images') */
+  phase?: string;
+  /** Current chapter being processed */
+  currentChapter?: number;
+  /** Total chapters to process */
+  totalChapters?: number;
+  /** Overall completion percentage (0-100) */
+  percentage: number;
+}
+
+/**
+ * Generated scene image data
+ */
+export interface GeneratedSceneImage {
+  /** Scene identifier */
+  sceneId?: string;
+  /** URL of the generated image */
+  imageUrl?: string;
+  /** Prompt used to generate the image */
+  prompt?: string;
+  /** Image caption/description */
+  caption?: string;
+}
+
+/**
+ * Generated chapter with content and images
+ */
+export interface GeneratedChapter {
+  /** Chapter number (1-based) */
+  chapterNumber: number;
+  /** Chapter title */
+  title?: string;
+  /** Full chapter content/prose */
+  content?: string;
+  /** Word count for this chapter */
+  wordCount: number;
+  /** Chapter header image URL */
+  headerImageUrl?: string;
+  /** Scene illustrations within the chapter */
+  sceneImages?: GeneratedSceneImage[];
+}
+
+/**
+ * Complete result of full story generation
+ */
+export interface FullStoryGenerationResult {
+  /** Story ID */
+  storyId: string;
+  /** Cover art image URL */
+  coverArtUrl?: string;
+  /** Generated chapters with content and images */
+  chapters?: GeneratedChapter[];
+  /** Character ID to portrait URL mapping */
+  characterPortraits?: Record<string, string>;
+  /** Total word count across all chapters */
+  totalWordCount: number;
+  /** Total images generated */
+  totalImages: number;
+}
+
+/**
+ * Response when starting a full story generation job
+ */
+export interface FullStoryGenerationStartResponse {
+  /** Whether the job was started successfully */
+  success: boolean;
+  /** Job ID for tracking progress */
+  jobId?: string;
+  /** Initial job status */
+  status?: string;
+  /** Estimated duration in seconds */
+  estimatedDuration: number;
+  /** Job creation timestamp */
+  createdAt: string;
+  /** Error message if failed to start */
+  error?: string;
+}
+
+/**
+ * Response when checking full story generation job status
+ */
+export interface FullStoryGenerationStatusResponse {
+  /** Whether the status check was successful */
+  success: boolean;
+  /** Job ID */
+  jobId: string;
+  /** Current job status (pending, processing, completed, failed, cancelled) */
+  status?: string;
+  /** Detailed progress information */
+  progress?: GenerationProgress;
+  /** Final result (only present when completed) */
+  result?: FullStoryGenerationResult;
+  /** Job start timestamp */
+  startedAt?: string;
+  /** Job completion timestamp */
+  completedAt?: string;
+  /** Error message if failed */
+  error?: string;
+}
+
+/**
+ * Request to generate images for a specific chapter
+ */
+export interface ChapterImageGenerationRequest {
+  /** Story ID */
+  storyId: string;
+  /** Optional chapter ID (generates for all chapters if not specified) */
+  chapterId?: string;
+  /** Number of images to generate */
+  imageCount: number;
+  /** Visual style for images */
+  style?: string;
+  /** Specific scenes to visualize */
+  scenes?: string[];
 }
 
 // Export singleton instance

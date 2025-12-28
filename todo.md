@@ -1,6 +1,146 @@
 # TODO - Creative Canvas Studio
 
-**Last Updated:** December 27, 2025
+**Last Updated:** December 28, 2025
+
+---
+
+## Full Story Generation API Integration - Dec 28, 2025 ✅ COMPLETE
+
+### Summary
+Integrated the new async full story generation API endpoints into the frontend. The API team implemented background job processing for generating complete stories with chapters, images, and character portraits.
+
+### API Endpoints Integrated
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/storytelling/generate-full` | POST | Start async story generation job |
+| `/api/storytelling/generate-full/{jobId}` | GET | Poll job status and get results |
+| `/api/storytelling/generate-full/{jobId}` | DELETE | Cancel pending job |
+| `/api/storytelling/generate-chapter-images` | POST | Generate images for chapters |
+
+### Work Completed
+- [x] Added new types to `storyGenerationService.ts` (FullStoryGenerationRequest, GenerationProgress, etc.)
+- [x] Added new service methods (startFullStoryGeneration, getFullStoryGenerationStatus, cancelFullStoryGeneration, generateChapterImages, pollFullStoryGeneration)
+- [x] Updated CreateStoryFlow.tsx to use backend async API
+- [x] Added progress polling with live status updates
+- [x] Added cancel button for in-progress jobs
+- [x] Added display for generated chapters, character portraits, and images
+- [x] Updated architectureDesign.md with new endpoint documentation
+- [x] Build verified successful
+
+### Build Status
+✅ Build successful (Dec 28, 2025) - 12,340 modules, 1,956KB bundle
+
+### GCS Download CORS Fallback (Dec 28, 2025) ✅ FRONTEND FIXED
+
+**Problem:** Downloading images from GCS (storage.googleapis.com) fails with CORS error:
+```
+Access to fetch at 'https://storage.googleapis.com/...' has been blocked by CORS policy
+```
+
+**Frontend Workaround Applied:**
+- Updated `downloadService.ts` to catch CORS errors
+- Falls back to opening image in new tab when direct download fails
+- User can then right-click → Save Image As
+- Returns `{ success: true, method: 'newTab' }` to indicate fallback was used
+
+**Preferred Backend Fix (API Team):**
+Configure CORS on GCS bucket `smartai-ssgp-v2-assets`:
+```bash
+gsutil cors set cors.json gs://smartai-ssgp-v2-assets
+```
+
+With `cors.json`:
+```json
+[{
+  "origin": ["http://localhost:3001", "https://your-domain.com"],
+  "method": ["GET", "HEAD"],
+  "responseHeader": ["Content-Type"],
+  "maxAgeSeconds": 3600
+}]
+```
+
+### Node Input Key Mapping Audit (Dec 28, 2025)
+
+**Audit Results - Input Port → Handler Key Mismatches:**
+
+| Node Type | Input Port | Handler Expects | Status |
+|-----------|------------|-----------------|--------|
+| sceneGenerator | `sceneConcept` | `concept` | ✅ Fixed |
+| sceneGenerator | `characters` | array | ✅ Fixed (handles single/array) |
+| plotTwist | `characters` | array | ⚠️ Needs fix |
+| dialogueGenerator | `characters` | array (min 2) | ⚠️ Needs fix |
+| storySynthesizer | `characters` | array | ⚠️ Needs fix |
+
+**Missing Execution Handlers (nodes without handlers):**
+- treatmentGenerator, plotPoint, conflictGenerator, storyPivot
+- intrigueLift, characterRelationship, characterVoice, characterSheet
+- worldLore, storyTimeline, monologueGenerator
+- choicePoint, consequenceTracker, pathMerge
+- sceneVisualizer, screenplayFormatter
+
+**Recommended Fixes:**
+1. Apply array normalization pattern to all character inputs
+2. Add `sceneConcept` to the port mapping aliases at line 2522
+
+### Story Save API - Archetype Mapping Fix (Dec 28, 2025) ✅ FRONTEND FIXED
+
+**Problem:** POST /api/stories failed with two errors:
+1. `"request": ["The request field is required."]` - Backend model binding issue
+2. `"$.characters[0].archetype"` - Invalid enum value "The Innocent Genius/Underdog"
+
+**Frontend Fixes Applied:**
+- Added `mapToValidArchetype()` function to map free-form archetypes to valid enum values:
+  - "The Innocent Genius/Underdog" → "Innocent"
+  - "The Tyrant/Bully" → "Shadow"
+  - "The Wise Guide" → "Mentor"
+  - etc.
+- Added `cleanCharacterName()` to remove markdown formatting (e.g., `**Pippin**` → `Pippin`)
+- Updated `saveFromNodeOutput()` to apply both fixes
+
+**Backend Issue (API Team Action Required):**
+The `"request field is required"` error indicates the backend controller may expect a wrapper:
+- Current: `POST { title, description, ... }`
+- Expected: `POST { request: { title, description, ... } }`
+
+Check `StoryLibraryController.CreateStory()` method parameter binding.
+
+### Character Creator Node - Moment of Delight Preview (Dec 28, 2025) ✅ COMPLETE
+
+Added rich preview display for Character Creator node when generation completes:
+- **Header**: Character name, full name, avatar with role/archetype/age/gender chips
+- **Core Info**: Motivation, Goal with styled quotes
+- **Quick View**: Fear, Flaw, Strength chips with emoji icons
+- **Collapsible Sections**:
+  - Personality: Traits, strengths, weaknesses, MBTI type
+  - Appearance: Height, build, eyes, hair, style, features
+  - Backstory: Full character background
+  - Character Arc: Starting state → Trigger → Ending state → Lesson learned
+  - Voice Profile: Speech pattern, tone, favorite expressions
+- **Portrait Prompt**: Ready-to-use prompt for image generation
+
+**Files Modified:**
+- `src/components/nodes/slots/PreviewSlot.tsx` - Added ~500 lines of character preview rendering
+
+### API Integration Testing (Dec 28, 2025) ✅ ALL TESTS PASSED
+
+| Endpoint | Test | Result |
+|----------|------|--------|
+| POST /api/storytelling/generate-full | Job creation | ✅ Pass |
+| GET /api/storytelling/generate-full/{jobId} | Status tracking | ✅ Pass |
+| DELETE /api/storytelling/generate-full/{jobId} | Cancel validation | ✅ Pass |
+| POST /api/storytelling/generate-chapter-images | Image gen + GCS upload | ✅ Pass |
+
+**Verified Working:**
+- Background job processing (async queue)
+- Progress tracking (phase + percentage)
+- GCS image upload to `smartai-ssgp-v2-assets` bucket
+- Proper error handling for invalid operations
+
+### Backend Stub Audit (Dec 28, 2025)
+API team fixed critical stub implementations:
+- **StoryGenerationService**: Fixed error-swallowing try-catch, proper error propagation
+- **CreativeCanvasService**: Full DB implementation for RemoveAssetsFromLibrary, GetAsset, GetAssetsForCard
+- **Not used by frontend** (converted to NotImplementedException): Content Packs, Marketplace (use IMarketplaceService), Reviews/Favorites, Analytics (use IGenerationTrackingService)
 
 ---
 
@@ -70,7 +210,7 @@ Created comprehensive strategy and API requirements for Story Library, Publishin
 - [ ] Create `StoryLibraryPage.tsx` component (dedicated browsing page)
 - [ ] Create `StoryShowcasePage.tsx` (community gallery for public stories)
 - [ ] Add Story Library to main navigation
-- [ ] Implement full story generation with images (async job processing)
+- [x] Implement full story generation with images (async job processing) ✅ Dec 28, 2025
 
 ---
 

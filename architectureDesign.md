@@ -1,6 +1,6 @@
 # Architecture Design - Creative Canvas Studio
 
-**Last Updated:** December 27, 2025
+**Last Updated:** December 28, 2025
 
 ## Overview
 
@@ -49,6 +49,48 @@ The API team implemented the following migrations for studio library support:
 - `015_AddMoodboardLibraryTable.cs`
 - `016_AddFashionLookbooksTable.cs`
 - `017_AddInteriorDesignRedesignsTable.cs`
+
+---
+
+## Node Execution Persistence - December 28, 2025
+
+> **Status:** ✅ COMPLETE - Node previews now persist across page reloads
+
+### Problem
+
+Node execution results (images, generated content, scene data, character data) were lost on page reload because the backend wasn't persisting `cachedOutput`.
+
+### Solution
+
+**Frontend (already implemented):**
+- `CreativeCanvasStudio.tsx:3346` - Stores execution results in `cachedOutput`
+- `CreativeCanvasStudio.tsx:3397-3406` - Persists `cachedOutput` via `nodeService.update()`
+- `CreativeCanvasStudio.tsx:897` - Loads `cachedOutput` when restoring nodes
+
+**Backend (fixed Dec 28):**
+- `CanvasNodeModels.cs:578-585` - Added `CachedOutput`, `Status`, `LastExecution` to `UpdateNodeRequest`
+- `CreativeCanvasService.cs:3613-3627` - Added persistence logic for `cached_output` column
+
+### Node Input/Output Key Mapping Fixes
+
+Fixed array normalization for nodes that accept character/scene/location inputs:
+
+| Node | File:Line | Fix |
+|------|-----------|-----|
+| `sceneGenerator` | `CreativeCanvasStudio.tsx:2858-2872` | Handle both `characters` and `character` as array or single object |
+| `plotTwist` | `CreativeCanvasStudio.tsx:2985-2995` | Handle both `characters` and `character` as array or single object |
+| `dialogueGenerator` | `CreativeCanvasStudio.tsx:2937-2947` | Handle both `characters` and `character` as array or single object |
+| `storySynthesizer` | `CreativeCanvasStudio.tsx:3061-3095` | Handle characters, scenes, locations as array or single object |
+
+### "Moment of Delight" Rich Previews
+
+Added rich preview rendering for storytelling nodes:
+
+| Node Type | File:Line | Features |
+|-----------|-----------|----------|
+| `storyGenesis` | `PreviewSlot.tsx:550-865` | Title, logline, themes, collapsible characters/outline |
+| `characterCreator` | `PreviewSlot.tsx:868-1415` | Avatar, traits, personality, backstory, arc, voice profile |
+| `sceneGenerator` | `PreviewSlot.tsx:1417-1726` | Title, slugline, location, mood, characters, content, dialogue |
 
 ---
 
@@ -952,8 +994,10 @@ const executeClothesSwap = async (params) => {
 | `/api/stories/{storyId}/scenes` | GET/POST | List/Create story scenes | Dec 27, 2025 | ✅ Implemented |
 | `/api/stories/{storyId}/scenes/{id}` | GET/PUT/DELETE | CRUD story scenes | Dec 27, 2025 | ✅ Implemented |
 | `/api/stories/{storyId}/scenes/reorder` | POST | Reorder scenes within story | Dec 27, 2025 | ✅ Implemented |
-| `/api/storytelling/generate-full` | POST | Generate complete story with images | Dec 27, 2025 | ⏳ Backlog (requires async job processing) |
-| `/api/storytelling/generate-chapter-images` | POST | Generate images for a chapter | Dec 27, 2025 | ⏳ Backlog (requires async job processing) |
+| `/api/storytelling/generate-full` | POST | Start async full story generation job | Dec 28, 2025 | ✅ Implemented |
+| `/api/storytelling/generate-full/{jobId}` | GET | Get job status and results | Dec 28, 2025 | ✅ Implemented |
+| `/api/storytelling/generate-full/{jobId}` | DELETE | Cancel pending job | Dec 28, 2025 | ✅ Implemented |
+| `/api/storytelling/generate-chapter-images` | POST | Generate images for a chapter | Dec 28, 2025 | ✅ Implemented |
 | `/api/social/posts` | GET/POST | List/Save user's social posts | Dec 27, 2025 | ✅ Implemented |
 | `/api/social/posts/{id}` | GET/PATCH/DELETE | CRUD for social posts | Dec 27, 2025 | ✅ Implemented |
 | `/api/social/carousels` | GET/POST | List/Save user's carousels | Dec 27, 2025 | ✅ Implemented |
@@ -1045,11 +1089,56 @@ The Story Library system provides persistence, organization, and publishing capa
    - Community showcase (like Inspiration Gallery)
    - Like/comment engagement
 
-4. **Full Story Generation**
+4. **Full Story Generation** ✅ (Completed Dec 28, 2025)
    - Generate complete chapters with AI text
    - Generate chapter header images
    - Generate scene illustrations
+   - Character portrait generation
+   - Cover art generation
+   - Async job processing with progress polling
    - Export to PDF/manuscript formats
+
+### Full Story Generation API Integration (Dec 28, 2025)
+
+**New Endpoints Integrated:**
+- `POST /api/storytelling/generate-full` - Start async story generation job
+- `GET /api/storytelling/generate-full/{jobId}` - Poll job status and get results
+- `DELETE /api/storytelling/generate-full/{jobId}` - Cancel pending job
+- `POST /api/storytelling/generate-chapter-images` - Generate chapter images
+
+**Frontend Changes:**
+- `src/services/storyGenerationService.ts` - Added new types and methods for async job handling
+- `src/components/studios/storyteller/flows/CreateStoryFlow.tsx` - Updated to use backend async API
+- Progress polling with live status updates
+- Cancel button for in-progress jobs
+- Display of generated chapters, character portraits, and images
+
+### API Integration Testing (Dec 28, 2025) ✅ ALL TESTS PASSED
+
+All full story generation endpoints verified working:
+- **Job Creation**: POST returns jobId, status "pending", estimatedDuration
+- **Status Tracking**: GET returns phase, percentage, and completed results
+- **Cancel Validation**: DELETE correctly rejects invalid cancel requests
+- **Image Generation**: Images generated and uploaded to GCS (`smartai-ssgp-v2-assets` bucket)
+
+### Backend Stub Audit (Dec 28, 2025)
+
+**Fixed - Now Properly Implemented:**
+| Service | Method | Fix |
+|---------|--------|-----|
+| StoryGenerationService | GetStoryAsync | Removed error-swallowing try-catch |
+| StoryGenerationService | UpdateStoryWithResultsAsync | Proper error propagation + logging |
+| CreativeCanvasService | RemoveAssetsFromLibraryAsync | Full DB implementation |
+| CreativeCanvasService | GetAssetAsync | Full DB implementation with access control |
+| CreativeCanvasService | GetAssetsForCardAsync | Full DB implementation |
+| CreativeCanvasService | GetTemplateCategoriesAsync | Fixed async warning |
+
+**Converted to NotImplementedException (not used by frontend):**
+- Content Pack Operations (4 methods) - Feature not yet implemented
+- Marketplace Operations (11 methods) - Should use IMarketplaceService
+- Reviews & Favorites (5 methods) - Should use IMarketplaceService
+- Analytics (2 methods) - Should use IGenerationTrackingService
+- Asset Upload (1 method) - Use AddAssetsToLibraryAsync with URL/base64
 
 ### UI Enhancements (Implemented Dec 27, 2025)
 

@@ -58,13 +58,23 @@ const getExtensionFromUrl = (url: string): string => {
 
 /**
  * Convert image URL to blob
+ * Falls back to proxy or alternative methods for CORS-blocked resources
  */
 const urlToBlob = async (url: string): Promise<Blob> => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.statusText}`);
+  // Try direct fetch first
+  try {
+    const response = await fetch(url, { mode: 'cors' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+    return response.blob();
+  } catch (error) {
+    // If CORS blocked and URL is from GCS, try no-cors mode won't work for reading
+    // Instead, throw a specific error that can be caught
+    const corsError = new Error('CORS_BLOCKED');
+    (corsError as Error & { originalUrl: string }).originalUrl = url;
+    throw corsError;
   }
-  return response.blob();
 };
 
 // ==================== DOWNLOAD SERVICE ====================
@@ -72,19 +82,22 @@ const urlToBlob = async (url: string): Promise<Blob> => {
 export const downloadService = {
   /**
    * Download a single image from URL
+   * Falls back to opening in new tab if CORS blocks direct download
    */
   async downloadImage(
     imageUrl: string,
-    options: DownloadOptions = {}
-  ): Promise<void> {
+    options: DownloadOptions & { fallbackToNewTab?: boolean } = {}
+  ): Promise<{ success: boolean; method: 'blob' | 'newTab' }> {
+    const { fallbackToNewTab = true, ...downloadOptions } = options;
+
     try {
       const blob = await urlToBlob(imageUrl);
-      const extension = options.extension || getExtensionFromUrl(imageUrl);
+      const extension = downloadOptions.extension || getExtensionFromUrl(imageUrl);
 
-      let filename = options.filename || 'image';
+      let filename = downloadOptions.filename || 'image';
       filename = sanitizeFilename(filename);
 
-      if (options.addTimestamp) {
+      if (downloadOptions.addTimestamp) {
         filename = `${filename}_${generateTimestamp()}`;
       }
 
@@ -99,7 +112,25 @@ export const downloadService = {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+
+      return { success: true, method: 'blob' };
     } catch (error) {
+      // Check if this is a CORS error
+      if (error instanceof Error && (
+        error.message === 'CORS_BLOCKED' ||
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('NetworkError')
+      )) {
+        console.warn('CORS blocked direct download, using fallback method');
+
+        if (fallbackToNewTab) {
+          // Fallback: Open in new tab - browser will handle the download
+          // This works because navigation isn't subject to CORS
+          this.openImageInNewTab(imageUrl);
+          return { success: true, method: 'newTab' };
+        }
+      }
+
       console.error('Download failed:', error);
       throw error;
     }
@@ -207,15 +238,16 @@ export const downloadService = {
 
   /**
    * Copy image to clipboard
+   * Returns { success: boolean, reason?: string }
    */
-  async copyImageToClipboard(imageUrl: string): Promise<boolean> {
+  async copyImageToClipboard(imageUrl: string): Promise<{ success: boolean; reason?: string }> {
     try {
       const blob = await urlToBlob(imageUrl);
 
       // Check if clipboard API supports images
       if (!navigator.clipboard || !('write' in navigator.clipboard)) {
         console.warn('Clipboard API not fully supported');
-        return false;
+        return { success: false, reason: 'Clipboard API not supported' };
       }
 
       await navigator.clipboard.write([
@@ -224,10 +256,21 @@ export const downloadService = {
         }),
       ]);
 
-      return true;
+      return { success: true };
     } catch (error) {
+      // Check for CORS error
+      if (error instanceof Error && (
+        error.message === 'CORS_BLOCKED' ||
+        error.message.includes('Failed to fetch')
+      )) {
+        console.warn('CORS blocked image copy - copying URL instead');
+        // Fallback: copy the URL instead
+        await this.copyTextToClipboard(imageUrl);
+        return { success: true, reason: 'Copied URL instead (CORS restricted)' };
+      }
+
       console.error('Failed to copy image to clipboard:', error);
-      return false;
+      return { success: false, reason: 'Copy failed' };
     }
   },
 

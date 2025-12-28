@@ -9,6 +9,73 @@
 import api from './api';
 
 // ============================================================================
+// ARCHETYPE MAPPING HELPERS
+// ============================================================================
+
+/**
+ * Valid CharacterArchetype enum values from the API
+ */
+const VALID_ARCHETYPES = [
+  'Hero', 'Mentor', 'Herald', 'ThresholdGuardian', 'Shapeshifter', 'Shadow',
+  'Trickster', 'Ally', 'Mother', 'Father', 'Child', 'Rebel', 'Lover',
+  'Creator', 'Ruler', 'Caregiver', 'Sage', 'Innocent', 'Explorer',
+  'Everyman', 'Jester', 'Magician', 'Outlaw'
+] as const;
+
+type ValidArchetype = typeof VALID_ARCHETYPES[number];
+
+/**
+ * Maps free-form archetype descriptions to valid API enum values.
+ * Uses keyword matching to find the best fit.
+ */
+function mapToValidArchetype(archetypeDescription: string): ValidArchetype {
+  if (!archetypeDescription) return 'Ally';
+
+  const lower = archetypeDescription.toLowerCase();
+
+  // Direct match first (case-insensitive)
+  const directMatch = VALID_ARCHETYPES.find(a => lower.includes(a.toLowerCase()));
+  if (directMatch) return directMatch;
+
+  // Keyword mapping
+  if (lower.includes('hero') || lower.includes('protagonist') || lower.includes('chosen')) return 'Hero';
+  if (lower.includes('mentor') || lower.includes('guide') || lower.includes('teacher') || lower.includes('wise')) return 'Mentor';
+  if (lower.includes('herald') || lower.includes('messenger') || lower.includes('announcer')) return 'Herald';
+  if (lower.includes('guardian') || lower.includes('threshold') || lower.includes('gatekeeper')) return 'ThresholdGuardian';
+  if (lower.includes('shapeshifter') || lower.includes('chameleon') || lower.includes('deceiver')) return 'Shapeshifter';
+  if (lower.includes('shadow') || lower.includes('villain') || lower.includes('antagonist') || lower.includes('tyrant') || lower.includes('bully')) return 'Shadow';
+  if (lower.includes('trickster') || lower.includes('prankster') || lower.includes('fool')) return 'Trickster';
+  if (lower.includes('ally') || lower.includes('companion') || lower.includes('sidekick') || lower.includes('friend') || lower.includes('loyal') || lower.includes('supporter')) return 'Ally';
+  if (lower.includes('mother') || lower.includes('maternal')) return 'Mother';
+  if (lower.includes('father') || lower.includes('paternal')) return 'Father';
+  if (lower.includes('child') || lower.includes('youth') || lower.includes('innocent genius') || lower.includes('young')) return 'Child';
+  if (lower.includes('rebel') || lower.includes('revolutionary') || lower.includes('outcast')) return 'Rebel';
+  if (lower.includes('lover') || lower.includes('romantic')) return 'Lover';
+  if (lower.includes('creator') || lower.includes('artist') || lower.includes('inventor') || lower.includes('innovator')) return 'Creator';
+  if (lower.includes('ruler') || lower.includes('king') || lower.includes('queen') || lower.includes('leader')) return 'Ruler';
+  if (lower.includes('caregiver') || lower.includes('nurturer') || lower.includes('healer')) return 'Caregiver';
+  if (lower.includes('sage') || lower.includes('philosopher') || lower.includes('scholar')) return 'Sage';
+  if (lower.includes('innocent') || lower.includes('naive') || lower.includes('pure') || lower.includes('underdog')) return 'Innocent';
+  if (lower.includes('explorer') || lower.includes('seeker') || lower.includes('wanderer') || lower.includes('adventurer')) return 'Explorer';
+  if (lower.includes('everyman') || lower.includes('ordinary') || lower.includes('regular')) return 'Everyman';
+  if (lower.includes('jester') || lower.includes('clown') || lower.includes('comedian') || lower.includes('enthusiast')) return 'Jester';
+  if (lower.includes('magician') || lower.includes('wizard') || lower.includes('sorcerer')) return 'Magician';
+  if (lower.includes('outlaw') || lower.includes('rogue') || lower.includes('thief')) return 'Outlaw';
+
+  // Default fallback
+  return 'Ally';
+}
+
+/**
+ * Cleans character name by removing markdown formatting
+ */
+function cleanCharacterName(name: string): string {
+  if (!name) return 'Unknown';
+  // Remove markdown bold/italic markers and trim
+  return name.replace(/\*+/g, '').trim();
+}
+
+// ============================================================================
 // Type Definitions
 // ============================================================================
 
@@ -605,11 +672,11 @@ class StoryLibraryService {
     };
 
     const characterProfiles: CharacterProfile[] = (characters || []).map(char => ({
-      name: char.name as string,
-      role: char.role as string,
-      archetype: char.archetype as string,
-      briefDescription: char.briefDescription as string,
-      motivation: char.motivation as string,
+      name: cleanCharacterName(char.name as string),
+      role: (char.role as string) || 'Supporting',
+      archetype: mapToValidArchetype(char.archetype as string),
+      briefDescription: (char.briefDescription as string) || '',
+      motivation: (char.motivation as string) || '',
     }));
 
     const outlineData: OutlineData | undefined = outline ? {

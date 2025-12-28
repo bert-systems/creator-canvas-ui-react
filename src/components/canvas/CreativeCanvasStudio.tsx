@@ -2521,12 +2521,49 @@ const CreativeCanvasInner: React.FC = () => {
 
           // Storytelling-related mappings
           if (targetPortId === 'story' || targetPortId.includes('story') || targetPortId.includes('Story')) {
-            inputData['story'] = finalValue;
-            inputData['Story Context'] = finalValue;
+            // If story is an object, extract text representation
+            if (typeof finalValue === 'object' && finalValue !== null) {
+              const storyObj = finalValue as Record<string, unknown>;
+              const storyText = (storyObj.premise as string) ||
+                               (storyObj.logline as string) ||
+                               (storyObj.title as string) ||
+                               '';
+              inputData['story'] = storyText; // String for APIs expecting text
+              inputData['storyObject'] = finalValue; // Full object for nodes that need it
+              inputData['Story Context'] = storyText;
+            } else {
+              inputData['story'] = finalValue;
+              inputData['Story Context'] = finalValue;
+            }
           }
 
           if (targetPortId === 'scene' || targetPortId.includes('scene') || targetPortId.includes('Scene')) {
-            inputData['scene'] = finalValue;
+            // If scene is an object (from Scene Generator), extract description for image generation
+            // but also keep the full object for nodes that need structured data
+            if (typeof finalValue === 'object' && finalValue !== null) {
+              const sceneObj = finalValue as Record<string, unknown>;
+              // Extract the best text representation for image generation
+              const sceneText = (sceneObj.description as string) ||
+                               (sceneObj.content as string) ||
+                               (sceneObj.title as string) ||
+                               '';
+              inputData['scene'] = sceneText; // String for image generation APIs
+              inputData['sceneObject'] = finalValue; // Full object for nodes that need it
+              inputData['sceneDescription'] = sceneText;
+              // Also map to prompt for image generation nodes
+              if (sceneText) {
+                inputData['prompt'] = sceneText;
+                inputData['text'] = sceneText;
+              }
+            } else {
+              inputData['scene'] = finalValue;
+            }
+          }
+
+          // Scene concept mapping (for scene generators)
+          if (targetPortId === 'sceneConcept' || targetPortId.includes('sceneConcept') || targetPortId.includes('SceneConcept')) {
+            inputData['sceneConcept'] = finalValue;
+            inputData['concept'] = finalValue; // Also map to generic concept
           }
 
           if (targetPortId === 'dialogue' || targetPortId.includes('dialogue') || targetPortId.includes('Dialogue')) {
@@ -2759,7 +2796,9 @@ const CreativeCanvasInner: React.FC = () => {
       } else if (nodeType === 'storyStructure') {
         // Story Structure - Apply story framework
         console.log('[handleNodeExecute] Processing Story Structure');
-        const storyInput = inputData.story as Record<string, unknown>;
+        // Use storyObject (full object) or fallback to story if it's already an object
+        const storyInput = (inputData.storyObject as Record<string, unknown>) ||
+                          (typeof inputData.story === 'object' ? inputData.story as Record<string, unknown> : null);
 
         if (!storyInput) {
           throw new Error('Story Structure requires a story concept. Connect the Story input.');
@@ -2847,17 +2886,35 @@ const CreativeCanvasInner: React.FC = () => {
       } else if (nodeType === 'sceneGenerator') {
         // Scene Generator - Generate a complete scene
         console.log('[handleNodeExecute] Processing Scene Generator');
-        const concept = (inputData.concept as string) || (nodeData?.parameters?.concept as string);
+        // Check multiple possible input keys for scene concept
+        const concept = (inputData.sceneConcept as string) ||
+                       (inputData.concept as string) ||
+                       (inputData.scene as string) ||
+                       (nodeData?.parameters?.concept as string) ||
+                       (nodeData?.parameters?.sceneConcept as string);
 
         if (!concept) {
-          throw new Error('Scene Writer requires a scene concept.');
+          console.error('[handleNodeExecute] Scene Generator - No concept found. inputData:', inputData, 'parameters:', nodeData?.parameters);
+          throw new Error('Scene Writer requires a scene concept. Connect a Text Input to the sceneConcept port.');
+        }
+
+        // Handle characters - can be an array or a single character object
+        let characters: any[] = [];
+        if (inputData.characters) {
+          characters = Array.isArray(inputData.characters)
+            ? inputData.characters
+            : [inputData.characters];
+        } else if (inputData.character) {
+          characters = Array.isArray(inputData.character)
+            ? inputData.character
+            : [inputData.character];
         }
 
         const sceneResponse = await storyGenerationService.generateScene({
           storyId: 'temp-story',
           storyContext: (inputData.story as any) || {},
           concept,
-          characters: (inputData.characters as any[]) || [],
+          characters,
           location: inputData.location as any,
           format: (nodeData?.parameters?.format as SceneFormat) || 'prose',
           pov: (nodeData?.parameters?.pov as POV) || 'third-limited',
@@ -2909,7 +2966,19 @@ const CreativeCanvasInner: React.FC = () => {
       } else if (nodeType === 'dialogueGenerator') {
         // Dialogue Generator - Generate dialogue between characters
         console.log('[handleNodeExecute] Processing Dialogue Generator');
-        const characters = (inputData.characters as any[]) || [];
+
+        // Handle characters - can be array or single character
+        let characters: any[] = [];
+        if (inputData.characters) {
+          characters = Array.isArray(inputData.characters)
+            ? inputData.characters
+            : [inputData.characters];
+        } else if (inputData.character) {
+          characters = Array.isArray(inputData.character)
+            ? inputData.character
+            : [inputData.character];
+        }
+
         const situation = (inputData.situation as string) || (nodeData?.parameters?.situation as string);
 
         if (characters.length < 2) {
@@ -2952,16 +3021,30 @@ const CreativeCanvasInner: React.FC = () => {
       } else if (nodeType === 'plotTwist') {
         // Plot Twist - Generate a plot twist
         console.log('[handleNodeExecute] Processing Plot Twist');
-        const storyInput = inputData.story as Record<string, unknown>;
+        // Use storyObject (full object) or fallback to story if it's already an object
+        const storyInput = (inputData.storyObject as Record<string, unknown>) ||
+                          (typeof inputData.story === 'object' ? inputData.story as Record<string, unknown> : null);
 
         if (!storyInput) {
           throw new Error('Plot Twist requires a story context. Connect the Story input.');
         }
 
+        // Handle characters - can be array or single character
+        let twistCharacters: any[] = [];
+        if (inputData.characters) {
+          twistCharacters = Array.isArray(inputData.characters)
+            ? inputData.characters
+            : [inputData.characters];
+        } else if (inputData.character) {
+          twistCharacters = Array.isArray(inputData.character)
+            ? inputData.character
+            : [inputData.character];
+        }
+
         const twistResponse = await storyGenerationService.generatePlotTwist({
           storyId: (storyInput.id as string) || 'temp-story',
           storyContext: storyInput as any,
-          characters: (inputData.characters as any[]) || [],
+          characters: twistCharacters,
           twistType: (nodeData?.parameters?.twistType as TwistType) || 'betrayal',
           impactLevel: (nodeData?.parameters?.impactLevel as 'minor' | 'moderate' | 'major' | 'story-changing') || 'major',
           generateForeshadowing: (nodeData?.parameters?.generateForeshadowing as boolean) ?? true,
@@ -3008,11 +3091,54 @@ const CreativeCanvasInner: React.FC = () => {
         // Story Synthesizer - Compile and export story elements
         console.log('[handleNodeExecute] Processing Story Synthesizer');
 
-        const storyInput = inputData.story as Record<string, unknown>;
-        const characters = inputData.characters as Array<Record<string, unknown>> | undefined;
+        // Use storyObject (full object) or fallback to story if it's already an object
+        const storyInput = (inputData.storyObject as Record<string, unknown>) ||
+                          (typeof inputData.story === 'object' ? inputData.story as Record<string, unknown> : null);
+
+        // Handle characters - can be array or single character
+        let characters: Array<Record<string, unknown>> = [];
+        if (inputData.characters) {
+          characters = Array.isArray(inputData.characters)
+            ? inputData.characters
+            : [inputData.characters];
+        } else if (inputData.character) {
+          characters = Array.isArray(inputData.character)
+            ? inputData.character
+            : [inputData.character];
+        }
+
+        // Handle scenes - can be array or single scene
+        // Use sceneObject (full object) since inputData.scene is now a string
+        let scenes: Array<Record<string, unknown>> = [];
+        if (inputData.scenes) {
+          scenes = Array.isArray(inputData.scenes)
+            ? inputData.scenes
+            : [inputData.scenes];
+        } else if (inputData.sceneObject) {
+          // sceneObject is the full scene data object
+          scenes = Array.isArray(inputData.sceneObject)
+            ? inputData.sceneObject as Array<Record<string, unknown>>
+            : [inputData.sceneObject as Record<string, unknown>];
+        } else if (typeof inputData.scene === 'object' && inputData.scene !== null) {
+          // Fallback for direct object input
+          scenes = Array.isArray(inputData.scene)
+            ? inputData.scene
+            : [inputData.scene];
+        }
+
+        // Handle locations - can be array or single location
+        let locations: Array<Record<string, unknown>> = [];
+        if (inputData.locations) {
+          locations = Array.isArray(inputData.locations)
+            ? inputData.locations
+            : [inputData.locations];
+        } else if (inputData.location) {
+          locations = Array.isArray(inputData.location)
+            ? inputData.location
+            : [inputData.location];
+        }
+
         const outline = inputData.outline as Record<string, unknown> | undefined;
-        const scenes = inputData.scenes as Array<Record<string, unknown>> | undefined;
-        const locations = inputData.locations as Array<Record<string, unknown>> | undefined;
         const treatment = inputData.treatment as Record<string, unknown> | undefined;
 
         if (!storyInput) {
