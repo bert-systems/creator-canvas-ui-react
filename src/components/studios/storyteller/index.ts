@@ -4,4 +4,6 @@
  */
 
 export { StorytellerStudio } from './StorytellerStudio';
+export { CharacterLibraryPanel } from './CharacterLibraryPanel';
+export { CharacterDetailModal } from './CharacterDetailModal';
 export * from './flows';

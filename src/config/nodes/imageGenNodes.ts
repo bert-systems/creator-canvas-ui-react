@@ -143,6 +143,12 @@ export const imageGenNodes: NodeDefinition[] = [
       { id: 'guidance', name: 'Guidance Scale', type: 'slider', default: 3.5, min: 1, max: 20, step: 0.1 },
       { id: 'numImages', name: 'Num Images', type: 'number', default: 1, min: 1, max: 4 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true, showVariations: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['width', 'height', 'guidance'] },
+      actions: { primary: 'execute', secondary: ['download', 'duplicate'], showProgress: true },
+    },
   },
   {
     type: 'recraftV3',
@@ -176,6 +182,12 @@ export const imageGenNodes: NodeDefinition[] = [
       { id: 'width', name: 'Width', type: 'number', default: 1024, min: 256, max: 2048 },
       { id: 'height', name: 'Height', type: 'number', default: 1024, min: 256, max: 2048 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['style', 'textContent', 'brandColors'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'gptImage',
@@ -197,6 +209,12 @@ export const imageGenNodes: NodeDefinition[] = [
       { id: 'height', name: 'Height', type: 'number', default: 1024, min: 256, max: 2048 },
       { id: 'numImages', name: 'Num Images', type: 'number', default: 1, min: 1, max: 4 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true, showVariations: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['width', 'height'] },
+      actions: { primary: 'execute', secondary: ['download', 'duplicate'], showProgress: true },
+    },
   },
   {
     type: 'zImageTurbo',
@@ -218,5 +236,11 @@ export const imageGenNodes: NodeDefinition[] = [
       { id: 'height', name: 'Height', type: 'number', default: 1024, min: 256, max: 2048 },
       { id: 'numImages', name: 'Num Images', type: 'number', default: 1, min: 1, max: 4 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'image', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['width', 'height'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
 ];

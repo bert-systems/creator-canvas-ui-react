@@ -89,6 +89,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/stacks/time',
       config: {},
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '9:16', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['frameCount', 'timespan'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'stackMultiverse',
@@ -112,6 +118,12 @@ export const outputNodes: NodeDefinition[] = [
       agentType: 'multiframe-stack',
       endpoint: '/api/MultiFrame/stacks/multiverse',
       config: {},
+    },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '9:16', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['frameCount', 'styles'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
     },
   },
   {
@@ -142,6 +154,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/stacks/time',
       config: { subtype: 'chrono' },
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '9:16', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['frameCount', 'startTime'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'stackSubconscious',
@@ -171,6 +189,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/stacks/concept',
       config: { subtype: 'subconscious' },
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '9:16', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['perceptionNote', 'distortion'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'stackZAxis',
@@ -198,6 +222,12 @@ export const outputNodes: NodeDefinition[] = [
       agentType: 'multiframe-stack',
       endpoint: '/api/MultiFrame/stacks/perspective',
       config: {},
+    },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '9:16', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['frameCount', 'startScale'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
     },
   },
   {
@@ -231,6 +261,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/stacks/transformation',
       config: {},
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'comparison', aspectRatio: '9:16', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['beforePrompt', 'afterPrompt', 'effectType'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
 
   // MULTI-FRAME NODES - QUEUES (Horizontal 16:9+)
@@ -262,6 +298,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/queues/comparison',
       config: { subtype: 'panorama' },
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['panelCount', 'environment'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'queueWalkCycle',
@@ -292,6 +334,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/queues/process',
       config: { subtype: 'walkcycle' },
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['frameCount', 'locomotion'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'queueDialogueBeat',
@@ -317,6 +365,12 @@ export const outputNodes: NodeDefinition[] = [
       agentType: 'multiframe-queue',
       endpoint: '/api/MultiFrame/queues/storyboard',
       config: {},
+    },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['setupPrompt', 'actionPrompt', 'reactionPrompt'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
     },
   },
   {
@@ -347,6 +401,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/queues/process',
       config: { subtype: 'motiontrail' },
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['trailCount', 'motionType'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'queueMirror',
@@ -375,6 +435,12 @@ export const outputNodes: NodeDefinition[] = [
       agentType: 'multiframe-queue',
       endpoint: '/api/MultiFrame/queues/comparison',
       config: { subtype: 'mirror' },
+    },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'comparison', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['truthReveal', 'mirrorType'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
     },
   },
 
@@ -413,6 +479,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/grids/contact',
       config: {},
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['topology', 'shotProgression'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'gridTurnaround',
@@ -448,6 +520,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/grids/turnaround',
       config: {},
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '4:3', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['topology', 'poseType'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'gridLighting',
@@ -475,6 +553,12 @@ export const outputNodes: NodeDefinition[] = [
       agentType: 'multiframe-grid',
       endpoint: '/api/MultiFrame/grids/lighting',
       config: {},
+    },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['lightingSet'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
     },
   },
   {
@@ -509,6 +593,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/grids/expression',
       config: {},
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['emotionArc'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'gridStylePrism',
@@ -537,6 +627,12 @@ export const outputNodes: NodeDefinition[] = [
       agentType: 'multiframe-grid',
       endpoint: '/api/MultiFrame/grids/moodboard',
       config: { subtype: 'styleprism' },
+    },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['styleSet', 'customStyles'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
     },
   },
   {
@@ -570,6 +666,12 @@ export const outputNodes: NodeDefinition[] = [
       endpoint: '/api/MultiFrame/grids/material',
       config: { subtype: 'entropy' },
     },
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '1:1', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['direction', 'timeSpan'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
 
   // ENHANCEMENT NODES
@@ -598,6 +700,12 @@ export const outputNodes: NodeDefinition[] = [
       { id: 'denoise', name: 'Denoise Level', type: 'slider', default: 0.3, min: 0, max: 1, step: 0.1 },
     ],
     aiModel: 'flux-2-pro-edit',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'comparison', aspectRatio: 'auto', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['scale', 'enhanceDetail'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'enhancePrompt',
@@ -625,5 +733,11 @@ export const outputNodes: NodeDefinition[] = [
       { id: 'verbosity', name: 'Detail Level', type: 'slider', default: 0.7, min: 0, max: 1, step: 0.1 },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['style', 'verbosity'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
 ];

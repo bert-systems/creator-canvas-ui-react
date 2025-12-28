@@ -1,10 +1,11 @@
 /**
  * FashionStudio - Main container for Fashion Studio
  * Combines StudioShell with fashion-specific content
+ * Integrates with fashionStore for persistent storage
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Box, Typography, IconButton, Tooltip } from '@mui/material';
+import { Box, Typography, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CollectionsIcon from '@mui/icons-material/Collections';
@@ -17,6 +18,7 @@ import { CreateLookbookFlow } from './flows/CreateLookbookFlow';
 import { WorkspaceMode, Gallery, type GalleryItem } from '../modes/WorkspaceMode';
 import FolderIcon from '@mui/icons-material/Folder';
 import TuneIcon from '@mui/icons-material/Tune';
+import { useFashionStore } from '@/stores/fashionStore';
 
 // Active flow type
 type ActiveFlow = 'none' | 'create-lookbook' | 'generate-look' | 'virtual-try-on';
@@ -27,14 +29,6 @@ interface GeneratedLook {
   imageUrl: string;
   prompt: string;
   status: 'pending' | 'generating' | 'complete' | 'error';
-}
-
-// Saved lookbook type
-interface SavedLookbook {
-  id: string;
-  name: string;
-  looks: GeneratedLook[];
-  createdAt: Date;
 }
 
 export interface FashionStudioProps {
@@ -79,7 +73,20 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeFlow, setActiveFlow] = useState<ActiveFlow>('none');
-  const [savedLookbooks, setSavedLookbooks] = useState<SavedLookbook[]>([]);
+
+  // Connect to fashion store
+  const {
+    lookbooks,
+    lookbooksLoading,
+    fetchLookbooks,
+    createLookbook,
+    createGarment,
+  } = useFashionStore();
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchLookbooks().catch(console.error);
+  }, [fetchLookbooks]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -158,17 +165,30 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
     }
   }, []);
 
-  const handleLookbookComplete = useCallback((looks: GeneratedLook[]) => {
-    // Save the lookbook
-    const newLookbook: SavedLookbook = {
-      id: `lookbook-${Date.now()}`,
-      name: `Lookbook ${savedLookbooks.length + 1}`,
-      looks,
-      createdAt: new Date(),
-    };
-    setSavedLookbooks((prev) => [newLookbook, ...prev]);
+  const handleLookbookComplete = useCallback(async (looks: GeneratedLook[]) => {
+    try {
+      // Create the lookbook first
+      const lookbook = await createLookbook({
+        name: `Lookbook ${lookbooks.length + 1}`,
+        description: 'AI-generated lookbook',
+        thumbnailUrl: looks[0]?.imageUrl,
+      });
+
+      // Save each look as a garment
+      for (const look of looks) {
+        if (look.status === 'complete' && look.imageUrl) {
+          await createGarment(lookbook.id, {
+            name: `Look ${look.id}`,
+            imageUrl: look.imageUrl,
+            description: look.prompt,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save lookbook:', error);
+    }
     setActiveFlow('none');
-  }, [savedLookbooks.length]);
+  }, [lookbooks.length, createLookbook, createGarment]);
 
   const handleFlowCancel = useCallback(() => {
     setActiveFlow('none');
@@ -303,7 +323,11 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
               >
                 Recent Projects
               </Typography>
-              {savedLookbooks.length === 0 ? (
+              {lookbooksLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                  <CircularProgress size={32} sx={{ color: studioColors.accent }} />
+                </Box>
+              ) : lookbooks.length === 0 ? (
                 <Box
                   sx={{
                     p: 6,
@@ -318,34 +342,23 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
                 </Box>
               ) : (
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  {savedLookbooks.slice(0, 4).map((lookbook) => (
+                  {lookbooks.slice(0, 4).map((lookbook) => (
                     <SurfaceCard
                       key={lookbook.id}
                       interactive
                       padding="none"
                       sx={{ flex: '1 1 calc(25% - 12px)', minWidth: 180, overflow: 'hidden' }}
                     >
-                      {/* Preview images */}
+                      {/* Preview image */}
                       <Box
                         sx={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: '2px',
                           aspectRatio: '1',
+                          background: studioColors.surface2,
+                          backgroundImage: lookbook.thumbnailUrl ? `url(${lookbook.thumbnailUrl})` : undefined,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
                         }}
-                      >
-                        {lookbook.looks.slice(0, 4).map((look, idx) => (
-                          <Box
-                            key={idx}
-                            sx={{
-                              background: studioColors.surface2,
-                              backgroundImage: look.imageUrl ? `url(${look.imageUrl})` : undefined,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
-                            }}
-                          />
-                        ))}
-                      </Box>
+                      />
                       <Box sx={{ p: 2 }}>
                         <Typography
                           sx={{
@@ -362,7 +375,7 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
                             color: studioColors.textTertiary,
                           }}
                         >
-                          {lookbook.looks.length} looks
+                          {lookbook.season || lookbook.collection || 'Lookbook'}
                         </Typography>
                       </Box>
                     </SurfaceCard>
@@ -375,17 +388,15 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
         );
 
       case 'workspace': {
-        // Convert saved lookbooks to gallery items
-        const galleryItems: GalleryItem[] = savedLookbooks.flatMap((lookbook) =>
-          lookbook.looks
-            .filter((look) => look.status === 'complete' && look.imageUrl)
-            .map((look) => ({
-              id: `${lookbook.id}-${look.id}`,
-              imageUrl: look.imageUrl,
-              title: `Look ${look.id}`,
-              subtitle: lookbook.name,
-            }))
-        );
+        // Convert lookbooks to gallery items (use thumbnail)
+        const galleryItems: GalleryItem[] = lookbooks
+          .filter((lookbook) => lookbook.thumbnailUrl)
+          .map((lookbook) => ({
+            id: lookbook.id,
+            imageUrl: lookbook.thumbnailUrl || '',
+            title: lookbook.name || 'Lookbook',
+            subtitle: lookbook.season || lookbook.collection || '',
+          }));
 
         return (
           <WorkspaceMode
@@ -397,12 +408,16 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
                 defaultWidth: 220,
                 content: (
                   <Box>
-                    {savedLookbooks.length === 0 ? (
+                    {lookbooksLoading ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                        <CircularProgress size={24} sx={{ color: studioColors.accent }} />
+                      </Box>
+                    ) : lookbooks.length === 0 ? (
                       <Typography sx={{ color: studioColors.textTertiary, fontSize: studioTypography.fontSize.sm }}>
                         No projects yet
                       </Typography>
                     ) : (
-                      savedLookbooks.map((lookbook) => (
+                      lookbooks.map((lookbook) => (
                         <Box
                           key={lookbook.id}
                           sx={{
@@ -429,7 +444,7 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
                               color: studioColors.textTertiary,
                             }}
                           >
-                            {lookbook.looks.length} looks
+                            {lookbook.season || lookbook.collection || 'Lookbook'}
                           </Typography>
                         </Box>
                       ))
@@ -456,7 +471,7 @@ export const FashionStudio: React.FC<FashionStudioProps> = ({
             footer={
               <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Typography sx={{ fontSize: studioTypography.fontSize.sm, color: studioColors.textSecondary }}>
-                  {galleryItems.length} looks
+                  {lookbooks.length} lookbooks
                 </Typography>
                 <Box sx={{ flex: 1 }} />
                 <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textMuted }}>

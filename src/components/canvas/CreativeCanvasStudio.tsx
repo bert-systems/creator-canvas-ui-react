@@ -118,65 +118,11 @@ import type { ToolbarAction, UnifiedNodeData } from '../../models/unifiedNode';
 import { unifiedNodeService } from '../../services/unifiedNodeService';
 import { edgeService, apiEdgeToFlowEdge } from '../../services/edgeService';
 import { DomainToolbar } from './DomainToolbar';
+// Core node components - kept for backwards compatibility
 import { CanvasNode } from '../nodes/CanvasNode';
 import { FlowNode } from '../nodes/FlowNode';
-// Storytelling nodes (Dec 2025)
-import { StoryGenesisNode } from '../nodes/StoryGenesisNode';
-import { StoryStructureNode } from '../nodes/StoryStructureNode';
-import { CharacterCreatorNode } from '../nodes/CharacterCreatorNode';
-import { SceneGeneratorNode } from '../nodes/SceneGeneratorNode';
-import { LocationCreatorNode } from '../nodes/LocationCreatorNode';
-import { DialogueGeneratorNode } from '../nodes/DialogueGeneratorNode';
-// Storytelling Phase 2 nodes (Dec 2025)
-import { TreatmentGeneratorNode } from '../nodes/TreatmentGeneratorNode';
-import { CharacterRelationshipNode } from '../nodes/CharacterRelationshipNode';
-import { CharacterVoiceNode } from '../nodes/CharacterVoiceNode';
-import { WorldLoreNode } from '../nodes/WorldLoreNode';
-import { TimelineNode } from '../nodes/TimelineNode';
-import { PlotPointNode } from '../nodes/PlotPointNode';
-import { PlotTwistNode } from '../nodes/PlotTwistNode';
-import { ConflictGeneratorNode } from '../nodes/ConflictGeneratorNode';
-import { MonologueGeneratorNode } from '../nodes/MonologueGeneratorNode';
-// Branching narrative nodes (Dec 2025)
-import { ChoicePointNode } from '../nodes/ChoicePointNode';
-import { ConsequenceTrackerNode } from '../nodes/ConsequenceTrackerNode';
-import { PathMergeNode } from '../nodes/PathMergeNode';
-// Enhancement nodes (Dec 2025)
-import { StoryPivotNode } from '../nodes/StoryPivotNode';
-import { IntrigueLiftNode } from '../nodes/IntrigueLiftNode';
-import { StoryEnhancerNode } from '../nodes/StoryEnhancerNode';
-// Visualization nodes - Phase 5 (Dec 2025)
-import { SceneVisualizerNode } from '../nodes/SceneVisualizerNode';
-import { CharacterSheetNode } from '../nodes/CharacterSheetNode';
-import { ScreenplayFormatterNode } from '../nodes/ScreenplayFormatterNode';
-// Fashion nodes (Dec 2025)
-import { GarmentSketchNode } from '../nodes/GarmentSketchNode';
-import { TextileDesignerNode } from '../nodes/TextileDesignerNode';
-import { ModelCasterNode } from '../nodes/ModelCasterNode';
-import { OutfitComposerNode } from '../nodes/OutfitComposerNode';
-import { FlatLayComposerNode } from '../nodes/FlatLayComposerNode';
-import { EcommerceShotNode } from '../nodes/EcommerceShotNode';
-import { CollectionBuilderNode } from '../nodes/CollectionBuilderNode';
-import { PatternGeneratorNode } from '../nodes/PatternGeneratorNode';
-import { TechPackGeneratorNode } from '../nodes/TechPackGeneratorNode';
-import { LookbookGeneratorNode } from '../nodes/LookbookGeneratorNode';
-import { AccessoryStylistNode } from '../nodes/AccessoryStylistNode';
-import { FabricMotionNode } from '../nodes/FabricMotionNode';
-// Fashion nodes - Phase 2 (Dec 2025)
-import { CulturalTextileFusionNode } from '../nodes/CulturalTextileFusionNode';
-import { ColorwayGeneratorNode } from '../nodes/ColorwayGeneratorNode';
-import { PoseLibraryNode } from '../nodes/PoseLibraryNode';
-import { SizeScalerNode } from '../nodes/SizeScalerNode';
-import { LayeringStylistNode } from '../nodes/LayeringStylistNode';
-import { GhostMannequinNode } from '../nodes/GhostMannequinNode';
-import { TurnaroundVideoNode } from '../nodes/TurnaroundVideoNode';
-import { LineSheetGeneratorNode } from '../nodes/LineSheetGeneratorNode';
-// Fashion nodes - Composite/Try-On (Dec 2025)
-import { VirtualTryOnNode } from '../nodes/VirtualTryOnNode';
-import { ClothesSwapNode } from '../nodes/ClothesSwapNode';
-import { RunwayAnimationNode } from '../nodes/RunwayAnimationNode';
-// Input nodes (Dec 2025)
-import { ReferenceImageNode } from '../nodes/ReferenceImageNode';
+// Note: All custom node components (StoryGenesisNode, VirtualTryOnNode, etc.)
+// are now deprecated - all rendering goes through UnifiedNode with slot configs
 import TemplateBrowser from '../panels/TemplateBrowser';
 import BoardManager from '../panels/BoardManager';
 import ConnectionActionMenu from '../panels/ConnectionActionMenu';
@@ -261,71 +207,16 @@ export interface CanvasActionsContextValue {
 export const CanvasActionsContext = React.createContext<CanvasActionsContextValue>({});
 
 // Node types for React Flow
+// v4.0 Unified Node Architecture - All nodes render through UnifiedNode
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const nodeTypes: NodeTypes = {
   // === v4.0 Unified Node - Single component for all node types ===
   unifiedNode: UnifiedNode as any,
-  // === Legacy node types (to be deprecated) ===
-  canvasCard: CanvasNode,
-  creativeCard: CreativeCard as any, // New Creative Card (Elevated Vision v3.0)
-  canvasNode: FlowNode as any,  // New flow node type for palette nodes
-  // Storytelling nodes - Foundation (Dec 2025)
-  storyGenesis: StoryGenesisNode as any,
-  storyStructure: StoryStructureNode as any,
-  characterCreator: CharacterCreatorNode as any,
-  sceneGenerator: SceneGeneratorNode as any,
-  locationCreator: LocationCreatorNode as any,
-  dialogueGenerator: DialogueGeneratorNode as any,
-  // Storytelling nodes - Phase 2 (Dec 2025)
-  treatmentGenerator: TreatmentGeneratorNode as any,
-  characterRelationship: CharacterRelationshipNode as any,
-  characterVoice: CharacterVoiceNode as any,
-  worldLore: WorldLoreNode as any,
-  storyTimeline: TimelineNode as any,
-  plotPoint: PlotPointNode as any,
-  plotTwist: PlotTwistNode as any,
-  conflictGenerator: ConflictGeneratorNode as any,
-  monologueGenerator: MonologueGeneratorNode as any,
-  // Branching narrative nodes (Dec 2025)
-  choicePoint: ChoicePointNode as any,
-  consequenceTracker: ConsequenceTrackerNode as any,
-  pathMerge: PathMergeNode as any,
-  // Enhancement nodes (Dec 2025)
-  storyPivot: StoryPivotNode as any,
-  intrigueLift: IntrigueLiftNode as any,
-  storyEnhancer: StoryEnhancerNode as any,
-  // Visualization nodes - Phase 5 (Dec 2025)
-  sceneVisualizer: SceneVisualizerNode as any,
-  characterSheet: CharacterSheetNode as any,
-  screenplayFormatter: ScreenplayFormatterNode as any,
-  // Fashion nodes (Dec 2025)
-  garmentSketch: GarmentSketchNode as any,
-  textileDesigner: TextileDesignerNode as any,
-  modelCaster: ModelCasterNode as any,
-  outfitComposer: OutfitComposerNode as any,
-  flatLayComposer: FlatLayComposerNode as any,
-  ecommerceShot: EcommerceShotNode as any,
-  collectionBuilder: CollectionBuilderNode as any,
-  patternGenerator: PatternGeneratorNode as any,
-  techPackGenerator: TechPackGeneratorNode as any,
-  lookbookGenerator: LookbookGeneratorNode as any,
-  accessoryStylist: AccessoryStylistNode as any,
-  fabricMotion: FabricMotionNode as any,
-  // Fashion nodes - Phase 2 (Dec 2025)
-  culturalTextileFusion: CulturalTextileFusionNode as any,
-  colorwayGenerator: ColorwayGeneratorNode as any,
-  poseLibrary: PoseLibraryNode as any,
-  sizeScaler: SizeScalerNode as any,
-  layeringStylist: LayeringStylistNode as any,
-  ghostMannequin: GhostMannequinNode as any,
-  turnaroundVideo: TurnaroundVideoNode as any,
-  lineSheetGenerator: LineSheetGeneratorNode as any,
-  // Fashion nodes - Composite/Try-On (Dec 2025)
-  virtualTryOn: VirtualTryOnNode as any,
-  clothesSwap: ClothesSwapNode as any,
-  runwayAnimation: RunwayAnimationNode as any,
-  // Input nodes (Dec 2025)
-  referenceImage: ReferenceImageNode as any,
+  // === Backwards compatibility for legacy node types ===
+  // All legacy types now route to UnifiedNode for consistent rendering
+  canvasCard: CanvasNode,  // Keep for old canvas card data
+  creativeCard: CreativeCard as any, // Elevated Vision v3.0
+  canvasNode: FlowNode as any,  // Keep for old flow node data
 };
 
 // Edge types for React Flow - animated connection lines

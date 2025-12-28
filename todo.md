@@ -1,6 +1,136 @@
 # TODO - Creative Canvas Studio
 
-**Last Updated:** December 26, 2025
+**Last Updated:** December 27, 2025
+
+---
+
+## Story Library & Publishing System - Dec 27, 2025 ✅ STRATEGY COMPLETE
+
+### Summary
+Created comprehensive strategy and API requirements for Story Library, Publishing System, and Full Story Generation with images.
+
+### Work Completed
+
+#### 1. Strategy & API Requirements Documents Created
+- `docs/STORY_LIBRARY_PUBLISHING_STRATEGY.md` - Comprehensive 5-phase strategy
+- `docs/STORY_LIBRARY_API_REQUIREMENTS.md` - Complete API specification
+
+#### 2. Story Persistence Strategy
+- Zustand store design (`storyStore.ts` planned)
+- Auto-save with debouncing
+- Version history for undo/redo
+- Connection to `storyLibraryService.ts`
+
+#### 3. Story Library Page Design
+- Browsable interface similar to Asset Library
+- Tabs: All Stories, Characters, Treatments, Scenes, Collections
+- Search, filter, sort capabilities
+- Story card component designs
+
+#### 4. Publishing System Design
+- Visibility levels: Private → Shared → Public
+- Story Showcase (community gallery)
+- Like/comment engagement
+- Collaboration features
+
+#### 5. Full Story Generation with Images
+- Generate complete chapters with AI text
+- Generate chapter header images
+- Generate scene illustrations
+- Export to PDF/manuscript formats
+
+#### 6. UI Enhancements Implemented
+- **Scrollable Output:** FlowMode content area now properly scrolls with custom scrollbar styling
+- **Action Buttons:** Added "Generate Full Story with Images", "Save to Library", "Generate Cover Art" buttons
+- **Info Panel:** Added informational note about full story generation capabilities
+
+### API Endpoints Requested (Backend Pending)
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/stories/public` | List public stories |
+| `GET /api/stories/featured` | Featured stories |
+| `POST /api/stories/{id}/publish` | Publish story |
+| `POST /api/storytelling/generate-full` | Full story generation |
+| `POST /api/storytelling/generate-chapter-images` | Chapter image generation |
+
+### Build Status
+✅ Build successful (Dec 27, 2025) - 12,332 modules, 1,910KB bundle
+
+### Backend Integration Complete (Dec 27, 2025)
+- [x] Backend API implemented (15 new endpoints)
+- [x] Migration applied to database
+- [x] All endpoints tested and verified
+- [x] `storyLibraryService.ts` updated with 35+ methods
+- [x] `storyStore.ts` Zustand store created
+- [x] StorytellerStudio connected to persistence
+- [x] CreateStoryFlow saves stories on completion
+- [x] Workspace mode displays stories from backend
+
+### Next Steps
+- [ ] Create `StoryLibraryPage.tsx` component (dedicated browsing page)
+- [ ] Create `StoryShowcasePage.tsx` (community gallery for public stories)
+- [ ] Add Story Library to main navigation
+- [ ] Implement full story generation with images (async job processing)
+
+---
+
+## Legacy Node Cleanup - Dec 27, 2025 ✅ COMPLETE
+
+### Summary
+Completed Phase 5c cleanup: removed legacy node components and completed slot configs for remaining nodes.
+
+### Work Completed
+
+#### 1. Removed Legacy Node Components (54 files)
+All custom node components (StoryGenesisNode, VirtualTryOnNode, CharacterCreatorNode, etc.) have been removed from `src/components/nodes/`. These were redundant implementations that are now handled by the UnifiedNode slot system.
+
+**Remaining files:**
+- `UnifiedNode.tsx` - Main unified node component (v4.0)
+- `CanvasNode.tsx` - Backwards compatibility only
+- `FlowNode.tsx` - Backwards compatibility only
+- `slots/` - Slot components (PreviewSlot, ParameterSlot, ActionSlot)
+
+#### 2. Updated nodeTypes Registration
+Simplified `CreativeCanvasStudio.tsx` nodeTypes from 60+ entries to just 4:
+- `unifiedNode: UnifiedNode` - Main component for all node types
+- `canvasCard: CanvasNode` - Legacy compatibility
+- `creativeCard: CreativeCard` - Elevated Vision v3.0
+- `canvasNode: FlowNode` - Legacy compatibility
+
+#### 3. Added Slot Configs to Storytelling Nodes
+All 25 storytelling nodes in `storytellingNodes.ts` now have complete slot configurations:
+- `preview`: type (text/gallery), aspectRatio
+- `parameters`: layout (accordion), visibleInModes, priorityParams
+- `actions`: primary (execute/download), showProgress
+
+#### 4. Added Missing Port Colors
+Extended `portColors` in theme.ts to include all PortType values:
+- Interior Design: room, floorPlan, material, furniture, designStyle, roomLayout
+- Moodboard: moodboard, colorPalette, brandKit, typography, texture, aesthetic
+- Social Media: post, carousel, caption, template, platform
+- Fashion: fabric, pattern, techPack, lookbook
+
+### Build Status
+✅ Build successful (Dec 27, 2025)
+
+#### 5. Completed Slot Configs for All Node Files
+All node definition files now have complete slot configurations:
+- `styleNodes.ts` - 8 nodes (styleDNA, styleTransfer, loraTraining, virtualTryOn, clothesSwap, runwayAnimation, storyboardAutopilot, collectionSlideshow)
+- `outputNodes.ts` - 21 nodes (preview, export, 13 multiframe nodes, upscaleImage, enhancePrompt)
+- `imageGenNodes.ts` - 8 nodes (flux2Pro, flux2Dev, nanoBananaPro, fluxKontext, flux2Max, recraftV3, gptImage, zImageTurbo)
+- `videoGenNodes.ts` - 15 nodes (kling26T2V, kling26I2V, veo31, sora2, kling26Pro, ltx2, wan26, meshy6, tripoV25, characterLock, faceMemory, elementLibrary, etc.)
+- `inputNodes.ts` - 5 nodes (all had slots)
+- `interiorDesignNodes.ts` - 6 nodes (all had slots)
+- `moodboardNodes.ts` - 10 nodes (all had slots)
+- `socialMediaNodes.ts` - 12 nodes (all had slots)
+- `audioNodes.ts` - 8 nodes (all had slots)
+
+### Build Status
+✅ Build successful (Dec 27, 2025) - 12,331 modules, 1,899KB bundle
+
+### Remaining Work
+- [ ] Performance testing with 100+ nodes
+- [ ] Integration testing for all node types
 
 ---
 

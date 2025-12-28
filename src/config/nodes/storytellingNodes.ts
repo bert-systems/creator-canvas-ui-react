@@ -57,6 +57,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'complexity', name: 'Narrative Complexity', type: 'slider', default: 0.5, min: 0, max: 1, step: 0.1 },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['genre', 'length'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'storyStructure',
@@ -96,6 +102,12 @@ export const storytellingNodes: NodeDefinition[] = [
       ]},
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['framework'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'treatmentGenerator',
@@ -133,6 +145,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'includeSynopsis', name: 'Include Synopsis', type: 'boolean', default: true },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['format'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'sceneGenerator',
@@ -187,6 +205,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'generateVisualPrompts', name: 'Generate Visual Prompts', type: 'boolean', default: true },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['format', 'sceneType'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'plotPoint',
@@ -228,6 +252,12 @@ export const storytellingNodes: NodeDefinition[] = [
       ]},
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['beatType'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'plotTwist',
@@ -264,6 +294,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'includeForeshadowing', name: 'Include Foreshadowing', type: 'boolean', default: true },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['twistType'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'conflictGenerator',
@@ -298,6 +334,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'includeEscalation', name: 'Include Escalation Path', type: 'boolean', default: true },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['conflictType'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'storyPivot',
@@ -329,6 +371,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'preserveRatio', name: 'Preservation Level', type: 'slider', default: 0.4, min: 0, max: 1, step: 0.1 },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['pivotType'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'intrigueLift',
@@ -363,6 +411,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'numSecrets', name: 'Number of Secrets', type: 'number', default: 3, min: 1, max: 10 },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['intrigueType'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'storyEnhancer',
@@ -395,6 +449,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'preserveVoice', name: 'Preserve Original Voice', type: 'boolean', default: true },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['enhancementFocus'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'storySynthesizer',
@@ -436,6 +496,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'includeVisualPrompts', name: 'Include Visual Prompts', type: 'boolean', default: false },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['format', 'sections'] },
+      actions: { primary: 'download', showProgress: true },
+    },
   },
 
   // ============================================================================
@@ -491,6 +557,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'generateArc', name: 'Generate Character Arc', type: 'boolean', default: true },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['archetype', 'depth'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'characterRelationship',
@@ -531,6 +603,12 @@ export const storytellingNodes: NodeDefinition[] = [
       ]},
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['relationshipType'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'characterVoice',
@@ -563,6 +641,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'catchphrase', name: 'Generate Catchphrase', type: 'boolean', default: false },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['speechPattern'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'characterSheet',
@@ -599,6 +683,12 @@ export const storytellingNodes: NodeDefinition[] = [
       ]},
     ],
     aiModel: 'flux-2-pro',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: 'auto', showZoom: true },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['sheetType', 'artStyle'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
 
   // ============================================================================
@@ -647,6 +737,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'includeHistory', name: 'Include History', type: 'boolean', default: true },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['locationType', 'mood'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'worldLore',
@@ -683,6 +779,12 @@ export const storytellingNodes: NodeDefinition[] = [
       ]},
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['loreType', 'depth'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'storyTimeline',
@@ -716,6 +818,12 @@ export const storytellingNodes: NodeDefinition[] = [
       ]},
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['scope', 'granularity'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
 
   // ============================================================================
@@ -765,6 +873,12 @@ export const storytellingNodes: NodeDefinition[] = [
       ]},
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['dialogueType', 'format'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'monologueGenerator',
@@ -802,6 +916,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'emotionalIntensity', name: 'Emotional Intensity', type: 'slider', default: 0.7, min: 0, max: 1, step: 0.1 },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['monologueType', 'length'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
 
   // ============================================================================
@@ -849,6 +969,12 @@ export const storytellingNodes: NodeDefinition[] = [
       ]},
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['numChoices', 'choiceType'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'consequenceTracker',
@@ -878,6 +1004,12 @@ export const storytellingNodes: NodeDefinition[] = [
       ]},
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['evaluationType'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'pathMerge',
@@ -907,6 +1039,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'retainMemory', name: 'Retain Choice Memory', type: 'boolean', default: true },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['mergeStyle'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
 
   // ============================================================================
@@ -950,6 +1088,12 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'characterConsistency', name: 'Character Consistency', type: 'boolean', default: true },
     ],
     aiModel: 'flux-2-pro',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['numFrames', 'visualStyle'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'screenplayFormatter',
@@ -980,5 +1124,11 @@ export const storytellingNodes: NodeDefinition[] = [
       { id: 'includeParentheticals', name: 'Include Parentheticals', type: 'boolean', default: true },
     ],
     aiModel: 'gemini-2.5-flash',
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'text', aspectRatio: 'auto' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['format'] },
+      actions: { primary: 'download', showProgress: true },
+    },
   },
 ];

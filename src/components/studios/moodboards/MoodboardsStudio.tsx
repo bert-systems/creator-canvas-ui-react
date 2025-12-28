@@ -1,10 +1,11 @@
 /**
  * MoodboardsStudio - Main container for Moodboards & Brand Identity Studio
  * Provides guided flows for creating moodboards and brand kits
+ * Integrates with moodboardStore for persistent storage
  */
 
-import React, { useState, useCallback } from 'react';
-import { Box, Typography, IconButton, Tooltip } from '@mui/material';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Box, Typography, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PaletteIcon from '@mui/icons-material/Palette';
@@ -18,25 +19,10 @@ import { CreateMoodboardFlow } from './flows/CreateMoodboardFlow';
 import { CreateBrandKitFlow } from './flows/CreateBrandKitFlow';
 import { WorkspaceMode, Gallery, type GalleryItem } from '../modes/WorkspaceMode';
 import { type BrandKit } from '@/services/moodboardService';
+import { useMoodboardStore } from '@/stores/moodboardStore';
 
 // Active flow type
 type ActiveFlow = 'none' | 'create-moodboard' | 'create-brand-kit' | 'extract-colors';
-
-// Saved content types
-interface SavedMoodboard {
-  id: string;
-  imageUrl: string;
-  theme: string;
-  colors: { hex: string }[];
-  createdAt: Date;
-}
-
-interface SavedBrandKit {
-  id: string;
-  name: string;
-  primaryColor: string;
-  createdAt: Date;
-}
 
 interface MoodboardsStudioProps {
   onBack?: () => void;
@@ -50,8 +36,26 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
   const [studioMode, setStudioMode] = useState<StudioMode>(initialMode);
   const [activeFlow, setActiveFlow] = useState<ActiveFlow>('none');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [savedMoodboards, setSavedMoodboards] = useState<SavedMoodboard[]>([]);
-  const [savedBrandKits, setSavedBrandKits] = useState<SavedBrandKit[]>([]);
+
+  // Connect to moodboard store
+  const {
+    moodboards,
+    brandKits,
+    moodboardsLoading,
+    brandKitsLoading,
+    fetchMoodboards,
+    fetchBrandKits,
+    createMoodboard,
+    createBrandKit: storeSaveBrandKit,
+  } = useMoodboardStore();
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchMoodboards().catch(console.error);
+    fetchBrandKits().catch(console.error);
+  }, [fetchMoodboards, fetchBrandKits]);
+
+  const isLoading = moodboardsLoading || brandKitsLoading;
 
   // Command palette commands
   const contextCommands: Command[] = [
@@ -111,35 +115,44 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
     setActiveFlow('none');
   }, []);
 
-  const handleMoodboardComplete = useCallback((result: { id: string; imageUrl: string; colors: { hex: string }[]; keywords: string[] }) => {
-    const newMoodboard: SavedMoodboard = {
-      id: result.id,
-      imageUrl: result.imageUrl,
-      theme: result.keywords.slice(0, 3).join(', ') || 'Moodboard',
-      colors: result.colors,
-      createdAt: new Date(),
-    };
-    setSavedMoodboards((prev) => [newMoodboard, ...prev]);
+  const handleMoodboardComplete = useCallback(async (result: { id: string; imageUrl: string; colors: { hex: string }[]; keywords: string[] }) => {
+    try {
+      await createMoodboard({
+        name: result.keywords.slice(0, 3).join(', ') || 'Moodboard',
+        thumbnailUrl: result.imageUrl,
+        colorPalette: result.colors.map(c => c.hex),
+        tags: result.keywords,
+      });
+    } catch (error) {
+      console.error('Failed to save moodboard:', error);
+    }
     setActiveFlow('none');
-  }, []);
+  }, [createMoodboard]);
 
-  const handleBrandKitComplete = useCallback((result: BrandKit) => {
-    const newKit: SavedBrandKit = {
-      id: result.id,
-      name: result.name,
-      primaryColor: result.colorPalette?.colors?.[0]?.hex || '#3B9B94',
-      createdAt: new Date(),
-    };
-    setSavedBrandKits((prev) => [newKit, ...prev]);
+  const handleBrandKitComplete = useCallback(async (result: BrandKit) => {
+    try {
+      await storeSaveBrandKit({
+        name: result.name,
+        companyName: result.name,
+        primaryColors: result.colorPalette?.colors?.slice(0, 3).map(c => c.hex) || [],
+        secondaryColors: result.colorPalette?.colors?.slice(3).map(c => c.hex) || [],
+        typography: {
+          headingFont: result.typography?.primary?.family,
+          bodyFont: result.typography?.secondary?.family || result.typography?.primary?.family,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to save brand kit:', error);
+    }
     setActiveFlow('none');
-  }, []);
+  }, [storeSaveBrandKit]);
 
-  // Convert saved content to gallery items
-  const moodboardGalleryItems: GalleryItem[] = savedMoodboards.map((mb) => ({
+  // Convert store data to gallery items
+  const moodboardGalleryItems: GalleryItem[] = moodboards.map((mb) => ({
     id: mb.id,
-    imageUrl: mb.imageUrl,
-    title: mb.theme,
-    subtitle: mb.createdAt.toLocaleDateString(),
+    imageUrl: mb.thumbnailUrl || '',
+    title: mb.name || 'Moodboard',
+    subtitle: mb.createdAt ? new Date(mb.createdAt).toLocaleDateString() : '',
   }));
 
   // Render active flow
@@ -180,15 +193,15 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    Moodboards ({savedMoodboards.length})
+                    Moodboards ({moodboards.length})
                   </Typography>
-                  {savedMoodboards.slice(0, 4).map((mb) => (
+                  {moodboards.slice(0, 4).map((mb) => (
                     <Box
                       key={mb.id}
                       sx={{
                         aspectRatio: '16/9',
                         background: studioColors.surface2,
-                        backgroundImage: `url(${mb.imageUrl})`,
+                        backgroundImage: mb.thumbnailUrl ? `url(${mb.thumbnailUrl})` : undefined,
                         backgroundSize: 'cover',
                         borderRadius: `${studioRadii.sm}px`,
                       }}
@@ -202,9 +215,9 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
                       mt: 2,
                     }}
                   >
-                    Brand Kits ({savedBrandKits.length})
+                    Brand Kits ({brandKits.length})
                   </Typography>
-                  {savedBrandKits.slice(0, 4).map((kit) => (
+                  {brandKits.slice(0, 4).map((kit) => (
                     <Box
                       key={kit.id}
                       sx={{
@@ -221,7 +234,7 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
                           width: 24,
                           height: 24,
                           borderRadius: `${studioRadii.sm}px`,
-                          background: kit.primaryColor,
+                          background: kit.primaryColors?.[0] || studioColors.accent,
                         }}
                       />
                       <Typography sx={{ fontSize: studioTypography.fontSize.sm, color: studioColors.textPrimary }}>
@@ -251,7 +264,11 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
           ]}
         >
           <Box sx={{ p: 4 }}>
-            {savedMoodboards.length > 0 ? (
+            {isLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                <CircularProgress size={32} sx={{ color: studioColors.accent }} />
+              </Box>
+            ) : moodboards.length > 0 ? (
               <Box>
                 <Typography
                   sx={{
@@ -455,7 +472,7 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
         </Box>
 
         {/* Recent content preview */}
-        {(savedMoodboards.length > 0 || savedBrandKits.length > 0) && (
+        {(moodboards.length > 0 || brandKits.length > 0) && (
           <Box sx={{ mt: 4, width: '100%', maxWidth: 900 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography
@@ -480,7 +497,7 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto' }}>
-              {savedMoodboards.slice(0, 4).map((mb) => (
+              {moodboards.slice(0, 4).map((mb) => (
                 <Box
                   key={mb.id}
                   sx={{
@@ -489,13 +506,13 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
                     flexShrink: 0,
                     borderRadius: `${studioRadii.md}px`,
                     background: studioColors.surface2,
-                    backgroundImage: `url(${mb.imageUrl})`,
+                    backgroundImage: mb.thumbnailUrl ? `url(${mb.thumbnailUrl})` : undefined,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}
                 />
               ))}
-              {savedBrandKits.slice(0, 2).map((kit) => (
+              {brandKits.slice(0, 2).map((kit) => (
                 <Box
                   key={kit.id}
                   sx={{
@@ -516,7 +533,7 @@ export const MoodboardsStudio: React.FC<MoodboardsStudioProps> = ({
                       width: 40,
                       height: 40,
                       borderRadius: `${studioRadii.md}px`,
-                      background: kit.primaryColor,
+                      background: kit.primaryColors?.[0] || studioColors.accent,
                     }}
                   />
                   <Typography sx={{ fontSize: studioTypography.fontSize.sm, color: studioColors.textPrimary }}>

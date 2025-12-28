@@ -467,6 +467,7 @@ export const nodeColors = {
 // ============================================================================
 
 export const portColors = {
+  // Media types
   image: brandColors.tealPulse,
   video: brandColors.mintGlow,
   audio: brandColors.techBlue,
@@ -474,6 +475,8 @@ export const portColors = {
   style: '#6366F1',                // Indigo
   character: '#EC4899',            // Pink
   mesh3d: brandColors.sunsetOrange,
+  any: darkNeutrals.textTertiary,
+  // Storytelling types
   story: '#10B981',                // Emerald
   scene: '#34D399',                // Light emerald
   plotPoint: '#84CC16',            // Lime
@@ -483,12 +486,36 @@ export const portColors = {
   outline: '#8B5CF6',              // Purple
   lore: '#FBBF24',                 // Yellow
   timeline: '#FB923C',             // Orange
+  // Fashion types
   garment: brandColors.coralSpark,
-  outfit: '#F56B4A',               // Light coral
-  textile: brandColors.sunsetOrange,
+  fabric: '#F97316',               // Orange (similar to textile)
+  pattern: '#A855F7',              // Purple
   model: '#EC4899',                // Pink
+  outfit: '#F56B4A',               // Light coral
   collection: brandColors.deepOcean,
-  any: darkNeutrals.textTertiary,
+  techPack: '#64748B',             // Slate
+  lookbook: '#06B6D4',             // Cyan
+  textile: brandColors.sunsetOrange, // Backwards compat alias
+  // Interior Design types
+  room: '#8B5CF6',                 // Violet
+  floorPlan: '#3B82F6',            // Blue
+  material: '#A1887F',             // Brown
+  furniture: '#D97706',            // Amber
+  designStyle: '#7C3AED',          // Purple
+  roomLayout: '#0EA5E9',           // Sky blue
+  // Moodboard types
+  moodboard: '#EC4899',            // Pink
+  colorPalette: '#F43F5E',         // Rose
+  brandKit: '#8B5CF6',             // Violet
+  typography: '#6366F1',           // Indigo
+  texture: '#D97706',              // Amber
+  aesthetic: '#C084FC',            // Violet light
+  // Social Media types
+  post: '#10B981',                 // Emerald
+  carousel: '#14B8A6',             // Teal
+  caption: '#6366F1',              // Indigo
+  template: '#8B5CF6',             // Purple
+  platform: '#3B82F6',             // Blue
 };
 
 // ============================================================================

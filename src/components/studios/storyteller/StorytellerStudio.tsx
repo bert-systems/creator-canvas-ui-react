@@ -1,10 +1,11 @@
 /**
  * StorytellerStudio - Main container for Storyteller Studio
  * Provides guided flows for story creation, character development, and world building
+ * Now integrated with backend persistence via storyStore
  */
 
-import React, { useState, useCallback } from 'react';
-import { Box, Typography, IconButton, Tooltip, Chip } from '@mui/material';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Box, Typography, IconButton, Tooltip, Chip, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import PersonIcon from '@mui/icons-material/Person';
@@ -12,6 +13,7 @@ import PublicIcon from '@mui/icons-material/Public';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import FolderIcon from '@mui/icons-material/Folder';
 import TuneIcon from '@mui/icons-material/Tune';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import { StudioShell, type StudioMode } from '../StudioShell';
 import { StudioCommandPalette, type Command } from '../StudioCommandPalette';
 import { SurfaceCard, studioColors, studioTypography, studioRadii } from '../shared';
@@ -19,28 +21,11 @@ import { CreateStoryFlow } from './flows/CreateStoryFlow';
 import { CreateCharacterFlow } from './flows/CreateCharacterFlow';
 import { WorkspaceMode } from '../modes/WorkspaceMode';
 import type { StoryData, CharacterProfile } from '@/services/storyGenerationService';
+import { useStoryStore } from '@/stores/storyStore';
+import { storyLibraryService } from '@/services/storyLibraryService';
 
 // Active flow type
 type ActiveFlow = 'none' | 'create-story' | 'create-character' | 'world-building' | 'branching-story';
-
-// Saved content types
-interface SavedStory {
-  id: string;
-  title: string;
-  genre: string;
-  premise: string;
-  wordCount: number;
-  chapterCount: number;
-  createdAt: Date;
-}
-
-interface SavedCharacter {
-  id: string;
-  name: string;
-  role: string;
-  avatarUrl?: string;
-  createdAt: Date;
-}
 
 interface StorytellerStudioProps {
   onBack?: () => void;
@@ -54,8 +39,21 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
   const [studioMode, setStudioMode] = useState<StudioMode>(initialMode);
   const [activeFlow, setActiveFlow] = useState<ActiveFlow>('none');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [savedStories, setSavedStories] = useState<SavedStory[]>([]);
-  const [savedCharacters, setSavedCharacters] = useState<SavedCharacter[]>([]);
+
+  // Use the story store for persisted state
+  const {
+    stories,
+    storiesLoading,
+    characters,
+    charactersLoading,
+    currentStory,
+    fetchStories,
+  } = useStoryStore();
+
+  // Fetch stories on mount
+  useEffect(() => {
+    fetchStories().catch(console.error);
+  }, [fetchStories]);
 
   // Command palette commands
   const contextCommands: Command[] = [
@@ -128,31 +126,46 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
     setActiveFlow('none');
   }, []);
 
-  const handleStoryComplete = useCallback((story: StoryData) => {
-    const newStory: SavedStory = {
-      id: story.id,
-      title: story.title,
-      genre: story.genre,
-      premise: story.premise,
-      wordCount: story.targetWordCount,
-      chapterCount: story.estimatedChapters,
-      createdAt: new Date(),
-    };
-    setSavedStories((prev) => [newStory, ...prev]);
+  const handleStoryComplete = useCallback(async (_story: StoryData) => {
+    // Stories are now saved explicitly via the "Save to Library" button in CreateStoryFlow
+    // Just refresh the stories list to pick up any stories that were saved
+    try {
+      await fetchStories();
+    } catch (error) {
+      console.error('Failed to refresh stories:', error);
+    }
     setActiveFlow('none');
-  }, []);
+  }, [fetchStories]);
 
-  const handleCharacterComplete = useCallback((character: CharacterProfile) => {
-    const newCharacter: SavedCharacter = {
-      id: character.id,
-      name: character.name,
-      role: character.role,
-      avatarUrl: undefined, // Would come from character sheet generation
-      createdAt: new Date(),
-    };
-    setSavedCharacters((prev) => [newCharacter, ...prev]);
+  const handleCharacterComplete = useCallback(async (character: CharacterProfile) => {
+    // For now, characters are saved as part of stories
+    // Standalone character saving will be added when currentStory is set
+    if (currentStory) {
+      try {
+        await storyLibraryService.createCharacter(currentStory.id, {
+          name: character.name,
+          role: character.role,
+          archetype: character.archetype,
+          briefDescription: character.motivation, // Use motivation as brief description
+          fullProfile: {
+            age: character.age,
+            gender: character.gender,
+            personality: character.personality ? {
+              traits: character.personality.traits,
+              fears: [character.fear],
+              desires: [character.goal],
+            } : undefined,
+            backstory: character.backstory?.origin || undefined,
+            motivation: character.motivation,
+            arc: character.arc,
+          },
+        });
+      } catch (error) {
+        console.error('Failed to save character:', error);
+      }
+    }
     setActiveFlow('none');
-  }, []);
+  }, [currentStory]);
 
   // Render active flow
   if (activeFlow === 'create-story') {
@@ -192,29 +205,35 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    My Stories ({savedStories.length})
+                    My Stories ({stories.length})
                   </Typography>
-                  {savedStories.slice(0, 5).map((story) => (
-                    <SurfaceCard key={story.id} sx={{ p: 1.5 }}>
-                      <Typography
-                        sx={{
-                          fontSize: studioTypography.fontSize.sm,
-                          fontWeight: studioTypography.fontWeight.medium,
-                          color: studioColors.textPrimary,
-                        }}
-                      >
-                        {story.title}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: studioTypography.fontSize.xs,
-                          color: studioColors.textMuted,
-                        }}
-                      >
-                        {story.genre}
-                      </Typography>
-                    </SurfaceCard>
-                  ))}
+                  {storiesLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                      <CircularProgress size={20} sx={{ color: studioColors.accent }} />
+                    </Box>
+                  ) : (
+                    stories.slice(0, 5).map((story) => (
+                      <SurfaceCard key={story.id} sx={{ p: 1.5 }}>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.sm,
+                            fontWeight: studioTypography.fontWeight.medium,
+                            color: studioColors.textPrimary,
+                          }}
+                        >
+                          {story.title}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: studioTypography.fontSize.xs,
+                            color: studioColors.textMuted,
+                          }}
+                        >
+                          {story.genre || 'Draft'}
+                        </Typography>
+                      </SurfaceCard>
+                    ))
+                  )}
 
                   <Typography
                     sx={{
@@ -224,43 +243,49 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
                       mt: 2,
                     }}
                   >
-                    Characters ({savedCharacters.length})
+                    Characters ({characters.length})
                   </Typography>
-                  {savedCharacters.slice(0, 5).map((char) => (
-                    <SurfaceCard key={char.id} sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Box
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: '50%',
-                          background: studioColors.surface3,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <PersonIcon sx={{ fontSize: 16, color: studioColors.textMuted }} />
-                      </Box>
-                      <Box>
-                        <Typography
+                  {charactersLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                      <CircularProgress size={20} sx={{ color: studioColors.accent }} />
+                    </Box>
+                  ) : (
+                    characters.slice(0, 5).map((char) => (
+                      <SurfaceCard key={char.id} sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box
                           sx={{
-                            fontSize: studioTypography.fontSize.sm,
-                            color: studioColors.textPrimary,
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            background: studioColors.surface3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
                         >
-                          {char.name}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: studioTypography.fontSize.xs,
-                            color: studioColors.textMuted,
-                          }}
-                        >
-                          {char.role}
-                        </Typography>
-                      </Box>
-                    </SurfaceCard>
-                  ))}
+                          <PersonIcon sx={{ fontSize: 16, color: studioColors.textMuted }} />
+                        </Box>
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontSize: studioTypography.fontSize.sm,
+                              color: studioColors.textPrimary,
+                            }}
+                          >
+                            {char.name}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: studioTypography.fontSize.xs,
+                              color: studioColors.textMuted,
+                            }}
+                          >
+                            {char.role}
+                          </Typography>
+                        </Box>
+                      </SurfaceCard>
+                    ))
+                  )}
                 </Box>
               ),
               defaultWidth: 220,
@@ -283,7 +308,11 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
           ]}
         >
           <Box sx={{ p: 4 }}>
-            {savedStories.length > 0 ? (
+            {storiesLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+                <CircularProgress sx={{ color: studioColors.accent }} />
+              </Box>
+            ) : stories.length > 0 ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <Box>
                   <Typography
@@ -297,7 +326,7 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
                     My Stories
                   </Typography>
                   <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
-                    {savedStories.map((story) => (
+                    {stories.map((story) => (
                       <SurfaceCard key={story.id} sx={{ p: 3 }}>
                         <Typography
                           sx={{
@@ -310,7 +339,8 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
                           {story.title}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                          <Chip label={story.genre} size="small" sx={{ background: studioColors.surface3 }} />
+                          <Chip label={story.genre || 'Draft'} size="small" sx={{ background: studioColors.surface3 }} />
+                          <Chip label={story.status} size="small" sx={{ background: studioColors.surface2 }} />
                         </Box>
                         <Typography
                           sx={{
@@ -319,14 +349,14 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
                             mb: 2,
                           }}
                         >
-                          {story.premise.substring(0, 100)}...
+                          {story.description?.substring(0, 100) || story.storyData?.premise?.substring(0, 100) || 'No description'}...
                         </Typography>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                           <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textMuted }}>
-                            {story.chapterCount} chapters
+                            v{story.version}
                           </Typography>
                           <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textMuted }}>
-                            ~{story.wordCount.toLocaleString()} words
+                            {story.wordCount > 0 ? `~${story.wordCount.toLocaleString()} words` : 'Empty'}
                           </Typography>
                         </Box>
                       </SurfaceCard>
@@ -345,6 +375,7 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
                   gap: 2,
                 }}
               >
+                <LibraryBooksIcon sx={{ fontSize: 48, color: studioColors.textMuted }} />
                 <Typography sx={{ color: studioColors.textMuted }}>
                   No stories yet. Start by creating a new story.
                 </Typography>
@@ -616,7 +647,7 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
         </Box>
 
         {/* Recent content preview */}
-        {(savedStories.length > 0 || savedCharacters.length > 0) && (
+        {(stories.length > 0 || characters.length > 0) && (
           <Box sx={{ mt: 4, width: '100%', maxWidth: 1000 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography
@@ -641,7 +672,7 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto' }}>
-              {savedStories.slice(0, 4).map((story) => (
+              {stories.slice(0, 4).map((story) => (
                 <SurfaceCard key={story.id} sx={{ p: 2, minWidth: 200, flexShrink: 0 }}>
                   <Typography
                     sx={{
@@ -658,7 +689,7 @@ export const StorytellerStudio: React.FC<StorytellerStudioProps> = ({
                       color: studioColors.textMuted,
                     }}
                   >
-                    {story.genre}
+                    {story.genre || story.status}
                   </Typography>
                 </SurfaceCard>
               ))}

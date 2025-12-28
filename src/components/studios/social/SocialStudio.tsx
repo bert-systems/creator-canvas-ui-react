@@ -1,10 +1,11 @@
 /**
  * SocialStudio - Main container for Social Media Studio
  * Provides guided flows for creating social media content
+ * Integrates with socialStore for persistent storage
  */
 
-import React, { useState, useCallback } from 'react';
-import { Box, Typography, IconButton, Tooltip } from '@mui/material';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Box, Typography, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArticleIcon from '@mui/icons-material/Article';
 import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
@@ -18,26 +19,10 @@ import { CreatePostFlow } from './flows/CreatePostFlow';
 import { CreateCarouselFlow } from './flows/CreateCarouselFlow';
 import { WorkspaceMode, Gallery, type GalleryItem } from '../modes/WorkspaceMode';
 import { type SocialPostResponse, type CarouselResponse } from '@/services/socialMediaService';
+import { useSocialStore } from '@/stores/socialStore';
 
 // Active flow type
 type ActiveFlow = 'none' | 'create-post' | 'create-carousel' | 'create-story';
-
-// Saved content types
-interface SavedPost {
-  id: string;
-  imageUrl: string;
-  platform: string;
-  caption?: string;
-  createdAt: Date;
-}
-
-interface SavedCarousel {
-  id: string;
-  coverUrl: string;
-  slideCount: number;
-  topic: string;
-  createdAt: Date;
-}
 
 interface SocialStudioProps {
   onBack?: () => void;
@@ -51,8 +36,24 @@ export const SocialStudio: React.FC<SocialStudioProps> = ({
   const [studioMode, setStudioMode] = useState<StudioMode>(initialMode);
   const [activeFlow, setActiveFlow] = useState<ActiveFlow>('none');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [savedPosts, setSavedPosts] = useState<SavedPost[]>([]);
-  const [savedCarousels, setSavedCarousels] = useState<SavedCarousel[]>([]);
+
+  // Connect to social store
+  const {
+    posts,
+    carousels,
+    postsLoading,
+    carouselsLoading,
+    fetchPosts,
+    fetchCarousels,
+    createPost,
+    createCarousel,
+  } = useSocialStore();
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchPosts().catch(console.error);
+    fetchCarousels().catch(console.error);
+  }, [fetchPosts, fetchCarousels]);
 
   // Command palette commands
   const contextCommands: Command[] = [
@@ -112,44 +113,57 @@ export const SocialStudio: React.FC<SocialStudioProps> = ({
     setActiveFlow('none');
   }, []);
 
-  const handlePostComplete = useCallback((result: SocialPostResponse) => {
-    const newPost: SavedPost = {
-      id: `post-${Date.now()}`,
-      imageUrl: result.postImage,
-      platform: result.platformSpecs?.platform || 'instagram',
-      caption: result.caption?.text,
-      createdAt: new Date(),
-    };
-    setSavedPosts((prev) => [newPost, ...prev]);
+  const handlePostComplete = useCallback(async (result: SocialPostResponse) => {
+    try {
+      await createPost({
+        postType: 'image',
+        platform: result.platformSpecs?.platform || 'instagram',
+        caption: result.caption?.text,
+        hashtags: result.hashtags,
+        imageUrls: [result.postImage],
+        status: 'draft',
+      });
+    } catch (error) {
+      console.error('Failed to save post:', error);
+    }
     setActiveFlow('none');
-  }, []);
+  }, [createPost]);
 
-  const handleCarouselComplete = useCallback((result: CarouselResponse) => {
-    const newCarousel: SavedCarousel = {
-      id: `carousel-${Date.now()}`,
-      coverUrl: result.coverSlide || result.slides[0]?.imageUrl || '',
-      slideCount: result.slides.length,
-      topic: result.caption?.text?.slice(0, 50) || 'Carousel',
-      createdAt: new Date(),
-    };
-    setSavedCarousels((prev) => [newCarousel, ...prev]);
+  const handleCarouselComplete = useCallback(async (result: CarouselResponse) => {
+    try {
+      await createCarousel({
+        title: result.caption?.text?.slice(0, 50) || 'Carousel',
+        platform: 'instagram',
+        caption: result.caption?.text,
+        status: 'draft',
+        slides: result.slides.map((slide, idx) => ({
+          slideOrder: idx,
+          imageUrl: slide.imageUrl,
+          caption: slide.headline || slide.bodyText,
+        })),
+      });
+    } catch (error) {
+      console.error('Failed to save carousel:', error);
+    }
     setActiveFlow('none');
-  }, []);
+  }, [createCarousel]);
 
-  // Convert saved content to gallery items
-  const postGalleryItems: GalleryItem[] = savedPosts.map((post) => ({
+  // Convert store data to gallery items
+  const postGalleryItems: GalleryItem[] = posts.map((post) => ({
     id: post.id,
-    imageUrl: post.imageUrl,
-    title: post.platform,
-    subtitle: post.createdAt.toLocaleDateString(),
+    imageUrl: post.imageUrls?.[0] || '',
+    title: post.platform || 'Post',
+    subtitle: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '',
   }));
 
-  const carouselGalleryItems: GalleryItem[] = savedCarousels.map((carousel) => ({
+  const carouselGalleryItems: GalleryItem[] = carousels.map((carousel) => ({
     id: carousel.id,
-    imageUrl: carousel.coverUrl,
-    title: `${carousel.slideCount} slides`,
-    subtitle: carousel.createdAt.toLocaleDateString(),
+    imageUrl: carousel.slides?.[0]?.imageUrl || '',
+    title: `${carousel.slides?.length || 0} slides`,
+    subtitle: carousel.createdAt ? new Date(carousel.createdAt).toLocaleDateString() : '',
   }));
+
+  const isLoading = postsLoading || carouselsLoading;
 
   // Render active flow
   if (activeFlow === 'create-post') {
@@ -189,15 +203,15 @@ export const SocialStudio: React.FC<SocialStudioProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    Posts ({savedPosts.length})
+                    Posts ({posts.length})
                   </Typography>
-                  {savedPosts.slice(0, 6).map((post) => (
+                  {posts.slice(0, 6).map((post) => (
                     <Box
                       key={post.id}
                       sx={{
                         aspectRatio: '1/1',
                         background: studioColors.surface2,
-                        backgroundImage: `url(${post.imageUrl})`,
+                        backgroundImage: post.imageUrls?.[0] ? `url(${post.imageUrls[0]})` : undefined,
                         backgroundSize: 'cover',
                         borderRadius: `${studioRadii.sm}px`,
                       }}
@@ -225,9 +239,13 @@ export const SocialStudio: React.FC<SocialStudioProps> = ({
           ]}
         >
           <Box sx={{ p: 4 }}>
-            {savedPosts.length > 0 || savedCarousels.length > 0 ? (
+            {isLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                <CircularProgress size={32} sx={{ color: studioColors.accent }} />
+              </Box>
+            ) : posts.length > 0 || carousels.length > 0 ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {savedPosts.length > 0 && (
+                {posts.length > 0 && (
                   <Box>
                     <Typography
                       sx={{
@@ -242,7 +260,7 @@ export const SocialStudio: React.FC<SocialStudioProps> = ({
                     <Gallery items={postGalleryItems} columns={4} aspectRatio="1/1" />
                   </Box>
                 )}
-                {savedCarousels.length > 0 && (
+                {carousels.length > 0 && (
                   <Box>
                     <Typography
                       sx={{
@@ -448,7 +466,7 @@ export const SocialStudio: React.FC<SocialStudioProps> = ({
         </Box>
 
         {/* Recent content preview */}
-        {(savedPosts.length > 0 || savedCarousels.length > 0) && (
+        {(posts.length > 0 || carousels.length > 0) && (
           <Box sx={{ mt: 4, width: '100%', maxWidth: 900 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography
@@ -473,7 +491,10 @@ export const SocialStudio: React.FC<SocialStudioProps> = ({
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto' }}>
-              {[...savedPosts, ...savedCarousels.map(c => ({ ...c, imageUrl: c.coverUrl }))].slice(0, 6).map((item) => (
+              {[
+                ...posts.map(p => ({ id: p.id, imageUrl: p.imageUrls?.[0] || '' })),
+                ...carousels.map(c => ({ id: c.id, imageUrl: c.slides?.[0]?.imageUrl || '' }))
+              ].slice(0, 6).map((item) => (
                 <Box
                   key={item.id}
                   sx={{
@@ -482,7 +503,7 @@ export const SocialStudio: React.FC<SocialStudioProps> = ({
                     flexShrink: 0,
                     borderRadius: `${studioRadii.md}px`,
                     background: studioColors.surface2,
-                    backgroundImage: `url(${item.imageUrl || (item as SavedCarousel).coverUrl})`,
+                    backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : undefined,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}

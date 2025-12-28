@@ -1,10 +1,11 @@
 /**
  * InteriorDesignStudio - Main container for Interior Design Studio
  * Provides guided flows for room redesign, virtual staging, and space visualization
+ * Integrates with interiorStore for persistent storage
  */
 
-import React, { useState, useCallback } from 'react';
-import { Box, Typography, IconButton, Tooltip } from '@mui/material';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Box, Typography, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import HomeIcon from '@mui/icons-material/Home';
 import ChairIcon from '@mui/icons-material/Chair';
@@ -18,27 +19,10 @@ import { RedesignRoomFlow } from './flows/RedesignRoomFlow';
 import { VirtualStagingFlow } from './flows/VirtualStagingFlow';
 import { WorkspaceMode, Gallery, type GalleryItem } from '../modes/WorkspaceMode';
 import { type RoomRedesignResponse, type VirtualStagingResponse, type InteriorDesignStyle } from '@/services/interiorDesignService';
+import { useInteriorStore } from '@/stores/interiorStore';
 
 // Active flow type
 type ActiveFlow = 'none' | 'redesign-room' | 'virtual-staging' | 'floor-plan';
-
-// Saved content types
-interface SavedRedesign {
-  id: string;
-  originalUrl: string;
-  redesignedUrl: string;
-  style: InteriorDesignStyle;
-  roomType: string;
-  createdAt: Date;
-}
-
-interface SavedStaging {
-  id: string;
-  originalUrl: string;
-  stagedUrl: string;
-  stagingStyle: string;
-  createdAt: Date;
-}
 
 interface InteriorDesignStudioProps {
   onBack?: () => void;
@@ -52,8 +36,26 @@ export const InteriorDesignStudio: React.FC<InteriorDesignStudioProps> = ({
   const [studioMode, setStudioMode] = useState<StudioMode>(initialMode);
   const [activeFlow, setActiveFlow] = useState<ActiveFlow>('none');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [savedRedesigns, setSavedRedesigns] = useState<SavedRedesign[]>([]);
-  const [savedStagings, setSavedStagings] = useState<SavedStaging[]>([]);
+
+  // Connect to interior store
+  const {
+    redesigns,
+    stagings,
+    redesignsLoading,
+    stagingsLoading,
+    fetchRedesigns,
+    fetchStagings,
+    createRedesign,
+    createStaging,
+  } = useInteriorStore();
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchRedesigns().catch(console.error);
+    fetchStagings().catch(console.error);
+  }, [fetchRedesigns, fetchStagings]);
+
+  const isLoading = redesignsLoading || stagingsLoading;
 
   // Command palette commands
   const contextCommands: Command[] = [
@@ -113,44 +115,48 @@ export const InteriorDesignStudio: React.FC<InteriorDesignStudioProps> = ({
     setActiveFlow('none');
   }, []);
 
-  const handleRedesignComplete = useCallback((result: RoomRedesignResponse & { originalUrl: string; style: InteriorDesignStyle; roomType: string }) => {
-    const newRedesign: SavedRedesign = {
-      id: `redesign-${Date.now()}`,
-      originalUrl: result.originalUrl,
-      redesignedUrl: result.redesignedRoom,
-      style: result.style,
-      roomType: result.roomType,
-      createdAt: new Date(),
-    };
-    setSavedRedesigns((prev) => [newRedesign, ...prev]);
+  const handleRedesignComplete = useCallback(async (result: RoomRedesignResponse & { originalUrl: string; style: InteriorDesignStyle; roomType: string }) => {
+    try {
+      await createRedesign({
+        name: `${result.roomType} - ${result.style}`,
+        roomType: result.roomType,
+        originalImageUrl: result.originalUrl,
+        redesignedImageUrl: result.redesignedRoom,
+        style: result.style,
+      });
+    } catch (error) {
+      console.error('Failed to save redesign:', error);
+    }
     setActiveFlow('none');
-  }, []);
+  }, [createRedesign]);
 
-  const handleStagingComplete = useCallback((result: VirtualStagingResponse & { originalUrl: string; stagingStyle: string }) => {
-    const newStaging: SavedStaging = {
-      id: `staging-${Date.now()}`,
-      originalUrl: result.originalUrl,
-      stagedUrl: result.stagedRoomImage,
-      stagingStyle: result.stagingStyle,
-      createdAt: new Date(),
-    };
-    setSavedStagings((prev) => [newStaging, ...prev]);
+  const handleStagingComplete = useCallback(async (result: VirtualStagingResponse & { originalUrl: string; stagingStyle: string }) => {
+    try {
+      await createStaging({
+        name: `Virtual Staging - ${result.stagingStyle}`,
+        emptyRoomImageUrl: result.originalUrl,
+        stagedImageUrl: result.stagedRoomImage,
+        style: result.stagingStyle,
+      });
+    } catch (error) {
+      console.error('Failed to save staging:', error);
+    }
     setActiveFlow('none');
-  }, []);
+  }, [createStaging]);
 
-  // Convert saved content to gallery items
-  const redesignGalleryItems: GalleryItem[] = savedRedesigns.map((item) => ({
+  // Convert store data to gallery items
+  const redesignGalleryItems: GalleryItem[] = redesigns.map((item) => ({
     id: item.id,
-    imageUrl: item.redesignedUrl,
-    title: item.style,
-    subtitle: item.createdAt.toLocaleDateString(),
+    imageUrl: item.redesignedImageUrl || '',
+    title: item.style || 'Redesign',
+    subtitle: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '',
   }));
 
-  const stagingGalleryItems: GalleryItem[] = savedStagings.map((item) => ({
+  const stagingGalleryItems: GalleryItem[] = stagings.map((item) => ({
     id: item.id,
-    imageUrl: item.stagedUrl,
-    title: item.stagingStyle,
-    subtitle: item.createdAt.toLocaleDateString(),
+    imageUrl: item.stagedImageUrl || '',
+    title: item.style || 'Staging',
+    subtitle: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '',
   }));
 
   // Render active flow
@@ -191,15 +197,15 @@ export const InteriorDesignStudio: React.FC<InteriorDesignStudioProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    Redesigns ({savedRedesigns.length})
+                    Redesigns ({redesigns.length})
                   </Typography>
-                  {savedRedesigns.slice(0, 4).map((item) => (
+                  {redesigns.slice(0, 4).map((item) => (
                     <Box
                       key={item.id}
                       sx={{
                         aspectRatio: '16/9',
                         background: studioColors.surface2,
-                        backgroundImage: `url(${item.redesignedUrl})`,
+                        backgroundImage: item.redesignedImageUrl ? `url(${item.redesignedImageUrl})` : undefined,
                         backgroundSize: 'cover',
                         borderRadius: `${studioRadii.sm}px`,
                       }}
@@ -213,15 +219,15 @@ export const InteriorDesignStudio: React.FC<InteriorDesignStudioProps> = ({
                       mt: 2,
                     }}
                   >
-                    Staged ({savedStagings.length})
+                    Staged ({stagings.length})
                   </Typography>
-                  {savedStagings.slice(0, 4).map((item) => (
+                  {stagings.slice(0, 4).map((item) => (
                     <Box
                       key={item.id}
                       sx={{
                         aspectRatio: '16/9',
                         background: studioColors.surface2,
-                        backgroundImage: `url(${item.stagedUrl})`,
+                        backgroundImage: item.stagedImageUrl ? `url(${item.stagedImageUrl})` : undefined,
                         backgroundSize: 'cover',
                         borderRadius: `${studioRadii.sm}px`,
                       }}
@@ -249,9 +255,13 @@ export const InteriorDesignStudio: React.FC<InteriorDesignStudioProps> = ({
           ]}
         >
           <Box sx={{ p: 4 }}>
-            {savedRedesigns.length > 0 || savedStagings.length > 0 ? (
+            {isLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                <CircularProgress size={32} sx={{ color: studioColors.accent }} />
+              </Box>
+            ) : redesigns.length > 0 || stagings.length > 0 ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {savedRedesigns.length > 0 && (
+                {redesigns.length > 0 && (
                   <Box>
                     <Typography
                       sx={{
@@ -266,7 +276,7 @@ export const InteriorDesignStudio: React.FC<InteriorDesignStudioProps> = ({
                     <Gallery items={redesignGalleryItems} columns={3} aspectRatio="16/9" />
                   </Box>
                 )}
-                {savedStagings.length > 0 && (
+                {stagings.length > 0 && (
                   <Box>
                     <Typography
                       sx={{
@@ -472,7 +482,7 @@ export const InteriorDesignStudio: React.FC<InteriorDesignStudioProps> = ({
         </Box>
 
         {/* Recent content preview */}
-        {(savedRedesigns.length > 0 || savedStagings.length > 0) && (
+        {(redesigns.length > 0 || stagings.length > 0) && (
           <Box sx={{ mt: 4, width: '100%', maxWidth: 900 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography
@@ -497,8 +507,10 @@ export const InteriorDesignStudio: React.FC<InteriorDesignStudioProps> = ({
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto' }}>
-              {[...savedRedesigns.map(r => ({ ...r, imageUrl: r.redesignedUrl })),
-                ...savedStagings.map(s => ({ ...s, imageUrl: s.stagedUrl }))].slice(0, 6).map((item) => (
+              {[
+                ...redesigns.map(r => ({ id: r.id, imageUrl: r.redesignedImageUrl || '' })),
+                ...stagings.map(s => ({ id: s.id, imageUrl: s.stagedImageUrl || '' }))
+              ].slice(0, 6).map((item) => (
                 <Box
                   key={item.id}
                   sx={{
@@ -507,7 +519,7 @@ export const InteriorDesignStudio: React.FC<InteriorDesignStudioProps> = ({
                     flexShrink: 0,
                     borderRadius: `${studioRadii.md}px`,
                     background: studioColors.surface2,
-                    backgroundImage: `url(${item.imageUrl})`,
+                    backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : undefined,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}

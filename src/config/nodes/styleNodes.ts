@@ -23,6 +23,12 @@ export const styleNodes: NodeDefinition[] = [
       { id: 'colorWeight', name: 'Color Weight', type: 'slider', default: 0.5, min: 0, max: 1, step: 0.1 },
       { id: 'textureWeight', name: 'Texture Weight', type: 'slider', default: 0.5, min: 0, max: 1, step: 0.1 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'colorSwatches', aspectRatio: 'auto' },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['styleName'] },
+      actions: { primary: 'execute', showProgress: true },
+    },
   },
   {
     type: 'styleTransfer',
@@ -41,6 +47,12 @@ export const styleNodes: NodeDefinition[] = [
     parameters: [
       { id: 'strength', name: 'Transfer Strength', type: 'slider', default: 0.7, min: 0, max: 1, step: 0.1 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'comparison', aspectRatio: 'auto', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['strength'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'loraTraining',
@@ -60,6 +72,12 @@ export const styleNodes: NodeDefinition[] = [
       { id: 'triggerWord', name: 'Trigger Word', type: 'text', default: '' },
       { id: 'steps', name: 'Training Steps', type: 'number', default: 1000, min: 100, max: 5000 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: 'auto' },
+      parameters: { layout: 'stack', visibleInModes: ['standard', 'expanded'], priorityParams: ['loraName', 'triggerWord'] },
+      actions: { primary: 'execute', showProgress: true, showCost: true },
+    },
   },
 
   // COMPOSITE / FASHION NODES
@@ -175,6 +193,12 @@ export const styleNodes: NodeDefinition[] = [
         { label: 'Multi-Angle', value: 'multi-angle' },
       ]},
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '9:16' },
+      parameters: { layout: 'accordion', visibleInModes: ['standard', 'expanded'], priorityParams: ['walkStyle', 'duration'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'storyboardAutopilot',
@@ -201,6 +225,12 @@ export const styleNodes: NodeDefinition[] = [
         { label: '1:1 (Square)', value: '1:1' },
       ]},
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'gallery', aspectRatio: '16:9', showZoom: true },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['panelCount', 'aspectRatio'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
   {
     type: 'collectionSlideshow',
@@ -224,5 +254,11 @@ export const styleNodes: NodeDefinition[] = [
       ]},
       { id: 'imageDuration', name: 'Image Duration (s)', type: 'number', default: 3, min: 1, max: 10 },
     ],
+    defaultDisplayMode: 'standard',
+    slots: {
+      preview: { type: 'video', aspectRatio: '16:9' },
+      parameters: { layout: 'inline', visibleInModes: ['standard', 'expanded'], priorityParams: ['transition', 'imageDuration'] },
+      actions: { primary: 'execute', secondary: ['download'], showProgress: true },
+    },
   },
 ];

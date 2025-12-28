@@ -16,7 +16,9 @@ import {
   Avatar,
   IconButton,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import PlaceIcon from '@mui/icons-material/Place';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -26,6 +28,9 @@ import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import WarningIcon from '@mui/icons-material/Warning';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 import TheaterComedyIcon from '@mui/icons-material/TheaterComedy';
+import ImageIcon from '@mui/icons-material/Image';
+import MovieCreationIcon from '@mui/icons-material/MovieCreation';
+import SaveIcon from '@mui/icons-material/Save';
 import { FlowMode, type FlowStep } from '../../modes/FlowMode';
 import { SurfaceCard, studioColors, studioTypography, studioRadii } from '../../shared';
 import {
@@ -38,6 +43,13 @@ import {
   type StoryFramework,
   type StoryStartResponse,
 } from '@/services/storyGenerationService';
+import {
+  storyLibraryService,
+  type StoryGenre as LibraryStoryGenre,
+  type StoryTone as LibraryStoryTone,
+} from '@/services/storyLibraryService';
+import { useStoryStore } from '@/stores/storyStore';
+import { imageGenerationService } from '@/services/imageGenerationService';
 
 // Flow step definitions
 const FLOW_STEPS: FlowStep[] = [
@@ -111,7 +123,18 @@ interface CreateStoryFlowProps {
   onComplete: (story: StoryData) => void;
 }
 
+// Helper to convert lowercase genre/tone to PascalCase for library service
+const toPascalCase = (str: string): string => {
+  if (!str) return str;
+  // Handle special cases
+  if (str.toLowerCase() === 'scifi') return 'SciFi';
+  if (str.toLowerCase() === 'ya') return 'YA';
+  // Standard PascalCase conversion
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
 export const CreateStoryFlow: React.FC<CreateStoryFlowProps> = ({ onCancel, onComplete }) => {
+  const { fetchStories } = useStoryStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -128,6 +151,14 @@ export const CreateStoryFlow: React.FC<CreateStoryFlowProps> = ({ onCancel, onCo
   const [result, setResult] = useState<StoryData | null>(null);
   const [fullResponse, setFullResponse] = useState<StoryStartResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Library and generation state
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedStoryId, setSavedStoryId] = useState<string | null>(null);
+  const [isGeneratingCover, setIsGeneratingCover] = useState(false);
+  const [coverArtUrl, setCoverArtUrl] = useState<string | null>(null);
+  const [isGeneratingFullStory, setIsGeneratingFullStory] = useState(false);
+  const [fullStoryProgress, setFullStoryProgress] = useState({ current: 0, total: 0, status: '' });
 
   // Check if current step is valid
   const canProceed = useCallback(() => {
@@ -215,6 +246,206 @@ export const CreateStoryFlow: React.FC<CreateStoryFlowProps> = ({ onCancel, onCo
       onComplete(result);
     }
   }, [result, onComplete]);
+
+  // Handle Save to Library
+  const handleSaveToLibrary = useCallback(async () => {
+    if (!result || !fullResponse) return;
+
+    setIsSaving(true);
+    try {
+      // Use the saveFromNodeOutput helper which handles the data transformation
+      // Convert characters to plain objects for saveFromNodeOutput
+      const charactersAsRecords = fullResponse.characters?.map(c => ({
+        name: c.name,
+        role: c.role,
+        archetype: c.archetype || '',
+        briefDescription: c.briefDescription,
+        motivation: c.motivation,
+      })) as Record<string, unknown>[] | undefined;
+
+      const savedStory = await storyLibraryService.saveFromNodeOutput(
+        {
+          title: result.title,
+          premise: result.premise,
+          themes: result.themes,
+          genre: toPascalCase(result.genre),
+          tone: toPascalCase(result.tone),
+          centralConflict: result.centralConflict,
+          stakes: result.stakes,
+          hook: result.hook,
+          logline: fullResponse.logline,
+          tagline: fullResponse.tagline,
+        },
+        charactersAsRecords,
+        fullResponse.outline as unknown as Record<string, unknown> | undefined,
+        [toPascalCase(result.genre), toPascalCase(result.tone), audience, length].filter(Boolean) as string[]
+      );
+
+      setSavedStoryId(savedStory.id);
+      // Refresh the store so the story appears in the library
+      await fetchStories();
+    } catch (err) {
+      console.error('Failed to save story:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save story to library');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [result, fullResponse, audience, length, fetchStories]);
+
+  // Handle Generate Cover Art
+  const handleGenerateCoverArt = useCallback(async () => {
+    if (!result || !fullResponse) return;
+
+    setIsGeneratingCover(true);
+    try {
+      // Build a cover art prompt from story data
+      const coverPrompt = fullResponse.coverPrompt ||
+        `Book cover art for "${result.title}". ${fullResponse.tagline || result.premise}. ` +
+        `Genre: ${result.genre}. Tone: ${result.tone}. ` +
+        `Professional book cover design, dramatic lighting, cinematic composition, no text.`;
+
+      const response = await imageGenerationService.generateFluxPro({
+        prompt: coverPrompt,
+        width: 768,
+        height: 1024, // Portrait for book cover
+        aspectRatio: '3:4',
+      });
+
+      // ImageGenerationResponse has images array with url property
+      if (response.images && response.images.length > 0) {
+        const generatedCoverUrl = response.images[0].url;
+        setCoverArtUrl(generatedCoverUrl);
+
+        // If story was already saved, update it with the cover art URL
+        if (savedStoryId) {
+          try {
+            await storyLibraryService.updateStory(savedStoryId, {
+              coverImageUrl: generatedCoverUrl,
+            });
+          } catch (updateErr) {
+            console.warn('Failed to update story with cover art:', updateErr);
+            // Don't fail the whole operation if update fails
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to generate cover art:', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate cover art');
+    } finally {
+      setIsGeneratingCover(false);
+    }
+  }, [result, fullResponse, savedStoryId]);
+
+  // Handle Generate Full Story with Images (client-side orchestration)
+  // Note: Uses image generation for act illustrations since /api/storytelling/generate-full is not yet available
+  const handleGenerateFullStory = useCallback(async () => {
+    if (!result || !fullResponse?.outline?.acts) return;
+
+    setIsGeneratingFullStory(true);
+    const acts = fullResponse.outline.acts;
+    const totalSteps = acts.length; // One image per act
+    setFullStoryProgress({ current: 0, total: totalSteps, status: 'Starting illustration generation...' });
+
+    try {
+      interface GeneratedScene {
+        id: string;
+        title: string;
+        description: string;
+        imageUrl?: string;
+      }
+
+      const generatedScenes: GeneratedScene[] = [];
+
+      for (let i = 0; i < acts.length; i++) {
+        const act = acts[i];
+
+        // Generate illustration for this act
+        setFullStoryProgress({
+          current: i + 1,
+          total: totalSteps,
+          status: `Illustrating Act ${act.actNumber}: ${act.title}...`,
+        });
+
+        // Build a visual prompt from the act summary
+        const scenePrompt = `Cinematic illustration for "${result.title}" - ${act.title}. ` +
+          `${act.summary}. Genre: ${result.genre}. Tone: ${result.tone}. ` +
+          `Dramatic lighting, rich atmosphere, story illustration style.`;
+
+        const scene: GeneratedScene = {
+          id: `scene-${i + 1}`,
+          title: act.title,
+          description: act.summary,
+        };
+
+        try {
+          const imgResponse = await imageGenerationService.generateFluxPro({
+            prompt: scenePrompt,
+            width: 1024,
+            height: 768,
+            aspectRatio: '4:3',
+          });
+
+          if (imgResponse.images && imgResponse.images.length > 0) {
+            scene.imageUrl = imgResponse.images[0].url;
+          }
+        } catch (imgErr) {
+          console.warn(`Failed to generate image for Act ${act.actNumber}:`, imgErr);
+          // Continue without image - don't fail the whole process
+        }
+
+        generatedScenes.push(scene);
+      }
+
+      setFullStoryProgress({
+        current: totalSteps,
+        total: totalSteps,
+        status: 'Illustration generation complete!',
+      });
+
+      // Automatically save the full story if not already saved
+      if (!savedStoryId) {
+        const savedStory = await storyLibraryService.createStory({
+          title: result.title,
+          description: fullResponse.logline,
+          storyData: {
+            title: result.title,
+            premise: result.premise,
+            themes: result.themes,
+            genre: toPascalCase(result.genre) as LibraryStoryGenre,
+            tone: toPascalCase(result.tone) as LibraryStoryTone,
+            centralConflict: result.centralConflict,
+            stakes: result.stakes,
+            hook: result.hook,
+            logline: fullResponse.logline,
+            tagline: fullResponse.tagline,
+          },
+          characters: fullResponse.characters?.map(c => ({
+            name: c.name,
+            role: c.role,
+            archetype: c.archetype || '',
+            briefDescription: c.briefDescription,
+          })),
+          outline: fullResponse.outline,
+          scenes: generatedScenes.map(s => ({
+            title: s.title,
+            description: s.description,
+          })),
+          genre: toPascalCase(result.genre) as LibraryStoryGenre,
+          tone: toPascalCase(result.tone) as LibraryStoryTone,
+          status: 'InProgress',
+          tags: [toPascalCase(result.genre), toPascalCase(result.tone), 'generated'].filter(Boolean) as string[],
+        });
+        setSavedStoryId(savedStory.id);
+        // Refresh the store so the story appears in the library
+        await fetchStories();
+      }
+    } catch (err) {
+      console.error('Failed to generate full story:', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate full story');
+    } finally {
+      setIsGeneratingFullStory(false);
+    }
+  }, [result, fullResponse, savedStoryId, fetchStories]);
 
   // Render step content
   const renderStepContent = () => {
@@ -1051,25 +1282,214 @@ export const CreateStoryFlow: React.FC<CreateStoryFlowProps> = ({ onCancel, onCo
                 )}
 
                 {/* Action Buttons */}
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => {
-                      const storyText = `${result.title}\n\n"${fullResponse.tagline}"\n\n${fullResponse.logline}\n\nGenre: ${result.genre}\nTone: ${result.tone}\n\nThemes: ${result.themes.join(', ')}\n\nCentral Conflict:\n${result.centralConflict}\n\nStakes:\n${result.stakes}`;
-                      navigator.clipboard.writeText(storyText);
-                    }}
-                    startIcon={<ContentCopyIcon />}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 4 }}>
+                  {/* Primary Actions */}
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                    <Button
+                      variant="contained"
+                      startIcon={isGeneratingFullStory ? <CircularProgress size={18} color="inherit" /> : <MovieCreationIcon />}
+                      disabled={isGeneratingFullStory || !fullResponse?.outline?.acts?.length}
+                      sx={{
+                        px: 3,
+                        py: 1.5,
+                        background: `linear-gradient(135deg, ${studioColors.accent} 0%, #9C27B0 100%)`,
+                        color: '#fff',
+                        fontWeight: 600,
+                        '&:hover': {
+                          background: `linear-gradient(135deg, ${studioColors.accentMuted} 0%, #7B1FA2 100%)`,
+                        },
+                        '&.Mui-disabled': {
+                          background: studioColors.surface3,
+                          color: studioColors.textMuted,
+                        },
+                      }}
+                      onClick={handleGenerateFullStory}
+                    >
+                      {isGeneratingFullStory
+                        ? fullStoryProgress.status || 'Generating...'
+                        : 'Generate Full Story with Images'}
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      startIcon={
+                        savedStoryId ? <CheckCircleIcon /> :
+                        isSaving ? <CircularProgress size={18} color="inherit" /> :
+                        <SaveIcon />
+                      }
+                      disabled={isSaving || !!savedStoryId}
+                      sx={{
+                        borderColor: savedStoryId ? '#4CAF50' : studioColors.accent,
+                        color: savedStoryId ? '#4CAF50' : studioColors.accent,
+                        '&:hover': {
+                          borderColor: studioColors.accent,
+                          background: `${studioColors.accent}10`,
+                        },
+                        '&.Mui-disabled': {
+                          borderColor: savedStoryId ? '#4CAF50' : studioColors.border,
+                          color: savedStoryId ? '#4CAF50' : studioColors.textMuted,
+                        },
+                      }}
+                      onClick={handleSaveToLibrary}
+                    >
+                      {savedStoryId ? 'Saved to Library' : isSaving ? 'Saving...' : 'Save to Library'}
+                    </Button>
+                  </Box>
+
+                  {/* Secondary Actions */}
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => {
+                        const storyText = `${result.title}\n\n"${fullResponse.tagline}"\n\n${fullResponse.logline}\n\nGenre: ${result.genre}\nTone: ${result.tone}\n\nThemes: ${result.themes.join(', ')}\n\nCentral Conflict:\n${result.centralConflict}\n\nStakes:\n${result.stakes}`;
+                        navigator.clipboard.writeText(storyText);
+                      }}
+                      startIcon={<ContentCopyIcon />}
+                      sx={{
+                        borderColor: studioColors.border,
+                        color: studioColors.textSecondary,
+                        '&:hover': {
+                          borderColor: studioColors.accent,
+                          background: `${studioColors.accent}10`,
+                        },
+                      }}
+                    >
+                      Copy Story Brief
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={
+                        coverArtUrl ? <CheckCircleIcon /> :
+                        isGeneratingCover ? <CircularProgress size={16} color="inherit" /> :
+                        <ImageIcon />
+                      }
+                      disabled={isGeneratingCover || !!coverArtUrl}
+                      sx={{
+                        borderColor: coverArtUrl ? '#4CAF50' : studioColors.border,
+                        color: coverArtUrl ? '#4CAF50' : studioColors.textSecondary,
+                        '&:hover': {
+                          borderColor: studioColors.accent,
+                          background: `${studioColors.accent}10`,
+                        },
+                        '&.Mui-disabled': {
+                          borderColor: coverArtUrl ? '#4CAF50' : studioColors.border,
+                          color: coverArtUrl ? '#4CAF50' : studioColors.textMuted,
+                        },
+                      }}
+                      onClick={handleGenerateCoverArt}
+                    >
+                      {coverArtUrl ? 'Cover Generated' : isGeneratingCover ? 'Generating...' : 'Generate Cover Art'}
+                    </Button>
+                  </Box>
+
+                  {/* Info note about full story generation */}
+                  <Box
                     sx={{
-                      borderColor: studioColors.border,
-                      color: studioColors.textSecondary,
-                      '&:hover': {
-                        borderColor: studioColors.accent,
-                        background: `${studioColors.accent}10`,
-                      },
+                      textAlign: 'center',
+                      p: 2,
+                      background: `${studioColors.accent}10`,
+                      borderRadius: `${studioRadii.md}px`,
+                      border: `1px solid ${studioColors.accent}30`,
                     }}
                   >
-                    Copy Story Brief
-                  </Button>
+                    <Typography
+                      sx={{
+                        fontSize: studioTypography.fontSize.sm,
+                        color: studioColors.textSecondary,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1,
+                      }}
+                    >
+                      <AutoAwesomeIcon sx={{ fontSize: 16, color: studioColors.accent }} />
+                      "Generate Full Story" creates complete chapters with AI-generated illustrations for each act
+                    </Typography>
+                  </Box>
+
+                  {/* Full Story Progress */}
+                  {isGeneratingFullStory && fullStoryProgress.total > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textSecondary }}>
+                          {fullStoryProgress.status}
+                        </Typography>
+                        <Typography sx={{ fontSize: studioTypography.fontSize.xs, color: studioColors.textSecondary }}>
+                          {fullStoryProgress.current}/{fullStoryProgress.total}
+                        </Typography>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={(fullStoryProgress.current / fullStoryProgress.total) * 100}
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          background: studioColors.surface2,
+                          '& .MuiLinearProgress-bar': {
+                            background: `linear-gradient(90deg, ${studioColors.accent} 0%, #9C27B0 100%)`,
+                            borderRadius: 4,
+                          },
+                        }}
+                      />
+                    </Box>
+                  )}
+
+                  {/* Cover Art Preview */}
+                  {coverArtUrl && (
+                    <Box
+                      sx={{
+                        mt: 3,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 2,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: studioTypography.fontSize.sm,
+                          fontWeight: studioTypography.fontWeight.semibold,
+                          color: studioColors.textPrimary,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        Cover Art
+                      </Typography>
+                      <Box
+                        component="img"
+                        src={coverArtUrl}
+                        alt={`Cover art for ${result.title}`}
+                        sx={{
+                          maxWidth: 300,
+                          height: 'auto',
+                          borderRadius: `${studioRadii.md}px`,
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                          border: `1px solid ${studioColors.border}`,
+                        }}
+                      />
+                    </Box>
+                  )}
+
+                  {/* Error display */}
+                  {error && (
+                    <Box
+                      sx={{
+                        mt: 2,
+                        p: 2,
+                        background: 'rgba(244,67,54,0.1)',
+                        borderRadius: `${studioRadii.md}px`,
+                        border: '1px solid rgba(244,67,54,0.3)',
+                      }}
+                    >
+                      <Typography sx={{ fontSize: studioTypography.fontSize.sm, color: '#f44336' }}>
+                        {error}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               </>
             )}

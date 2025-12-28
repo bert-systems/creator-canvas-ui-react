@@ -81,6 +81,7 @@ export const FlowMode: React.FC<FlowModeProps> = ({
         display: 'flex',
         flexDirection: 'column',
         flex: 1,
+        height: '100vh', // Ensure full viewport height
         minHeight: 0,
         background: studioColors.ink,
       }}
@@ -222,14 +223,33 @@ export const FlowMode: React.FC<FlowModeProps> = ({
         }}
       />
 
-      {/* Content area */}
+      {/* Content area - scrollable */}
       <Box
         sx={{
           flex: 1,
           minHeight: 0,
-          overflow: 'auto',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           px: 4,
           py: 4,
+          // Custom scrollbar styling
+          '&::-webkit-scrollbar': {
+            width: 8,
+          },
+          '&::-webkit-scrollbar-track': {
+            background: studioColors.surface1,
+            borderRadius: 4,
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: studioColors.surface3,
+            borderRadius: 4,
+            '&:hover': {
+              background: studioColors.borderHover,
+            },
+          },
+          // Firefox scrollbar styling
+          scrollbarWidth: 'thin',
+          scrollbarColor: `${studioColors.surface3} ${studioColors.surface1}`,
         }}
       >
         {children}
